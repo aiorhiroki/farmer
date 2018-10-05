@@ -1,2 +1,2 @@
-# baker
-baker is an automated machine learning library.🍞
+# baker 🍞
+baker is an automated machine learning library.

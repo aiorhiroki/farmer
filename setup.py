@@ -5,7 +5,7 @@ setup(
     name='farmer',
     version='0.0.1',
     description='Auto Machine Learning for Doctor',
-    author='Hiroki Matsuzaki',
+    author='Hiroki Matsuzaki, Hiroaki Takano',
     author_email='1234defgsigeru@gmail.com',
     url='https://github.com/NCC-AI/farmer',
     download_url='',

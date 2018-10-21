@@ -3,6 +3,8 @@ from ncc.history import save_history
 from ncc.preprocessing import preprocess_input
 from ncc.metrics import show_matrix
 
+from keras.callbacks import EarlyStopping
+
 import numpy as np
 
 
@@ -28,7 +30,6 @@ def fit_from_array(x_train, y_train, x_test=None, y_test=None, class_names=None)
     input_shape = x_train.shape[1:]
 
     # build model
-
     if len(input_shape) == 3:  # (height, width, channel)
         model = Model2D(input_shape=input_shape, num_classes=num_classes)
     elif len(input_shape) == 4:  # (depth, height, width, channel)
@@ -39,7 +40,12 @@ def fit_from_array(x_train, y_train, x_test=None, y_test=None, class_names=None)
     # compile and fit
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
     model.summary()
-    history = model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_data=(x_test, y_test))
+    history = model.fit(x_train, y_train,
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        callbacks=[EarlyStopping(patience=5)],
+                        validation_data=(x_test, y_test)
+                        )
 
     # save results
     save_history(history)

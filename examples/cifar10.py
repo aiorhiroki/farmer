@@ -5,4 +5,4 @@ from farmer.Classifier import Classifier
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
 # fit farmer classification
-Classifier(epochs=5, optimizer='adm').fit_from_array(x_train, y_train, x_test, y_test)
+Classifier(epochs=5, optimizer='adam').fit_from_array(x_train, y_train, x_test, y_test)

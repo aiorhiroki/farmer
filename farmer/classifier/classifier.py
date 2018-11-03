@@ -12,7 +12,7 @@ class Classifier(object):
         # parameters
         self.optimizer = optimizer
         self.loss = loss
-        self.metrics = list(metrics)
+        self.metrics = [metrics]
         self.epochs = epochs
         self.batch_size = batch_size
 
@@ -50,4 +50,4 @@ class Classifier(object):
 
         # save and eval model
         save_show_results(history, model)
-        evaluate(model, x_test, y_train, class_names)
+        evaluate(model, x_test, y_test, class_names)

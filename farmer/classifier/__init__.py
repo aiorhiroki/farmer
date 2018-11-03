@@ -1,1 +1,1 @@
-from .classifier import fit_from_array
+from .Classifier import Classifier

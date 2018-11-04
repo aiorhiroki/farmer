@@ -8,13 +8,17 @@ import numpy as np
 
 
 class Classifier(object):
-    def __init__(self, optimizer='sgd', loss='categorical_crossentropy', metrics='acc', epochs=100, batch_size=32):
+    def __init__(self, optimizer='sgd', loss='categorical_crossentropy', metrics='acc', epochs=100, batch_size=32,
+                 early_stopping=True):
         # parameters
         self.optimizer = optimizer
         self.loss = loss
         self.metrics = [metrics]
         self.epochs = epochs
         self.batch_size = batch_size
+        self.callbacks = []
+        if early_stopping:
+            self.callbacks.append(EarlyStopping(patience=5))
 
     def fit_from_array(self, x_train, y_train, x_test=None, y_test=None, class_names=None):
         # prepare data
@@ -41,10 +45,11 @@ class Classifier(object):
         # compile and fit
         model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
         model.summary()
+
         history = model.fit(x_train, y_train,
                             epochs=self.epochs,
                             batch_size=self.batch_size,
-                            callbacks=[EarlyStopping(patience=5)],
+                            callbacks=self.callbacks,
                             validation_data=(x_test, y_test)
                             )
 

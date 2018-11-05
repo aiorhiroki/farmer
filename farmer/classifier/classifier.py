@@ -2,6 +2,7 @@ from ncc.models import Model3D, Model2D
 from ncc.history import save_history
 from ncc.preprocessing import preprocess_input
 from ncc.metrics import show_matrix
+from sklearn.model_selection import train_test_split
 
 from keras.callbacks import EarlyStopping
 
@@ -16,11 +17,13 @@ def fit_from_array(x_train, y_train, x_test=None, y_test=None, class_names=None)
     epochs = 30
     batch_size = 32
 
+    # if test data is nothing, split train data
+    if x_test is None and y_test is None:
+        x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2)
     # prepare data
+    x_test, y_test = preprocess_input(x_test, y_test)
     x_train, y_train = preprocess_input(x_train, y_train)
     print(x_train.shape, y_train.shape)
-    if x_test is not None and y_test is not None:
-        x_test, y_test = preprocess_input(x_test, y_test)
 
     # data profile
     if class_names is None:

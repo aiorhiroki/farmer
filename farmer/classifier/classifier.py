@@ -2,10 +2,10 @@ from ncc.models import Model3D, Model2D
 from ncc.preprocessing import preprocess_input
 from ncc.validations import save_show_results, evaluate
 
-from keras.callbacks import EarlyStopping
-
+from sklearn.model_selection import train_test_split
 import numpy as np
 
+from keras.callbacks import EarlyStopping
 
 class Classifier(object):
     def __init__(self, optimizer='sgd', loss='categorical_crossentropy', metrics='acc', epochs=100, batch_size=32,
@@ -21,11 +21,14 @@ class Classifier(object):
             self.callbacks.append(EarlyStopping(patience=5))
 
     def fit_from_array(self, x_train, y_train, x_test=None, y_test=None, class_names=None):
+        # if test data is nothing, split train data
+        if x_test is None and y_test is None:
+          x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2)
+          
         # prepare data
         x_train, y_train = preprocess_input(x_train, y_train)
+        x_test, y_test = preprocess_input(x_test, y_test)
         print(x_train.shape, y_train.shape)
-        if x_test is not None and y_test is not None:
-            x_test, y_test = preprocess_input(x_test, y_test)
 
         # data profile
         if class_names is None:

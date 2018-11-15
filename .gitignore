@@ -108,3 +108,6 @@ venv.bak/
 # model history data
 *.csv
 *.h5
+
+# For Mac
+.DS_Store

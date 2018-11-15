@@ -4,10 +4,9 @@ from ncc.validations import save_show_results, evaluate
 
 from sklearn.model_selection import train_test_split
 import numpy as np
-import glob
+import os
 
 from keras.callbacks import EarlyStopping
-from keras.preprocessing.image import array_to_img, img_to_array, list_pictures, load_img
 
 class Classifier(object):
     def __init__(self, optimizer='sgd', loss='categorical_crossentropy', metrics='acc', epochs=100, batch_size=32,
@@ -63,7 +62,12 @@ class Classifier(object):
         evaluate(model, x_test, y_test, class_names)
 
     def fit_from_directory(self, target_dir):
-        x_array, y_array = get_dataset(target_dir)
 
-        x_train, x_test, y_train, y_test = train_test_split(x_array, y_array, test_size=self.test_size)
-        self.fit_from_array(x_train, y_train, x_test, y_test)
+        if os.path.isdir(target_dir+'/train') and os.path.isdir(target_dir+'/test'):
+            x_train, y_train = get_dataset(target_dir+'/train')
+            x_test, y_test = get_dataset(target_dir+'/test')
+            self.fit_from_array(x_train, y_train, x_test, y_test)
+
+        else:
+            x_array, y_array = get_dataset(target_dir)
+            self.fit_from_array(x_array, y_array)

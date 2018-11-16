@@ -8,6 +8,7 @@ import os
 
 from keras.callbacks import EarlyStopping
 
+
 class Classifier(object):
     def __init__(self, optimizer='sgd', loss='categorical_crossentropy', metrics='acc', epochs=100, batch_size=32,
                  early_stopping=True):
@@ -25,7 +26,7 @@ class Classifier(object):
     def fit_from_array(self, x_train, y_train, x_test=None, y_test=None, class_names=None):
         # if test data is nothing, split train data
         if x_test is None and y_test is None:
-          x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=self.test_size)
+            x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=self.test_size)
         # prepare data
         x_train, y_train = preprocess_input(x_train, y_train)
         x_test, y_test = preprocess_input(x_test, y_test)

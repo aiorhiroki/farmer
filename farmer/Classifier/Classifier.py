@@ -1,9 +1,12 @@
 from ncc.models import Model3D, Model2D
 from ncc.preprocessing import preprocess_input, get_dataset
 from ncc.validations import save_show_results, evaluate
+from ncc.readers import search_from_annotation
+from ncc.generators import generate_arrays_from_annotation
 
 from sklearn.model_selection import train_test_split
 import numpy as np
+import pandas as pd
 import os
 
 from keras.callbacks import EarlyStopping
@@ -72,3 +75,23 @@ class Classifier(object):
         else:
             x_array, y_array = get_dataset(target_dir)
             self.fit_from_array(x_array, y_array)
+
+    def fit_from_annotation(self, file_path):
+
+        (height, width), class_names = search_from_annotation(file_path)
+        df = pd.read_csv(file_path)
+        model = Model2D(input_shape=(height, width, 3), num_classes=len(class_names))
+        model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
+        model.summary()
+        history = model.fit_generator(
+            generator=generate_arrays_from_annotation(file_path,
+                                                      batch_size=self.batch_size,
+                                                      nb_classes=len(class_names),
+                                                      target_size=(height, width),
+                                                      ),
+            steps_per_epoch=len(df)//self.batch_size,
+            epochs=self.epochs,
+        )
+
+        # save and eval model
+        save_show_results(history, model)

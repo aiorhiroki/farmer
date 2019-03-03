@@ -1,7 +1,7 @@
 from utils import reporter as rp
 from utils.parser import get_parser
 from utils.reader import train_test_files
-from utils.model import xception
+from utils.model import build_model
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
@@ -18,7 +18,12 @@ def train(args):
     checkpoint = ModelCheckpoint(reporter.model_dir + '/best_model.h5')
 
     # define model
-    model = xception(nb_classes=args.classes, img_height=args.height, img_width=args.width)
+    model = build_model(task=args.task,
+                        nb_classes=args.classes,
+                        img_height=args.height,
+                        img_width=args.width,
+                        backbone=args.backbone
+                        )
     model.compile(args.optimizer, loss=categorical_crossentropy, metrics=['acc'])
     model.fit_generator(
         reporter.generate_batch_arrays(),

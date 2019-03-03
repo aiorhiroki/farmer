@@ -1,13 +1,14 @@
-from keras.models import Model
-from keras.applications.xception import Xception
-from keras.layers import Dense, GlobalAveragePooling2D
+from ncc.models import xception
+from segmentation_models import Unet
 
 
-def xception(nb_classes, img_width=299, img_height=299):
-    base_model = Xception(input_shape=(img_width, img_height, 3), weights='imagenet', include_top=False)
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    predictions = Dense(nb_classes, activation='softmax')(x)
-    model = Model(base_model.input, predictions)
+def build_model(task, nb_classes, width=299, height=299, backbone='resnet50'):
+    if task == 'classification':
+        model = xception(nb_classes, width, height)
+    elif task == 'segmentation':
+        model = Unet(backbone, input_shape=(width, height, 3), classes=nb_classes)
+    else:
+        raise NotImplementedError
 
     return model
+

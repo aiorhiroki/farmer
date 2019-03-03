@@ -5,10 +5,16 @@ You can train Classification and Segmentation tasks
 ## Usage
 
 ### install requirements
+we utilize ncc module
 ```bash
 $ git clone git@github.com:NCC-AI/ncc.git
 $ cd ncc
 $ python setup.py install
+```
+
+to build segmentation models
+```bash
+$ pip install segmentation-models
 ```
 
 ### train models

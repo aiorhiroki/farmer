@@ -9,6 +9,7 @@ def get_parser():
         add_help=True
     )
 
+    parser.add_argument('-t', '--task', type=str, default='classification', help='Task name')
     parser.add_argument('-e', '--epoch', type=int, default=250, help='Number of epochs')
     parser.add_argument('-w', '--width', type=int, default=71, help='Input width')
     parser.add_argument('-ht', '--height', type=int, default=71, help='Input height')

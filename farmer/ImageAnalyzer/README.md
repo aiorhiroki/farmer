@@ -1,18 +1,21 @@
-# Classification
+# ImageAnalyzer
+You can train Classification and Segmentation tasks
 
 
 ## Usage
 
 ### install requirements
-we use ncc module
+```bash
+$ git clone git@github.com:NCC-AI/ncc.git
+$ cd ncc
+$ python setup.py install
+```
 
 ### train models
 `python train.py`
 
 
 ## Implementation
-- [tensorflowの実装](https://github.com/tks10/segmentation_unet/blob/master/util/loader.py)を参考にKerasで実装した。
-- ネットワーク構造は[Semgentation Model](https://github.com/qubvel/segmentation_models)を使い自由に変更できる。
 - Reporterクラスがすべての処理をやってくれる。
 - 実行した日付時間で自動にフォルダを作成。結果を以下のディレクトリ構造で保存
 

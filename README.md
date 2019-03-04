@@ -1,52 +1,45 @@
 # farmer
-farmer is an automated machine learning library.
+You can train Classification and Segmentation tasks
 
-## Classifier
-### Input data : 
-- array: 
-```
-2D image array: (num_samples, height, width, channel)
-3D image array: (num_samples, depth, height, width, channel)
-```
-- classified folder
-```
-target_dir
-  |-----banana
-  |       |---- *.jpg
-  |       |---- *.png
-  |       |
-  |
-  |-----apple
-  |       |---- *.tif
-  |       |---- *.dcm
-  |       |
-  |
-```
-- annotation data (csv file)
-```csv
-image_path, class_idx
-*.jpg, 0
-*.png, 1
-```
-### How to use it
 
-- python scripts
-```python
-from farmer import classifier
+## Usage
 
-classifier.fit_from_array(x_train, y_train)
-classifier.fit_from_directory(target_dir)
-classifier.fit_from_annotation(file_path)
-```
 
-- command line
+#### Requirements: ncc
 ```bash
-$ python classifier.py --mode=folder, --target-dir='~/'
-$ python classifier.py --mode=annotation, --file-path='~.csv'
+$ git clone git@github.com:NCC-AI/ncc.git
+$ cd ncc
+$ python setup.py install
+```
+#### Installation
+```bash
+pip install 
 ```
 
-## Object Detection
 
-## Segmentation
+### train models
+`python train.py`
 
-## Regression
+
+## Implementation
+- Reporterクラスがすべての処理をやってくれる。
+- 実行した日付時間で自動にフォルダを作成。結果を以下のディレクトリ構造で保存
+
+Project Organization
+------------
+    ├── train.py
+    │       
+    ├── utils
+    │       ├── reporter.py  # 画像の読み込み、結果の保存
+    │       ├── reader.py  # 各自ファイルロードのコード
+    │       ├── parser.py  # 設定
+    │       ├── model.py  # convulutional neural networks
+    │ 
+    ├── result
+          ├── 日付時間(結果A)
+          │      ├── image  # 推論サンプル
+          │      ├── info  # 設定ファイル
+          │      ├── learning  # 学習履歴 
+          │      ├── model  # 最良モデル & 最終モデル
+          │           
+          ├── 日付時間(結果B)

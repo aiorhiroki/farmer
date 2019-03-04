@@ -10,7 +10,7 @@ setup(
     url='https://github.com/NCC-AI/farmer',
     download_url='',
     license='Apache 2.0',
-    install_requires=['numpy>=1.13.3'],
+    install_requires=['numpy>=1.13.3', 'segmentation-models>=0.2.0'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

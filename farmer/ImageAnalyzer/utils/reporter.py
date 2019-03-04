@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 import requests
-import configparser
+from configparser import ConfigParser
 import datetime
 import os
 import csv
@@ -25,8 +25,7 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, train_files, test_files, size, nb_categories,
-                 shuffle=True, result_dir=None, parser=None):
+    def __init__(self, train_files, test_files, task, shuffle=True, result_dir=None):
         super().__init__()
         if result_dir is None:
             result_dir = Reporter.generate_dir_name()
@@ -44,20 +43,31 @@ class Reporter(Callback):
         self.test_files = test_files
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.TEST_FILE, self.test_files)
-        self.size = size
         self.shuffle = shuffle
-        self.nb_categories = nb_categories
-        self.batch_size = parser.batchsize
+        self.task = task
+        self.metric = 'acc' if self.task == 'classification' else 'iou'
         self.palette = self.get_palette()
-        self.secret_config = configparser.ConfigParser()
-        self.secret_config.read('secret_config.ini')
+
+        self.config = ConfigParser()
+        self.config.read('config.ini')
+        self.secret_config = ConfigParser()
+        self.secret_config.read('secret.ini')
+
+        self.epoch = self.config.getint('default', 'epoch')
+        self.batch_size = self.config.getint('default', 'batch_size')
+        self.optimizer = self.config.get('default', 'optimizer')
+        self.augmentation = self.config.getboolean('default', 'augmentation')
+        self.nb_classes = self.config.getint(task + '_default', 'nb_classes')
+        self.model_name = self.config.get(task + '_default', 'model')
+        self.height = self.config.getint(task + '_default', 'height')
+        self.width = self.config.getint(task + '_default', 'width')
+        self.backbone = self.config.get(task + '_default', 'backbone')
+
+        self.save_params(self._parameter)
 
         self._plot_manager = MatPlotManager(self._learning_dir)
-        self.accuracy_fig = self.create_figure("Accuracy", ("epoch", "acc"), ["train", "test"])
+        self.accuracy_fig = self.create_figure("Metric", ("epoch", self.metric), ["train", "test"])
         self.loss_fig = self.create_figure("Loss", ("epoch", "loss"), ["train", "test"])
-        self.parser = parser
-        if self.parser is not None:
-            self.save_params(self._parameter, self.parser)
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -148,25 +158,25 @@ class Reporter(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         # update learning figure
-        self.accuracy_fig.add([logs.get('acc'), logs.get('val_acc')], is_update=True)
+        self.accuracy_fig.add([logs.get(self.metric), logs.get('val_{}'.format(self.metric))], is_update=True)
         self.loss_fig.add([logs.get('loss'), logs.get('val_loss')], is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
-            """  # for segmentation evaluation
-            train_set = self._generate_sample_result()
-            test_set = self._generate_sample_result(training=False)
-            self.save_image_from_ndarray(train_set, test_set, self.palette, epoch)
-            """
+            if self.task == 'segmentation':  # for segmentation evaluation
+                train_set = self._generate_sample_result()
+                test_set = self._generate_sample_result(training=False)
+                self.save_image_from_ndarray(train_set, test_set, self.palette, epoch)
+
             self._slack_logging()
 
     def _slack_logging(self):
-        files = {'file': open(os.path.join(self._learning_dir, 'Accuracy.png'), 'rb')}
+        files = {'file': open(os.path.join(self._learning_dir, 'Metric.png'), 'rb')}
         param = {
            'token': self.secret_config.get(self.CONFIG_SECTION, 'slack_token'),
            'channels': self.secret_config.get(self.CONFIG_SECTION, 'slack_channel'),
-           'filename': "Accuracy Figure",
-           'title': self.parser.model
+           'filename': "Metric Figure",
+           'title': self.model_name
         }
         requests.post(url='https://slack.com/api/files.upload', params=param, files=files)
 
@@ -195,7 +205,7 @@ class Reporter(Callback):
                 input_file, label = image_file_set
                 input_image = self._read_image(input_file, anti_alias=True)  # 入力画像は高品質にリサイズ
 
-                if training and self.parser.augmentation:
+                if training and self.augmentation:
                     # not trained on out of category
                     # if np.sum(output_image) == 0:
                         # continue
@@ -221,8 +231,9 @@ class Reporter(Callback):
     def _read_image(self, file_path, normalization=True, anti_alias=False):
         image = Image.open(file_path)
         # resize
-        if self.size != image.size:
-            image = image.resize(self.size, Image.ANTIALIAS) if anti_alias else image.resize(self.size)
+        raw_size = (self.width, self.height)
+        if raw_size != image.size:
+            image = image.resize(raw_size, Image.ANTIALIAS) if anti_alias else image.resize(raw_size)
         # delete alpha channel
         if image.mode == "RGBA":
             image = image.convert("RGB")
@@ -234,9 +245,9 @@ class Reporter(Callback):
 
     def cast_to_onehot(self, labels):
         if len(labels.shape) == 1:  # Classification
-            one_hot = np.eye(self.nb_categories, dtype=np.uint8)
+            one_hot = np.eye(self.nb_classes, dtype=np.uint8)
         else:  # Segmentation
-            one_hot = np.identity(self.nb_categories, dtype=np.uint8)
+            one_hot = np.identity(self.nb_classes, dtype=np.uint8)
         return one_hot[labels]
 
     @staticmethod

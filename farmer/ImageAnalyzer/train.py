@@ -6,33 +6,29 @@ from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
 
 
-def train():
+def train(task):
     train_set, test_set = train_test_files()
 
-    reporter = rp.Reporter(train_set, test_set,
-                           size=(args.width, args.height),
-                           nb_categories=args.classes,
-                           parser=args
-                           )
+    reporter = rp.Reporter(train_set, test_set, task)
     checkpoint = ModelCheckpoint(reporter.model_dir + '/best_model.h5')
 
     # define model
-    model = build_model(task=args.task,
-                        nb_classes=args.classes,
-                        img_height=args.height,
-                        img_width=args.width,
-                        backbone=args.backbone
+    model = build_model(task=task,
+                        nb_classes=reporter.nb_classes,
+                        height=reporter.height,
+                        width=reporter.width,
+                        backbone=reporter.backbone
                         )
-    model.compile(args.optimizer, loss=categorical_crossentropy, metrics=['acc'])
+    model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=['acc'])
     model.fit_generator(
         reporter.generate_batch_arrays(),
-        steps_per_epoch=len(train_set)//args.batchsize,
+        steps_per_epoch=len(train_set)//reporter.batch_size,
         callbacks=[reporter, checkpoint],
-        epochs=args.epoch,
+        epochs=reporter.epoch,
         validation_data=reporter.generate_batch_arrays(training=False),
-        validation_steps=len(test_set)//args.batchsize
+        validation_steps=len(test_set)//reporter.batch_size
     )
 
 
 if __name__ == '__main__':
-    train()
+    train(task='classification')

@@ -16,7 +16,7 @@ $ pip install git+https://github.com/NCC-AI/farmer
 ```
 
 ### Prepare Data set folder
-- classification
+classification
 
 
     │
@@ -34,7 +34,7 @@ $ pip install git+https://github.com/NCC-AI/farmer
           │     
           ├── data_case_directory(dataB)
 
-- segmentation
+segmentation
 
 
     │

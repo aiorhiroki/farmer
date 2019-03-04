@@ -10,7 +10,7 @@ from keras.losses import categorical_crossentropy
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-    import farmer.ImageAnalyzer  # noqa: F401
+    import farmer.ImageAnalyzer
     __package__ = "farmer.ImageAnalyzer"
 
 

@@ -42,7 +42,7 @@ class Reporter(Callback):
         self.create_dirs()
         self.shuffle = shuffle
         self.task = task
-        self.metric = 'acc' if self.task == 'classification' else 'iou'
+        self.metric = 'acc' if self.task == 'classification' else 'iou_score'
         self.palette = self.get_palette()
 
         self.config = ConfigParser()

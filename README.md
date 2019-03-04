@@ -53,13 +53,13 @@ segmentation
           ├── data_case_directory(dataB)
 
 ### Training
-`config.ini`ファイルを作成。学習条件を書き込む。
-
+`config.ini`ファイルを作成。学習条件を書き込む。 
+`train_dirs`と`test_dirs`は半角スペースを開けて列挙する。
 ```buildoutcfg
 [project_settings]
 target_dir = /home/hiroki/ncc-dev/ncc/cifar10
-train_dirs = train
-test_dirs = test
+train_dirs = dataA dataB dataC
+test_dirs = dataD
 nb_classes = 10
 
 [default]

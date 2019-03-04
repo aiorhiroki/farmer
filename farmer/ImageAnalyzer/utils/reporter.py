@@ -40,9 +40,6 @@ class Reporter(Callback):
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
         self.create_dirs()
-        self.train_files, self.test_files = self.read_annotation_set(task)
-        self._write_files(self.TRAIN_FILE, self.train_files)
-        self._write_files(self.TEST_FILE, self.test_files)
         self.shuffle = shuffle
         self.task = task
         self.metric = 'acc' if self.task == 'classification' else 'iou'
@@ -57,11 +54,15 @@ class Reporter(Callback):
         self.batch_size = self.config.getint('default', 'batch_size')
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
-        self.nb_classes = self.config.getint('default', 'nb_classes')
+        self.nb_classes = self.config.getint('project_settings', 'nb_classes')
         self.model_name = self.config.get(task + '_default', 'model')
         self.height = self.config.getint(task + '_default', 'height')
         self.width = self.config.getint(task + '_default', 'width')
         self.backbone = self.config.get(task + '_default', 'backbone')
+
+        self.train_files, self.test_files = self.read_annotation_set(task)
+        self._write_files(self.TRAIN_FILE, self.train_files)
+        self._write_files(self.TEST_FILE, self.test_files)
 
         self.save_params(self._parameter)
 
@@ -103,9 +104,9 @@ class Reporter(Callback):
             self.config.write(configfile)
 
     def read_annotation_set(self, task):
-        target_dir = self.config.get('default', 'target_dir')
-        train_dirs = self.config.get('default', 'train_dirs').split()
-        test_dirs = self.config.get('default', 'test_dirs').split()
+        target_dir = self.config.get('project_settings', 'target_dir')
+        train_dirs = self.config.get('project_settings', 'train_dirs').split()
+        test_dirs = self.config.get('project_settings', 'test_dirs').split()
 
         if task == 'classification':
             train_set, test_set = classification_set(target_dir, train_dirs, test_dirs)
@@ -184,7 +185,8 @@ class Reporter(Callback):
                 test_set = self._generate_sample_result(training=False)
                 self.save_image_from_ndarray(train_set, test_set, self.palette, epoch)
 
-            self._slack_logging()
+            if len(self.secret_config.sections()) > 0:
+                self._slack_logging()
 
     def _slack_logging(self):
         files = {'file': open(os.path.join(self._learning_dir, 'Metric.png'), 'rb')}

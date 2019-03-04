@@ -1,15 +1,13 @@
 from .utils import reporter as rp
-from .utils.reader import train_test_files
 from .utils.model import build_model
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
 
 
-def train(task):
-    train_set, test_set = train_test_files()
+def _train(task):
 
-    reporter = rp.Reporter(train_set, test_set, task)
+    reporter = rp.Reporter(task)
     checkpoint = ModelCheckpoint(reporter.model_dir + '/best_model.h5')
 
     # define model
@@ -22,13 +20,21 @@ def train(task):
     model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=['acc'])
     model.fit_generator(
         reporter.generate_batch_arrays(),
-        steps_per_epoch=len(train_set)//reporter.batch_size,
+        steps_per_epoch=len(reporter.train_files)//reporter.batch_size,
         callbacks=[reporter, checkpoint],
         epochs=reporter.epoch,
         validation_data=reporter.generate_batch_arrays(training=False),
-        validation_steps=len(test_set)//reporter.batch_size
+        validation_steps=len(reporter.test_files)//reporter.batch_size
     )
 
 
+def classification():
+    _train('classification')
+
+
+def segmentation():
+    _train('segmentation')
+
+
 if __name__ == '__main__':
-    train(task='classification')
+    classification()

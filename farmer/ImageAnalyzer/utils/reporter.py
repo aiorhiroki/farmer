@@ -10,6 +10,7 @@ mpl.use('Agg')  # to run this script by remote machine
 import matplotlib.pyplot as plt
 
 from keras.callbacks import Callback
+from ncc.readers import classification_set, segmentation_set
 
 
 class Reporter(Callback):
@@ -25,7 +26,7 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, train_files, test_files, task, shuffle=True, result_dir=None):
+    def __init__(self, task, shuffle=True, result_dir=None):
         super().__init__()
         if result_dir is None:
             result_dir = Reporter.generate_dir_name()
@@ -57,7 +58,7 @@ class Reporter(Callback):
         self.batch_size = self.config.getint('default', 'batch_size')
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
-        self.nb_classes = self.config.getint(task + '_default', 'nb_classes')
+        self.nb_classes = self.config.getint('default', 'nb_classes')
         self.model_name = self.config.get(task + '_default', 'model')
         self.height = self.config.getint(task + '_default', 'height')
         self.width = self.config.getint(task + '_default', 'width')
@@ -101,6 +102,22 @@ class Reporter(Callback):
 
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
+
+    def read_annotation_set(self):
+        target_dir = self.config.get('default', 'target_dir')
+        train_dirs = self.config.get('default', 'train_dirs').split()
+        test_dirs = self.config.get('default', 'test_dirs').split()
+
+        if self.task == 'classification':
+            train_set, test_set = classification_set(target_dir, train_dirs, test_dirs)
+        elif self.task == 'segmentation':
+            image_dir = self.config.get('segmentation_default', 'image_dir')
+            label_dir = self.config.get('segmentation_default', 'label_dir')
+            train_set, test_set = segmentation_set(target_dir, train_dirs, test_dirs, image_dir, label_dir)
+        else:
+            raise NotImplementedError
+
+        return train_set, test_set
 
     def _save_image(self, train, test, epoch):
         file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION

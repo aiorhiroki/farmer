@@ -1,1 +1,1 @@
-from .train import train
+from .train import classification, segmentation

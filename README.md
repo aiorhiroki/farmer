@@ -53,7 +53,37 @@ segmentation
           ├── data_case_directory(dataB)
 
 ### Training
-`config.ini`に学習条件を書き込み、このファイルがある場所で以下のコマンドを実行 
+`config.ini`ファイルを作成。学習条件を書き込む。
+
+```buildoutcfg
+[project_settings]
+target_dir = /home/hiroki/ncc-dev/ncc/cifar10
+train_dirs = train
+test_dirs = test
+nb_classes = 10
+
+[default]
+epoch = 50
+batch_size = 1
+optimizer = adam
+augmentation = False
+
+[classification_default]
+model = Xception
+width = 71
+height = 71
+backbone = xception
+
+[segmentation_default]
+model = Unet
+width = 512
+height = 256
+backbone = resnet50
+image_dir = images
+label_dir = labels
+```
+
+`config.ini`ファイルがある場所でコマンドを実行 
 
 ```bash
 $ ncc-cls  # classification
@@ -63,7 +93,12 @@ $ ncc-cls  # classification
 $ ncc-seg  # segmentation
 ```
 
-`secret.ini`にスラックの情報を書き込めば、ログ画像を飛ばせる。
+`secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。
+```buildoutcfg
+[default]
+slack_token = xoxb-hogehoge
+slack_channel = fugafuga
+```
 
 Result
 ------------

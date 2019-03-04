@@ -1,8 +1,17 @@
+import sys
+import os
 from .utils import reporter as rp
 from .utils.model import build_model
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
+
+
+# Allow relative imports when being executed as script.
+if __name__ == "__main__" and __package__ is None:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    import farmer.ImageAnalyzer  # noqa: F401
+    __package__ = "farmer.ImageAnalyzer"
 
 
 def _train(task):

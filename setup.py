@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='0.0.1',
+    version='0.1.0',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki, Hiroaki Takano',
     author_email='1234defgsigeru@gmail.com',
@@ -29,5 +29,11 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     keywords='tensorflow keras machine deep learning',
-    packages=find_packages()
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'ncc-cls=farmer.ImageAnalyzer.train:classification',
+            'ncc-seg=farmer.ImageAnalyzer.train:segmentation',
+        ],
+    },
 )

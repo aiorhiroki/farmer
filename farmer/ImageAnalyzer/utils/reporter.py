@@ -40,8 +40,7 @@ class Reporter(Callback):
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
         self.create_dirs()
-        self.train_files = train_files
-        self.test_files = test_files
+        self.train_files, self.test_files = self.read_annotation_set(task)
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.TEST_FILE, self.test_files)
         self.shuffle = shuffle
@@ -103,14 +102,14 @@ class Reporter(Callback):
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
 
-    def read_annotation_set(self):
+    def read_annotation_set(self, task):
         target_dir = self.config.get('default', 'target_dir')
         train_dirs = self.config.get('default', 'train_dirs').split()
         test_dirs = self.config.get('default', 'test_dirs').split()
 
-        if self.task == 'classification':
+        if task == 'classification':
             train_set, test_set = classification_set(target_dir, train_dirs, test_dirs)
-        elif self.task == 'segmentation':
+        elif task == 'segmentation':
             image_dir = self.config.get('segmentation_default', 'image_dir')
             label_dir = self.config.get('segmentation_default', 'label_dir')
             train_set, test_set = segmentation_set(target_dir, train_dirs, test_dirs, image_dir, label_dir)

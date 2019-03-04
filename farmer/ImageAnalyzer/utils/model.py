@@ -1,5 +1,7 @@
 from ncc.models import xception
 from segmentation_models import Unet
+from segmentation_models.losses import bce_jaccard_loss
+from segmentation_models.metrics import iou_score
 
 
 def build_model(task, nb_classes, width=299, height=299, backbone='resnet50'):
@@ -12,3 +14,6 @@ def build_model(task, nb_classes, width=299, height=299, backbone='resnet50'):
 
     return model
 
+
+iou_score = iou_score
+bce_jaccard_loss = bce_jaccard_loss

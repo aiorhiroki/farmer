@@ -1,13 +1,12 @@
-from utils import reporter as rp
-from utils.parser import get_parser
-from utils.reader import train_test_files
-from utils.model import build_model
+from .utils import reporter as rp
+from .utils.reader import train_test_files
+from .utils.model import build_model
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
 
 
-def train(args):
+def train():
     train_set, test_set = train_test_files()
 
     reporter = rp.Reporter(train_set, test_set,
@@ -36,5 +35,4 @@ def train(args):
 
 
 if __name__ == '__main__':
-    parse_args = get_parser().parse_args()
-    train(parse_args)
+    train()

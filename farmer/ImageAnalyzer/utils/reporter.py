@@ -85,22 +85,12 @@ class Reporter(Callback):
         os.makedirs(self._info_dir)
         os.makedirs(self.model_dir)
 
-    def save_params(self, filename, parser):
-        parameters = list()
-        parameters.append("Number of epochs:" + str(parser.epoch))
-        parameters.append("Number of classes:" + str(parser.classes))
-        parameters.append('"Input shape:" (height, width) = ({}, {})'.format(parser.height, parser.width))
-        parameters.append("Batch size:" + str(parser.batchsize))
-        parameters.append('"Training:" {} files'.format(len(self.train_files)))
-        parameters.append('"Test:" {} files'.format(len(self.test_files)))
-        parameters.append("Augmentation:" + str(parser.augmentation))
-        parameters.append("Optimizer:" + str(parser.optimizer))
-        parameters.append("Backbone:" + str(parser.backbone))
-        parameters.append("Model name:" + str(parser.model))
-        output = "\n".join(parameters)
+    def save_params(self, filename):
+        self.config['Data'] = {'train files': len(self.train_files),
+                               'test_files': len(self.test_files)}
 
-        with open(filename, mode='w') as f:
-            f.write(output)
+        with open(filename, mode='w') as configfile:
+            self.config.write(configfile)
 
     def _save_image(self, train, test, epoch):
         file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION

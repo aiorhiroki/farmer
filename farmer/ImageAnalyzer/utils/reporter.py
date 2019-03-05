@@ -222,14 +222,20 @@ class Reporter(Callback):
             for image_file_set in image_files:
                 input_file, label = image_file_set
                 input_image = self._read_image(input_file, anti_alias=True)  # 入力画像は高品質にリサイズ
+                if self.task == 'segmentation':
+                    label = self._read_image(label, normalization=False)
 
                 if training and self.augmentation:
                     # not trained on out of category
                     # if np.sum(output_image) == 0:
                         # continue
                     # data augmentation
-                    input_image, output_image = self.horizontal_flip(input_image)
-                    input_image, output_image = self.vertical_flip(input_image)
+                    if self.task == 'segmentation':
+                        input_image, label = self.horizontal_flip(input_image, label)
+                        input_image, label = self.vertical_flip(input_image, label)
+                    else:
+                        input_image, label = self.horizontal_flip(input_image)
+                        input_image, label = self.vertical_flip(input_image)
 
                 x.append(input_image)
                 y.append(label)

@@ -202,9 +202,9 @@ class Reporter(Callback):
         self.model.save(self.model_dir + '/last_model.h5')
 
     def _generate_sample_result(self, training=True):
-        file_length = len(self.train_files) if training else len(self.train_files)
+        file_length = len(self.train_files) if training else len(self.test_files)
         random_index = np.random.randint(file_length)
-        sample_image_path = self.train_files[random_index]
+        sample_image_path = self.train_files[random_index] if training else self.test_files[random_index]
         sample_image = self._read_image(sample_image_path[0], anti_alias=True)
         segmented = self._read_image(sample_image_path[1], normalization=False)
         sample_image, segmented = self._process_input(sample_image, segmented)

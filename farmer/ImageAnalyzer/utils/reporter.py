@@ -10,7 +10,7 @@ mpl.use('Agg')  # to run this script by remote machine
 import matplotlib.pyplot as plt
 
 from keras.callbacks import Callback
-from ncc.readers import classification_set, segmentation_set
+from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 
 
 class Reporter(Callback):
@@ -105,15 +105,17 @@ class Reporter(Callback):
 
     def read_annotation_set(self, task):
         target_dir = self.config.get('project_settings', 'target_dir')
-        train_dirs = self.config.get('project_settings', 'train_dirs').split()
-        test_dirs = self.config.get('project_settings', 'test_dirs').split()
+        train_data = self.config.get('project_settings', 'train_data').split()
+        test_data = self.config.get('project_settings', 'test_data').split()
 
-        if task == 'classification':
-            train_set, test_set = classification_set(target_dir, train_dirs, test_dirs)
+        if len(train_data) == 1 and train_data[0].endswith('.csv'):
+            train_set, test_set = data_set_from_annotation(train_data[0], test_data[0])
+        elif task == 'classification':
+            train_set, test_set = classification_set(target_dir, train_data, test_data)
         elif task == 'segmentation':
             image_dir = self.config.get('segmentation_default', 'image_dir')
             label_dir = self.config.get('segmentation_default', 'label_dir')
-            train_set, test_set = segmentation_set(target_dir, train_dirs, test_dirs, image_dir, label_dir)
+            train_set, test_set = segmentation_set(target_dir, train_data, test_data, image_dir, label_dir)
         else:
             raise NotImplementedError
 

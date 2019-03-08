@@ -58,14 +58,14 @@ segmentation
 またはファイルパスとラベルがセットになったcsvファイルのパスを指定する。
 ```buildoutcfg
 [project_settings]
-target_dir = /home/hiroki/ncc-dev/ncc/cifar10
-train_data = dataA dataB dataC
-test_data = dataD
-nb_classes = 10
+target_dir = /mnt/hdd/data/Forceps/selected/data
+train_data = 1 2 3 5 7 8 10 11 12 13 14 15 16 17 19 20 21 22 25 26 27 28 32 34 35 36
+test_data = 4 6 9 18 23 24 29 33
+nb_classes = 6
 
 [default]
-epoch = 50
-batch_size = 1
+epoch = 100
+batch_size = 4
 optimizer = adam
 augmentation = False
 
@@ -76,12 +76,13 @@ height = 71
 backbone = xception
 
 [segmentation_default]
-model = Unet
+model = WithOutOthers
 width = 512
 height = 256
 backbone = resnet50
 image_dir = images
 label_dir = labels
+class_names = Background Clippper Maryland Linear Point Grasper
 ```
 
 `config.ini`ファイルがある場所でコマンドを実行 

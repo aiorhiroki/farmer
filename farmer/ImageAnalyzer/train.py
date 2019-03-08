@@ -29,7 +29,7 @@ def _train(task):
     if task == 'classification':
         model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=['acc'])
     elif task == 'segmentation':
-        model.compile(reporter.optimizer, loss=bce_jaccard_loss, metrics=[iou_score])
+        model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=[iou_score])
     else:
         raise NotImplementedError
     model.fit_generator(

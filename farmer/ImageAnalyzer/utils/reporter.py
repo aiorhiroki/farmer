@@ -60,7 +60,7 @@ class Reporter(Callback):
         self.width = self.config.getint(task + '_default', 'width')
         self.backbone = self.config.get(task + '_default', 'backbone')
 
-        self.train_files, self.test_files = self.read_annotation_set(task)
+        self.train_files, self.test_files, self.class_names = self.read_annotation_set(task)
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.TEST_FILE, self.test_files)
 
@@ -69,6 +69,8 @@ class Reporter(Callback):
         self._plot_manager = MatPlotManager(self._learning_dir)
         self.accuracy_fig = self.create_figure("Metric", ("epoch", self.metric), ["train", "test"])
         self.loss_fig = self.create_figure("Loss", ("epoch", "loss"), ["train", "test"])
+        if task == 'segmentation':
+            self.iou_fig = self.create_figure("IoU", ("epoch", "iou"), self.class_names)
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -107,6 +109,7 @@ class Reporter(Callback):
         target_dir = self.config.get('project_settings', 'target_dir')
         train_data = self.config.get('project_settings', 'train_data').split()
         test_data = self.config.get('project_settings', 'test_data').split()
+        class_names = None
 
         if len(train_data) == 1 and train_data[0].endswith('.csv'):
             train_set, test_set = data_set_from_annotation(train_data[0], test_data[0])
@@ -116,10 +119,11 @@ class Reporter(Callback):
             image_dir = self.config.get('segmentation_default', 'image_dir')
             label_dir = self.config.get('segmentation_default', 'label_dir')
             train_set, test_set = segmentation_set(target_dir, train_data, test_data, image_dir, label_dir)
+            class_names = self.config.get('segmentation_default', 'class_names').split()
         else:
             raise NotImplementedError
 
-        return train_set, test_set
+        return train_set, test_set, class_names
 
     def _save_image(self, train, test, epoch):
         file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION
@@ -179,6 +183,7 @@ class Reporter(Callback):
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get('val_{}'.format(self.metric))], is_update=True)
         self.loss_fig.add([logs.get('loss'), logs.get('val_loss')], is_update=True)
+        self.iou_fig.add(self.iou_validation(), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
@@ -190,8 +195,41 @@ class Reporter(Callback):
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()
 
+    def iou_validation(self):
+        conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
+
+        for image_file, seg_file in self.test_files:
+            # Get a training sample and make a prediction using the current model
+            sample = self._read_image(image_file, anti_alias=True)
+            target = self._read_image(seg_file, normalization=False)
+            predicted = np.asarray(self.model.predict_on_batch(np.expand_dims(sample, axis=0)))[0]
+
+            # Convert predictions and target from categorical to integer format
+            predicted = np.argmax(predicted, axis=-1).ravel()
+            target = target.ravel()
+            x = predicted + self.nb_classes * target
+            bincount_2d = np.bincount(x.astype(np.int32), minlength=self.nb_classes**2)
+            assert bincount_2d.size == self.nb_classes**2
+            conf += bincount_2d.reshape((self.nb_classes, self.nb_classes))
+
+        # Compute the IoU and mean IoU from the confusion matrix
+        true_positive = np.diag(conf)
+        false_positive = np.sum(conf, 0) - true_positive
+        false_negative = np.sum(conf, 1) - true_positive
+
+        # Just in case we get a division by 0, ignore/hide the error and set the value to 0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            iou = true_positive / (true_positive + false_positive + false_negative)
+        iou[np.isnan(iou)] = 0
+
+        return iou
+
     def _slack_logging(self):
-        files = {'file': open(os.path.join(self._learning_dir, 'Metric.png'), 'rb')}
+        if os.path.exists(os.path.join(self._learning_dir, 'IoU.png')):
+            file_name = os.path.join(self._learning_dir, 'IoU.png')
+        else:
+            file_name = os.path.join(self._learning_dir, 'Metric.png')
+        files = {'file': open(file_name, 'rb')}
         param = {
            'token': self.secret_config.get(self.CONFIG_SECTION, 'slack_token'),
            'channels': self.secret_config.get(self.CONFIG_SECTION, 'slack_channel'),

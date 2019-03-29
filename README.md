@@ -2,17 +2,10 @@
 You can train Classification and Segmentation tasks as best practice
 
 
-
-
-### Requirements: ncc
-```bash
-$ git clone git@github.com:NCC-AI/ncc.git
-$ cd ncc
-$ python setup.py install
-```
 ### Installation
 ```bash
-$ pip install git+https://github.com/NCC-AI/farmer
+$ pip install git+https://github.com/aiorhiroki/ncc
+$ pip install git+https://github.com/aiorhiroki/farmer
 ```
 
 ### Prepare Data set folder

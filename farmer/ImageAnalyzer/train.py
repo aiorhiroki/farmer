@@ -1,7 +1,7 @@
 import sys
 import os
 from .utils import reporter as rp
-from .utils.model import build_model, bce_jaccard_loss, iou_score
+from .utils.model import build_model, cce_dice_loss, iou_score
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
@@ -29,7 +29,7 @@ def _train(task):
     if task == 'classification':
         model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=['acc'])
     elif task == 'segmentation':
-        model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=[iou_score])
+        model.compile(reporter.optimizer, loss=cce_dice_loss, metrics=[iou_score])
     else:
         raise NotImplementedError
     model.fit_generator(

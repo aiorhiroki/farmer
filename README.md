@@ -59,8 +59,8 @@ segmentation
 ```buildoutcfg
 [project_settings]
 target_dir = /mnt/hdd/data/Forceps/selected/data
-train_data = 1 2 3 5 7 8 10 11 12 13 14 15 16 17 19 20 21 22 25 26 27 28 32 34 35 36
-test_data = 4 6 9 18 23 24 29 33
+train_data = DataA DataB DataC
+test_data = DataD
 nb_classes = 6
 
 [default]
@@ -82,7 +82,7 @@ height = 256
 backbone = resnet50
 image_dir = images
 label_dir = labels
-class_names = Background Clippper Maryland Linear Point Grasper
+class_names = Cat Dog Bird 
 ```
 
 `config.ini`ファイルがある場所でコマンドを実行 

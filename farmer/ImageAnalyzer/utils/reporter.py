@@ -322,7 +322,7 @@ class Reporter(Callback):
             return im1
         else:
             if np.random.rand() < rate:
-                im1 = im1[:, :, :]
+                im1 = im1[:, ::-1, :]
                 im2 = im2[:, ::-1]
             return im1, im2
 

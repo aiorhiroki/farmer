@@ -254,8 +254,10 @@ class Reporter(Callback):
 
     def generate_batch_arrays(self, training=True):
         image_files = self.train_files if training else self.test_files
+        """
         if training and self.shuffle:
             np.random.shuffle(image_files)
+        """
 
         while True:
             x, y = [], []

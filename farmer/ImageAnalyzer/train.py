@@ -37,6 +37,7 @@ def _train(task):
         model = multi_gpu_model(base_model, gpus=nb_gpu)
         reporter.batch_size *= nb_gpu
         compile_and_run(task, model, reporter, multi_gpu)
+        base_model.save(reporter.model_dir + '/last_model.h5')
     else:
         compile_and_run(task, base_model, reporter, multi_gpu)
 

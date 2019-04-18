@@ -54,6 +54,7 @@ class Reporter(Callback):
         self.batch_size = self.config.getint('default', 'batch_size')
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
+        self.gpu = self.config.get('default', 'gpu')
         self.nb_classes = self.config.getint('project_settings', 'nb_classes')
         self.model_name = self.config.get(task + '_default', 'model')
         self.height = self.config.getint(task + '_default', 'height')
@@ -183,7 +184,8 @@ class Reporter(Callback):
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get('val_{}'.format(self.metric))], is_update=True)
         self.loss_fig.add([logs.get('loss'), logs.get('val_loss')], is_update=True)
-        self.iou_fig.add(self.iou_validation(), is_update=True)
+        if self.task == 'segmentation':
+            self.iou_fig.add(self.iou_validation(), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
@@ -261,7 +263,7 @@ class Reporter(Callback):
             x, y = [], []
             for image_file_set in image_files:
                 input_file, label = image_file_set
-                input_image = self._read_image(input_file, anti_alias=True)  # 入力画像は高品質にリサイズ
+                input_image = self._read_image(input_file, anti_alias=True)
                 if self.task == 'segmentation':
                     label = self._read_image(label, normalization=False)
 

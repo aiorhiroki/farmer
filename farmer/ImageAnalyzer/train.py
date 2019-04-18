@@ -5,9 +5,8 @@ from .utils.model import build_model, cce_dice_loss, iou_score
 
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
-import tensorflow as tf # add
-from keras.utils import multi_gpu_model # add
-from ncc.readers import data_set_from_annotation
+import tensorflow as tf  # add
+from keras.utils import multi_gpu_model  # add
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -16,44 +15,39 @@ if __name__ == "__main__" and __package__ is None:
     __package__ = "farmer.ImageAnalyzer"
 
 
-def _train(task, step):
-
+def _train(task):
+    multi_gpu = False
     reporter = rp.Reporter(task)
-    train = "/home/hiroki/ncc-dev/data/Phase_Classification/data/processed/annotation/outside/"
-    train_path = os.path.join(train, "train_{}.csv".format(step))
-    reporter.train_files, _ = data_set_from_annotation(train_path, train_path)
-    # define model
+
     with tf.device("/cpu:0"):
-        base_model = build_model(task=task,
-                                    nb_classes=reporter.nb_classes,
-                                    height=reporter.height,
-                                    width=reporter.width,
-                                    backbone=reporter.backbone
-                                    )
-    if step > 0:
-        base_model.load_weights('outside_{}.h5'.format(step-1))
+        base_model = build_model(
+            task=task,
+            nb_classes=reporter.nb_classes,
+            height=reporter.height,
+            width=reporter.width,
+            backbone=reporter.backbone
+        )
+
     if reporter.gpu is not None:
         os.environ['CUDA_VISIBLE_DEVICES'] = reporter.gpu
         nb_gpu = len(reporter.gpu.split(','))
         multi_gpu = nb_gpu > 1
-    else:
-        multi_gpu = False
 
     if multi_gpu:
         model = multi_gpu_model(base_model, gpus=nb_gpu)
         reporter.batch_size *= nb_gpu
         compile_and_run(task, model, reporter, multi_gpu)
-        base_model.save('outside_{}.h5'.format(step))
-
     else:
         compile_and_run(task, base_model, reporter, multi_gpu)
 
 
 def compile_and_run(task, model, reporter, multi_gpu):
     if task == 'classification':
-        model.compile(reporter.optimizer, loss=categorical_crossentropy, metrics=['acc'])
+        model.compile(reporter.optimizer,
+                      loss=categorical_crossentropy, metrics=['acc'])
     elif task == 'segmentation':
-        model.compile(reporter.optimizer, loss=cce_dice_loss, metrics=[iou_score])
+        model.compile(reporter.optimizer, loss=cce_dice_loss,
+                      metrics=[iou_score])
     else:
         raise NotImplementedError
 
@@ -66,7 +60,7 @@ def compile_and_run(task, model, reporter, multi_gpu):
         callbacks = [reporter]
     else:
         validation_data = reporter.generate_batch_arrays(training=False)
-        validation_steps=len(reporter.test_files)//reporter.batch_size
+        validation_steps = len(reporter.test_files)//reporter.batch_size
         workers = 1
         max_queue_size = 10
         use_multiprocessing = False
@@ -87,8 +81,7 @@ def compile_and_run(task, model, reporter, multi_gpu):
 
 
 def classification():
-    for step in range(30):
-        _train('classification', step)
+    _train('classification')
 
 
 def segmentation():

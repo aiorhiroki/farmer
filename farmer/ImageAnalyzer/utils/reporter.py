@@ -118,7 +118,7 @@ class Reporter(Callback):
             'project_settings', 'train_data').split()
         validation_data = self.config.get(
             'project_settings', 'validation_data').split()
-        test_data = self.cofig.get(
+        test_data = self.config.get(
             'project_settings', 'test_data').split()
 
         class_names = None

@@ -1,5 +1,7 @@
 from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 from keras.callbacks import Callback
+from keras.models import load_model
+from .model import cce_dice_loss, iou_score
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -234,7 +236,7 @@ class Reporter(Callback):
             [logs.get('loss'), logs.get('val_loss')], is_update=True)
         if self.task == 'segmentation':
             self.iou_fig.add(self.iou_validation(
-                self.validation_files), is_update=True)
+                self.validation_files, self.model), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
@@ -247,14 +249,14 @@ class Reporter(Callback):
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()
 
-    def iou_validation(self, data_set):
+    def iou_validation(self, data_set, model):
         conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
 
         for image_file, seg_file in data_set:
             # Get a training sample and make a prediction using the current model
             sample = self._read_image(image_file, anti_alias=True)
             target = self._read_image(seg_file, normalization=False)
-            predicted = np.asarray(self.model.predict_on_batch(
+            predicted = np.asarray(model.predict_on_batch(
                 np.expand_dims(sample, axis=0)))[0]
 
             # Convert predictions and target from categorical to integer format
@@ -296,11 +298,15 @@ class Reporter(Callback):
 
     def on_train_end(self, logs=None):
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
-        self.model.load_weights(
-            os.path.join(self.model_dir, 'best_model.h5'))
+        last_model = load_model(
+            os.path.join(self.model_dir, 'best_model.h5'),
+            custom_objects={
+                'cce_jaccard_loss': cce_dice_loss,
+                'iou_score': iou_score}
+        )
         # evaluate on test data
         if self.task == 'segmentation':
-            test_ious = self.iou_validation(self.test_files)
+            test_ious = self.iou_validation(self.test_files, last_model)
             self.config['TEST'] = dict()
             for test_iou, class_name in zip(test_ious, self.class_names):
                 self.config['TEST'][class_name] = test_iou

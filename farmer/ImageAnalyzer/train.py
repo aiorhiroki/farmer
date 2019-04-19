@@ -65,7 +65,10 @@ def compile_and_run(task, model, reporter, multi_gpu):
         workers = 1
         max_queue_size = 10
         use_multiprocessing = False
-        checkpoint = ModelCheckpoint(reporter.model_dir + '/best_model.h5')
+        checkpoint = ModelCheckpoint(
+            filepath=reporter.model_dir + '/best_model.h5',
+            save_best_only=True,
+        )
         callbacks = [reporter, checkpoint]
 
     model.fit_generator(

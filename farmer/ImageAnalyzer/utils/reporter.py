@@ -1,3 +1,6 @@
+from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
+from keras.callbacks import Callback
+import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 import requests
@@ -7,10 +10,6 @@ import os
 import csv
 import matplotlib as mpl
 mpl.use('Agg')  # to run this script by remote machine
-import matplotlib.pyplot as plt
-
-from keras.callbacks import Callback
-from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 
 
 class Reporter(Callback):
@@ -21,6 +20,7 @@ class Reporter(Callback):
     MODEL_DIR = "model"
     PARAMETER = "parameter.txt"
     TRAIN_FILE = "train_files.csv"
+    VALIDATION_FILE = "validation_files.csv"
     TEST_FILE = "test_files.csv"
     IMAGE_PREFIX = "epoch_"
     IMAGE_EXTENSION = ".png"
@@ -34,7 +34,8 @@ class Reporter(Callback):
         self._result_dir = os.path.join(self._root_dir, result_dir)
         self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
         self._image_train_dir = os.path.join(self._image_dir, "train")
-        self._image_test_dir = os.path.join(self._image_dir, "test")
+        self._image_validation_dir = os.path.join(
+            self._image_dir, "validation")
         self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
         self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
@@ -61,17 +62,23 @@ class Reporter(Callback):
         self.width = self.config.getint(task + '_default', 'width')
         self.backbone = self.config.get(task + '_default', 'backbone')
 
-        self.train_files, self.test_files, self.class_names = self.read_annotation_set(task)
+        self.train_files, self.validation_files, self.test_files self.class_names = self.read_annotation_set(task)
         self._write_files(self.TRAIN_FILE, self.train_files)
+        self._write_files(self.VALIDATION_FILE, self.validation_files)
         self._write_files(self.TEST_FILE, self.test_files)
 
+        self.config['Data'] = {'train files': len(self.train_files),
+                               'validation_files': len(self.validation_files)}
         self.save_params(self._parameter)
 
         self._plot_manager = MatPlotManager(self._learning_dir)
-        self.accuracy_fig = self.create_figure("Metric", ("epoch", self.metric), ["train", "test"])
-        self.loss_fig = self.create_figure("Loss", ("epoch", "loss"), ["train", "test"])
+        self.accuracy_fig = self.create_figure(
+            "Metric", ("epoch", self.metric), ["train", "validation"])
+        self.loss_fig = self.create_figure(
+            "Loss", ("epoch", "loss"), ["train", "validation"])
         if task == 'segmentation':
-            self.iou_fig = self.create_figure("IoU", ("epoch", "iou"), self.class_names)
+            self.iou_fig = self.create_figure(
+                "IoU", ("epoch", "iou"), self.class_names)
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -94,53 +101,88 @@ class Reporter(Callback):
         os.makedirs(self._result_dir)
         os.makedirs(self._image_dir)
         os.makedirs(self._image_train_dir)
-        os.makedirs(self._image_test_dir)
+        os.makedirs(self._image_validation_dir)
         os.makedirs(self._learning_dir)
         os.makedirs(self._info_dir)
         os.makedirs(self.model_dir)
 
     def save_params(self, filename):
-        self.config['Data'] = {'train files': len(self.train_files),
-                               'test_files': len(self.test_files)}
-
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
 
     def read_annotation_set(self, task):
-        target_dir = self.config.get('project_settings', 'target_dir')
-        train_data = self.config.get('project_settings', 'train_data').split()
-        test_data = self.config.get('project_settings', 'test_data').split()
+        target_dir = self.config.get(
+            'project_settings', 'target_dir')
+        train_data = self.config.get(
+            'project_settings', 'train_data').split()
+        validation_data = self.config.get(
+            'project_settings', 'validation_data').split()
+        test_data = self.cofig.get(
+            'project_settings', 'test_data').split()
+
         class_names = None
 
         if len(train_data) == 1 and train_data[0].endswith('.csv'):
-            train_set, test_set = data_set_from_annotation(train_data[0], test_data[0])
+            train_set = data_set_from_annotation(train_data[0])
+            validation_set = data_set_from_annotation(validation_data[0])
+            if test_data:
+                test_set = data_set_from_annotation(test_data[0])
+
         elif task == 'classification':
-            train_set, test_set = classification_set(target_dir, train_data, test_data)
+            train_set, class_names = classification_set(target_dir, train_data)
+            validation_set, _ = classification_set(
+                target_dir,
+                validation_data,
+                training=False,
+                class_names=class_names
+            )
+            if test_data:
+                test_set, _ = classification_set(
+                    target_dir,
+                    test_data,
+                    training=False,
+                    class_names=class_names
+                )
+
         elif task == 'segmentation':
             image_dir = self.config.get('segmentation_default', 'image_dir')
             label_dir = self.config.get('segmentation_default', 'label_dir')
-            train_set, test_set = segmentation_set(target_dir, train_data, test_data, image_dir, label_dir)
-            class_names = self.config.get('segmentation_default', 'class_names').split()
+            train_set = segmentation_set(
+                target_dir, train_data, image_dir, label_dir)
+            validation_set = segmentation_set(
+                target_dir, validation_data, image_dir, label_dir)
+            if test_data:
+                test_set = segmentation_set(
+                    target_dir, test_data, image_dir, label_dir)
+            class_names = self.config.get(
+                'segmentation_default', 'class_names').split()
         else:
             raise NotImplementedError
 
-        return train_set, test_set, class_names
+        return train_set, validation_set, test_set, class_names
 
-    def _save_image(self, train, test, epoch):
+    def _save_image(self, train, validation, epoch):
         file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION
         train_filename = os.path.join(self._image_train_dir, file_name)
-        test_filename = os.path.join(self._image_test_dir, file_name)
+        validation_filename = os.path.join(
+            self._image_validation_dir, file_name)
         train.save(train_filename)
-        test.save(test_filename)
+        validation.save(validation_filename)
 
-    def save_image_from_ndarray(self, train_set, test_set, palette, epoch, index_void=None):
-        assert len(train_set) == len(test_set) == 3
-        train_image = Reporter.get_imageset(train_set[0], train_set[1], train_set[2], palette, index_void)
-        test_image = Reporter.get_imageset(test_set[0], test_set[1], test_set[2], palette, index_void)
-        self._save_image(train_image, test_image, epoch)
+    def save_image_from_ndarray(self, train_set, validation_set,
+                                palette, epoch, index_void=None):
+        assert len(train_set) == len(validation_set) == 3
+        train_image = Reporter.get_imageset(
+            train_set[0], train_set[1], train_set[2], palette, index_void)
+        validation_image = Reporter.get_imageset(
+            validation_set[0], validation_set[1], validation_set[2],
+            palette, index_void
+        )
+        self._save_image(train_image, validation_image, epoch)
 
     def create_figure(self, title, xy_labels, labels, filename=None):
-        return self._plot_manager.add_figure(title, xy_labels, labels, filename=filename)
+        return self._plot_manager.add_figure(title, xy_labels,
+                                             labels, filename)
 
     @staticmethod
     def concat_images(im1, im2, palette, mode):
@@ -171,46 +213,55 @@ class Reporter(Callback):
         return image
 
     @staticmethod
-    def get_imageset(image_in_np, image_out_np, image_gt_np, palette, index_void=None):
+    def get_imageset(image_in_np, image_out_np, image_gt_np,
+                     palette, index_void=None):
         assert image_in_np.shape[:2] == image_out_np.shape[:2] == image_gt_np.shape[:2]
         image_out, image_tc = Reporter.cast_to_pil(image_out_np, palette, index_void),\
-                              Reporter.cast_to_pil(image_gt_np, palette, index_void)
-        image_merged = Reporter.concat_images(image_out, image_tc, palette, "P").convert("RGB")
+            Reporter.cast_to_pil(image_gt_np, palette, index_void)
+        image_merged = Reporter.concat_images(
+            image_out, image_tc, palette, "P").convert("RGB")
         image_in_pil = Image.fromarray(np.uint8(image_in_np * 255), mode="RGB")
-        image_result = Reporter.concat_images(image_in_pil, image_merged, None, "RGB")
+        image_result = Reporter.concat_images(
+            image_in_pil, image_merged, None, "RGB")
         return image_result
 
     def on_epoch_end(self, epoch, logs={}):
         # update learning figure
-        self.accuracy_fig.add([logs.get(self.metric), logs.get('val_{}'.format(self.metric))], is_update=True)
-        self.loss_fig.add([logs.get('loss'), logs.get('val_loss')], is_update=True)
+        self.accuracy_fig.add([logs.get(self.metric), logs.get(
+            'val_{}'.format(self.metric))], is_update=True)
+        self.loss_fig.add(
+            [logs.get('loss'), logs.get('val_loss')], is_update=True)
         if self.task == 'segmentation':
-            self.iou_fig.add(self.iou_validation(), is_update=True)
+            self.iou_fig.add(self.iou_validation(
+                self.validation_files), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
             if self.task == 'segmentation':  # for segmentation evaluation
                 train_set = self._generate_sample_result()
-                test_set = self._generate_sample_result(training=False)
-                self.save_image_from_ndarray(train_set, test_set, self.palette, epoch)
+                validation_set = self._generate_sample_result(training=False)
+                self.save_image_from_ndarray(
+                    train_set, validation_set, self.palette, epoch)
 
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()
 
-    def iou_validation(self):
+    def iou_validation(self, data_set):
         conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
 
-        for image_file, seg_file in self.test_files:
+        for image_file, seg_file in data_set:
             # Get a training sample and make a prediction using the current model
             sample = self._read_image(image_file, anti_alias=True)
             target = self._read_image(seg_file, normalization=False)
-            predicted = np.asarray(self.model.predict_on_batch(np.expand_dims(sample, axis=0)))[0]
+            predicted = np.asarray(self.model.predict_on_batch(
+                np.expand_dims(sample, axis=0)))[0]
 
             # Convert predictions and target from categorical to integer format
             predicted = np.argmax(predicted, axis=-1).ravel()
             target = target.ravel()
             x = predicted + self.nb_classes * target
-            bincount_2d = np.bincount(x.astype(np.int32), minlength=self.nb_classes**2)
+            bincount_2d = np.bincount(
+                x.astype(np.int32), minlength=self.nb_classes**2)
             assert bincount_2d.size == self.nb_classes**2
             conf += bincount_2d.reshape((self.nb_classes, self.nb_classes))
 
@@ -221,7 +272,8 @@ class Reporter(Callback):
 
         # Just in case we get a division by 0, ignore/hide the error and set the value to 0
         with np.errstate(divide='ignore', invalid='ignore'):
-            iou = true_positive / (true_positive + false_positive + false_negative)
+            iou = true_positive / \
+                (true_positive + false_positive + false_negative)
         iou[np.isnan(iou)] = 0
 
         return iou
@@ -233,20 +285,27 @@ class Reporter(Callback):
             file_name = os.path.join(self._learning_dir, 'Metric.png')
         files = {'file': open(file_name, 'rb')}
         param = {
-           'token': self.secret_config.get(self.CONFIG_SECTION, 'slack_token'),
-           'channels': self.secret_config.get(self.CONFIG_SECTION, 'slack_channel'),
-           'filename': "Metric Figure",
-           'title': self.model_name
+            'token': self.secret_config.get(self.CONFIG_SECTION, 'slack_token'),
+            'channels': self.secret_config.get(self.CONFIG_SECTION, 'slack_channel'),
+            'filename': "Metric Figure",
+            'title': self.model_name
         }
-        requests.post(url='https://slack.com/api/files.upload', params=param, files=files)
+        requests.post(url='https://slack.com/api/files.upload',
+                      params=param, files=files)
 
     def on_train_end(self, logs=None):
         self.model.save(self.model_dir + '/last_model.h5')
+        # evaluate on test data
+        if self.task == 'segmentation':
+            test_iou = self.iou_validation(self.test_files)
+            self.config['TEST'] = {'iou': test_iou}
+            self.save_params(self._parameter)
 
     def _generate_sample_result(self, training=True):
-        file_length = len(self.train_files) if training else len(self.test_files)
+        file_length = len(self.train_files) if training else len(
+            self.validation_files)
         random_index = np.random.randint(file_length)
-        sample_image_path = self.train_files[random_index] if training else self.test_files[random_index]
+        sample_image_path = self.train_files[random_index] if training else self.validation_files[random_index]
         sample_image = self._read_image(sample_image_path[0], anti_alias=True)
         segmented = self._read_image(sample_image_path[1], normalization=False)
         sample_image, segmented = self._process_input(sample_image, segmented)
@@ -255,7 +314,7 @@ class Reporter(Callback):
         return [sample_image, output[0], segmented]
 
     def generate_batch_arrays(self, training=True):
-        image_files = self.train_files if training else self.test_files
+        image_files = self.train_files if training else self.validation_files
         if training and self.shuffle:
             np.random.shuffle(image_files)
 
@@ -273,7 +332,8 @@ class Reporter(Callback):
                         # continue
                     # data augmentation
                     if self.task == 'segmentation':
-                        input_image, label = self.horizontal_flip(input_image, label)
+                        input_image, label = self.horizontal_flip(
+                            input_image, label)
                         # input_image, label = self.vertical_flip(input_image, label)
                     else:
                         input_image, label = self.horizontal_flip(input_image)
@@ -299,7 +359,8 @@ class Reporter(Callback):
         # resize
         raw_size = (self.width, self.height)
         if raw_size != image.size:
-            image = image.resize(raw_size, Image.ANTIALIAS) if anti_alias else image.resize(raw_size)
+            image = image.resize(
+                raw_size, Image.ANTIALIAS) if anti_alias else image.resize(raw_size)
         # delete alpha channel
         if image.mode == "RGBA":
             image = image.convert("RGB")
@@ -372,7 +433,8 @@ class MatPlotManager:
 
     def add_figure(self, title, xy_labels, labels, filename=None):
         assert not(title in self._figures.keys()), "This title already exists."
-        self._figures[title] = MatPlot(title, xy_labels, labels, self._root_dir, filename=filename)
+        self._figures[title] = MatPlot(
+            title, xy_labels, labels, self._root_dir, filename=filename)
         return self._figures[title]
 
     def get_figure(self, title):
@@ -411,4 +473,5 @@ class MatPlot:
         plt.xlabel(self._x_label)
         plt.ylabel(self._y_label)
         plt.title(self._title)
-        plt.savefig(os.path.join(self._root_dir, self._filename+self.EXTENSION))
+        plt.savefig(os.path.join(self._root_dir,
+                                 self._filename+self.EXTENSION))

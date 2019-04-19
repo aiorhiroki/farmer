@@ -61,7 +61,7 @@ def compile_and_run(task, model, reporter, multi_gpu):
         callbacks = [reporter]
     else:
         validation_data = reporter.generate_batch_arrays(training=False)
-        validation_steps = len(reporter.test_files)//reporter.batch_size
+        validation_steps = len(reporter.validation_files)//reporter.batch_size
         workers = 1
         max_queue_size = 10
         use_multiprocessing = False

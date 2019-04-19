@@ -295,7 +295,9 @@ class Reporter(Callback):
                       params=param, files=files)
 
     def on_train_end(self, logs=None):
-        self.model.save(self.model_dir + '/last_model.h5')
+        self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
+        self.model.load_weights(
+            os.path.join(self.model_dir, 'best_model.h5'))
         # evaluate on test data
         if self.task == 'segmentation':
             test_iou = self.iou_validation(self.test_files)

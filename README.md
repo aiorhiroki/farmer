@@ -53,7 +53,8 @@ segmentation
 [project_settings]
 target_dir = /mnt/hdd/data/Forceps/selected/data
 train_data = DataA DataB DataC
-test_data = DataD
+validation_data = DataD
+test_data = DataE
 nb_classes = 6
 
 [default]

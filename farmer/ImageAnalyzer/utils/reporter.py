@@ -300,8 +300,10 @@ class Reporter(Callback):
             os.path.join(self.model_dir, 'best_model.h5'))
         # evaluate on test data
         if self.task == 'segmentation':
-            test_iou = self.iou_validation(self.test_files)
-            self.config['TEST'] = {'iou': test_iou}
+            test_ious = self.iou_validation(self.test_files)
+            self.config['TEST'] = dict()
+            for test_iou, class_name in zip(test_ious, self.class_names):
+                self.config['TEST'][class_name] = test_iou
             self.save_params(self._parameter)
 
     def _generate_sample_result(self, training=True):

@@ -2,7 +2,7 @@ import sys
 import os
 from .utils import reporter as rp
 from .utils.model import build_model, cce_dice_loss, iou_score
-
+from ncc.callbacks import MultiGPUCheckpointCallback
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
 import tensorflow as tf  # add
@@ -36,13 +36,13 @@ def _train(task):
     if multi_gpu:
         model = multi_gpu_model(base_model, gpus=nb_gpu)
         reporter.batch_size *= nb_gpu
-        compile_and_run(task, model, reporter, multi_gpu)
-        base_model.save(reporter.model_dir + '/last_model.h5')
+        compile_and_run(task, model, reporter, multi_gpu, base_model)
+        base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
     else:
         compile_and_run(task, base_model, reporter, multi_gpu)
 
 
-def compile_and_run(task, model, reporter, multi_gpu):
+def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
     if task == 'classification':
         model.compile(reporter.optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
@@ -58,7 +58,11 @@ def compile_and_run(task, model, reporter, multi_gpu):
         workers = 16
         max_queue_size = 32
         use_multiprocessing = True
-        callbacks = [reporter]
+        checkpoint = MultiGPUCheckpointCallback(
+            filepath=os.path.join(reporter.model_dir, 'best_model.h5'),
+            base_model=base_model,
+            save_best_only=True,
+        )
     else:
         validation_data = reporter.generate_batch_arrays(training=False)
         validation_steps = len(reporter.validation_files)//reporter.batch_size
@@ -66,10 +70,10 @@ def compile_and_run(task, model, reporter, multi_gpu):
         max_queue_size = 10
         use_multiprocessing = False
         checkpoint = ModelCheckpoint(
-            filepath=reporter.model_dir + '/best_model.h5',
+            filepath=os.path.join(reporter.model_dir, 'best_model.h5'),
             save_best_only=True,
         )
-        callbacks = [reporter, checkpoint]
+    callbacks = [reporter, checkpoint]
 
     model.fit_generator(
         reporter.generate_batch_arrays(),

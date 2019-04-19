@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "203a51913b2eaada336627e2d82574b40680fcb2ac2e4138dd6761203d6db497"
+            "sha256": "d9e182dca1982f74f17753dd50021d26166c0fc2e20dda2abfd85f0d6cbdf801"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -154,6 +154,11 @@
                 "sha256:fe463ff51e679377e3624984c829022e2cfb3be5518726b06f608a07a3aad680"
             ],
             "version": "==3.1"
+        },
+        "ncc": {
+            "editable": true,
+            "git": "https://github.com/aiorhiroki/ncc",
+            "ref": "120d63dab61244c10ec4cc9371b3290fa448cb6b"
         },
         "numpy": {
             "hashes": [

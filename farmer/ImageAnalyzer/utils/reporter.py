@@ -62,7 +62,8 @@ class Reporter(Callback):
         self.width = self.config.getint(task + '_default', 'width')
         self.backbone = self.config.get(task + '_default', 'backbone')
 
-        self.train_files, self.validation_files, self.test_files self.class_names = self.read_annotation_set(task)
+        self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
+            task)
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.VALIDATION_FILE, self.validation_files)
         self._write_files(self.TEST_FILE, self.test_files)

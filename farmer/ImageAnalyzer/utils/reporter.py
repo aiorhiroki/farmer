@@ -54,7 +54,7 @@ class Reporter(Callback):
         self.batch_size = self.config.getint('default', 'batch_size')
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
-        self.gpu = self.config.get('default', 'gpu')
+        self.gpu = self.config['default'].get('gpu') or None
         self.nb_classes = self.config.getint('project_settings', 'nb_classes')
         self.model_name = self.config.get(task + '_default', 'model')
         self.height = self.config.getint(task + '_default', 'height')

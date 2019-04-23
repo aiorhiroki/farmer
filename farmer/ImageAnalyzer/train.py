@@ -52,40 +52,45 @@ def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
     else:
         raise NotImplementedError
 
+    split_steps = int(reporter.nb_split)
+    if split_steps > 1:
+        reporter.test_files = list()  # empty list
+        reporter.epoch = 1  # not to learn same data during split learning
+    for step in range(split_steps):
+        reporter.train_files = reporter.train_files[step::split_steps]
+
+        model.fit_generator(
+            reporter.generate_batch_arrays(),
+            steps_per_epoch=len(reporter.train_files)//reporter.batch_size,
+            callbacks=set_callbacks(multi_gpu, reporter, step, base_model),
+            epochs=reporter.epoch,
+            validation_data=reporter.generate_batch_arrays(training=False),
+            validation_steps=len(
+                reporter.validation_files)//reporter.batch_size,
+            workers=16 if multi_gpu else 1,
+            max_queue_size=32 if multi_gpu else 10,
+            use_multiprocessing=multi_gpu
+        )
+
+
+def set_callbacks(multi_gpu, reporter, step, base_model=None):
+    if step == 0:
+        best_model_name = 'best_model.h5'
+    else:
+        best_model_name = 'best_mode_on_step%d.h5' % step
+
     if multi_gpu:
-        validation_data = None
-        validation_steps = None
-        workers = 16
-        max_queue_size = 32
-        use_multiprocessing = True
         checkpoint = MultiGPUCheckpointCallback(
-            filepath=os.path.join(reporter.model_dir, 'best_model.h5'),
+            filepath=os.path.join(reporter.model_dir, best_model_name),
             base_model=base_model,
             save_best_only=True,
         )
     else:
-        validation_data = reporter.generate_batch_arrays(training=False)
-        validation_steps = len(reporter.validation_files)//reporter.batch_size
-        workers = 1
-        max_queue_size = 10
-        use_multiprocessing = False
         checkpoint = ModelCheckpoint(
-            filepath=os.path.join(reporter.model_dir, 'best_model.h5'),
+            filepath=os.path.join(reporter.model_dir, best_model_name),
             save_best_only=True,
         )
-    callbacks = [reporter, checkpoint]
-
-    model.fit_generator(
-        reporter.generate_batch_arrays(),
-        steps_per_epoch=len(reporter.train_files)//reporter.batch_size,
-        callbacks=callbacks,
-        epochs=reporter.epoch,
-        validation_data=validation_data,
-        validation_steps=validation_steps,
-        workers=workers,
-        max_queue_size=max_queue_size,
-        use_multiprocessing=use_multiprocessing
-    )
+    return [reporter, checkpoint]
 
 
 def classification():

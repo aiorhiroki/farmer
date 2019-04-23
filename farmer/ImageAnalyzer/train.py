@@ -54,7 +54,7 @@ def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
 
     split_steps = int(reporter.nb_split)
     if split_steps > 1:
-        reporter.test_files = list()  # empty list
+        reporter.validation_files = list()  # empty list
         reporter.epoch = 1  # not to learn same data during split learning
     for step in range(split_steps):
         reporter.train_files = reporter.train_files[step::split_steps]

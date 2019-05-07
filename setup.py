@@ -3,9 +3,9 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='0.1.0',
+    version='1.0.0',
     description='Auto Machine Learning for Doctor',
-    author='Hiroki Matsuzaki, Hiroaki Takano',
+    author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
     url='https://github.com/NCC-AI/farmer',
     download_url='',
@@ -34,8 +34,10 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'ncc-cls=farmer.ImageAnalyzer.train:classification',
-            'ncc-seg=farmer.ImageAnalyzer.train:segmentation',
+            'ncc-cls=farmer.ImageAnalyzer.fit:classification',
+            'ncc-seg=farmer.ImageAnalyzer.fit:segmentation',
+            'ncc-cls-pred=farmer.ImageAnalyzer.fit:classification_predict',
+            'ncc-seg-pred=farmer.ImageAnalyzer.fit:segmentation_predict',
         ],
     },
 )

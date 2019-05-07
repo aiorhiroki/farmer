@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 from keras.callbacks import Callback
 from keras.models import load_model
 from .model import cce_dice_loss, iou_score
-import matplotlib.pyplot as plt
+from .image_util import ImageUtil
 from PIL import Image
 import numpy as np
 import requests
@@ -10,8 +11,6 @@ from configparser import ConfigParser
 import datetime
 import os
 import csv
-import matplotlib as mpl
-mpl.use('Agg')  # to run this script by remote machine
 
 
 class Reporter(Callback):
@@ -58,6 +57,7 @@ class Reporter(Callback):
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
         self.gpu = self.config['default'].get('gpu') or None
+        self.model_path = self.config['default'].get('model_path') or None
         self.nb_split = self.config['default'].get('nb_split') or 1
         self.nb_classes = self.config.getint('project_settings', 'nb_classes')
         self.model_name = self.config.get(task + '_default', 'model')
@@ -83,6 +83,7 @@ class Reporter(Callback):
         if task == 'segmentation':
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
+        self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -254,9 +255,9 @@ class Reporter(Callback):
         conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
 
         for image_file, seg_file in data_set:
-            # Get a training sample and make a prediction using the current model
-            sample = self._read_image(image_file, anti_alias=True)
-            target = self._read_image(seg_file, normalization=False)
+            # Get a training sample and make a prediction using current model
+            sample = self.image_util.read_image(image_file, anti_alias=True)
+            target = self.image_util.read_image(seg_file, normalization=False)
             predicted = np.asarray(model.predict_on_batch(
                 np.expand_dims(sample, axis=0)))[0]
 
@@ -299,14 +300,14 @@ class Reporter(Callback):
 
     def on_train_end(self, logs=None):
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
-        last_model = load_model(
-            os.path.join(self.model_dir, 'best_model.h5'),
-            custom_objects={
-                'cce_jaccard_loss': cce_dice_loss,
-                'iou_score': iou_score}
-        )
         # evaluate on test data
         if self.task == 'segmentation':
+            last_model = load_model(
+                os.path.join(self.model_dir, 'best_model.h5'),
+                custom_objects={
+                    'cce_jaccard_loss': cce_dice_loss,
+                    'iou_score': iou_score}
+            )
             test_ious = self.iou_validation(self.test_files, last_model)
             self.config['TEST'] = dict()
             for test_iou, class_name in zip(test_ious, self.class_names):
@@ -318,123 +319,26 @@ class Reporter(Callback):
             self.validation_files)
         random_index = np.random.randint(file_length)
         sample_image_path = self.train_files[random_index] if training else self.validation_files[random_index]
-        sample_image = self._read_image(sample_image_path[0], anti_alias=True)
-        segmented = self._read_image(sample_image_path[1], normalization=False)
+        sample_image = self.image_util.read_image(
+            sample_image_path[0],
+            anti_alias=True
+        )
+        segmented = self.image_util.read_image(
+            sample_image_path[1],
+            normalization=False
+        )
         sample_image, segmented = self._process_input(sample_image, segmented)
         output = self.model.predict(np.expand_dims(sample_image, axis=0))
 
         return [sample_image, output[0], segmented]
 
-    def generate_batch_arrays(self, training=True):
-        image_files = self.train_files if training else self.validation_files
-        if training and self.shuffle:
-            np.random.shuffle(image_files)
-
-        while True:
-            x, y = [], []
-            for image_file_set in image_files:
-                input_file, label = image_file_set
-                input_image = self._read_image(input_file, anti_alias=True)
-                if self.task == 'segmentation':
-                    label = self._read_image(label, normalization=False)
-
-                if training and self.augmentation:
-                    # not trained on out of category
-                    # if np.sum(output_image) == 0:
-                        # continue
-                    # data augmentation
-                    if self.task == 'segmentation':
-                        input_image, label = self.horizontal_flip(
-                            input_image, label)
-                        # input_image, label = self.vertical_flip(input_image, label)
-                    else:
-                        input_image, label = self.horizontal_flip(input_image)
-                        # input_image, label = self.vertical_flip(input_image)
-
-                x.append(input_image)
-                y.append(label)
-
-                if len(x) == self.batch_size:
-                    yield self._process_input(x, y)
-                    x, y = [], []
-
     def _process_input(self, images_original, labels):
         # Cast to ndarray
         images_original = np.asarray(images_original, dtype=np.float32)
         labels = np.asarray(labels, dtype=np.uint8)
-        images_segmented = self.cast_to_onehot(labels)
+        images_segmented = self.image_util.cast_to_onehot(labels)
 
         return images_original, images_segmented
-
-    def _read_image(self, file_path, normalization=True, anti_alias=False):
-        image = Image.open(file_path)
-        # resize
-        raw_size = (self.width, self.height)
-        if raw_size != image.size:
-            image = image.resize(
-                raw_size, Image.ANTIALIAS) if anti_alias else image.resize(raw_size)
-        # delete alpha channel
-        if image.mode == "RGBA":
-            image = image.convert("RGB")
-        image = np.asarray(image)
-        if normalization:
-            image = image / 255.0
-
-        return image
-
-    def cast_to_onehot(self, labels):
-        if len(labels.shape) == 1:  # Classification
-            one_hot = np.eye(self.nb_classes, dtype=np.uint8)
-        else:  # Segmentation
-            one_hot = np.identity(self.nb_classes, dtype=np.uint8)
-        return one_hot[labels]
-
-    @staticmethod
-    def horizontal_flip(im1, im2=None, rate=0.5):
-        if im2 is None:
-            if np.random.rand() < rate:
-                im1 = im1[:, ::-1, :]
-            return im1
-        else:
-            if np.random.rand() < rate:
-                im1 = im1[:, ::-1, :]
-                im2 = im2[:, ::-1]
-            return im1, im2
-
-    @staticmethod
-    def vertical_flip(im1, im2=None, rate=0.5):
-        if im2 is None:
-            if np.random.rand() < rate:
-                im1 = im1[::-1, :, :]
-            return im1
-        else:
-            if np.random.rand() < rate:
-                im1 = im1[::-1, :, :]
-                im2 = im2[::-1, :]
-            return im1, im2
-
-    @staticmethod
-    def random_crop(im1, im2, crop_size):
-        h, w, _ = im1.shape
-
-        if h - crop_size[0] == 0:
-            top = 0
-        else:
-            top = np.random.randint(0, h - crop_size[0])
-
-        if w - crop_size[1] == 0:
-            left = 0
-        else:
-            left = np.random.randint(0, w - crop_size[1])
-
-        bottom = top + crop_size[0]
-        right = left + crop_size[1]
-
-        # 決めたtop, bottom, left, rightを使って画像を抜き出す
-        im1 = im1[top:bottom, left:right, :]
-        im2 = im2[top:bottom, left:right, :]
-
-        return im1, im2
 
 
 # 図の保持

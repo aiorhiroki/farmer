@@ -1,12 +1,15 @@
 import sys
 import os
+import numpy as np
+
 from .utils import reporter as rp
 from .utils.model import build_model, cce_dice_loss, iou_score
+from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
-import tensorflow as tf  # add
-from keras.utils import multi_gpu_model  # add
+import tensorflow as tf
+from keras.utils import multi_gpu_model
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -15,7 +18,23 @@ if __name__ == "__main__" and __package__ is None:
     __package__ = "farmer.ImageAnalyzer"
 
 
-def _train(task):
+def classification():
+    _train('classification')
+
+
+def segmentation():
+    _train('segmentation')
+
+
+def classification_predict():
+    _predict('classification')
+
+
+def segmentation_predict():
+    _predict('segmentation')
+
+
+def _build_model(task):
     multi_gpu = False
     reporter = rp.Reporter(task)
 
@@ -33,16 +52,19 @@ def _train(task):
         nb_gpu = len(reporter.gpu.split(','))
         multi_gpu = nb_gpu > 1
 
+    if reporter.model_path is not None:
+        base_model.load_weights(reporter.model_path)
+
     if multi_gpu:
         model = multi_gpu_model(base_model, gpus=nb_gpu)
         reporter.batch_size *= nb_gpu
-        compile_and_run(task, model, reporter, multi_gpu, base_model)
-        base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
+        return model, reporter, multi_gpu, base_model
     else:
-        compile_and_run(task, base_model, reporter, multi_gpu)
+        return base_model, reporter, multi_gpu, None
 
 
-def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
+def _train(task):
+    model, reporter, multi_gpu, base_model = _build_model(task)
     if task == 'classification':
         model.compile(reporter.optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
@@ -58,22 +80,51 @@ def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
         reporter.epoch = 1  # not to learn same data during split learning
     for step in range(split_steps):
         reporter.train_files = reporter.train_files[step::split_steps]
+        train_gen = ImageSequence(
+            annotations=reporter.train_files,
+            input_shape=(reporter.height, reporter.width),
+            nb_classes=reporter.nb_classes
+        )
+        validation_gen = ImageSequence(
+            annotations=reporter.validation_files,
+            input_shape=(reporter.height, reporter.width),
+            nb_classes=reporter.nb_classes
+        )
 
         model.fit_generator(
-            reporter.generate_batch_arrays(),
-            steps_per_epoch=len(reporter.train_files)//reporter.batch_size,
-            callbacks=set_callbacks(multi_gpu, reporter, step, base_model),
+            train_gen,
+            steps_per_epoch=len(train_gen),
+            callbacks=_set_callbacks(multi_gpu, reporter, step, base_model),
             epochs=reporter.epoch,
-            validation_data=reporter.generate_batch_arrays(training=False),
-            validation_steps=len(
-                reporter.validation_files)//reporter.batch_size,
+            validation_data=validation_gen,
+            validation_steps=len(validation_gen),
             workers=16 if multi_gpu else 1,
             max_queue_size=32 if multi_gpu else 10,
             use_multiprocessing=multi_gpu
         )
+        if multi_gpu:
+            base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
-def set_callbacks(multi_gpu, reporter, step, base_model=None):
+def _predict(task):
+    model, reporter, multi_gpu, base_model = _build_model(task)
+    test_gen = ImageSequence(
+        annotations=reporter.test_files,
+        input_shape=(reporter.height, reporter.width),
+        nb_classes=reporter.nb_classes
+    )
+    prediction = model.predict_generator(
+        test_gen,
+        steps=len(test_gen),
+        workers=16 if multi_gpu else 1,
+        max_queue_size=32 if multi_gpu else 10,
+        use_multiprocessing=multi_gpu,
+        verbose=1
+    )
+    np.save(f'{reporter.model_name}.npy', prediction)
+
+
+def _set_callbacks(multi_gpu, reporter, step, base_model=None):
     if step == 0:
         best_model_name = 'best_model.h5'
     else:
@@ -91,11 +142,3 @@ def set_callbacks(multi_gpu, reporter, step, base_model=None):
             save_best_only=True,
         )
     return [reporter, checkpoint]
-
-
-def classification():
-    _train('classification')
-
-
-def segmentation():
-    _train('segmentation')

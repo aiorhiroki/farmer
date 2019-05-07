@@ -2,11 +2,12 @@ import sys
 import os
 from .utils import reporter as rp
 from .utils.model import build_model, cce_dice_loss, iou_score
+from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
 from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
-import tensorflow as tf  # add
-from keras.utils import multi_gpu_model  # add
+import tensorflow as tf
+from keras.utils import multi_gpu_model
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -58,15 +59,24 @@ def compile_and_run(task, model, reporter, multi_gpu, base_model=None):
         reporter.epoch = 1  # not to learn same data during split learning
     for step in range(split_steps):
         reporter.train_files = reporter.train_files[step::split_steps]
+        train_gen = ImageSequence(
+            annotations=reporter.train_files,
+            input_shape=(reporter.height, reporter.width),
+            nb_classes=reporter.nb_classes
+        )
+        validation_gen = ImageSequence(
+            annotations=reporter.validation_files,
+            input_shape=(reporter.height, reporter.width),
+            nb_classes=reporter.nb_classes
+        )
 
         model.fit_generator(
-            reporter.generate_batch_arrays(),
-            steps_per_epoch=len(reporter.train_files)//reporter.batch_size,
+            train_gen,
+            steps_per_epoch=len(train_gen),
             callbacks=set_callbacks(multi_gpu, reporter, step, base_model),
             epochs=reporter.epoch,
-            validation_data=reporter.generate_batch_arrays(training=False),
-            validation_steps=len(
-                reporter.validation_files)//reporter.batch_size,
+            validation_data=validation_gen,
+            validation_steps=len(validation_gen),
             workers=16 if multi_gpu else 1,
             max_queue_size=32 if multi_gpu else 10,
             use_multiprocessing=multi_gpu

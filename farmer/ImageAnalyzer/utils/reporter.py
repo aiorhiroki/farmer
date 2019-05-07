@@ -338,19 +338,6 @@ class Reporter(Callback):
                 if self.task == 'segmentation':
                     label = self._read_image(label, normalization=False)
 
-                if training and self.augmentation:
-                    # not trained on out of category
-                    # if np.sum(output_image) == 0:
-                        # continue
-                    # data augmentation
-                    if self.task == 'segmentation':
-                        input_image, label = self.horizontal_flip(
-                            input_image, label)
-                        # input_image, label = self.vertical_flip(input_image, label)
-                    else:
-                        input_image, label = self.horizontal_flip(input_image)
-                        # input_image, label = self.vertical_flip(input_image)
-
                 x.append(input_image)
                 y.append(label)
 

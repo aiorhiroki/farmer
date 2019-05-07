@@ -299,14 +299,14 @@ class Reporter(Callback):
 
     def on_train_end(self, logs=None):
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
-        last_model = load_model(
-            os.path.join(self.model_dir, 'best_model.h5'),
-            custom_objects={
-                'cce_jaccard_loss': cce_dice_loss,
-                'iou_score': iou_score}
-        )
         # evaluate on test data
         if self.task == 'segmentation':
+            last_model = load_model(
+                os.path.join(self.model_dir, 'best_model.h5'),
+                custom_objects={
+                    'cce_jaccard_loss': cce_dice_loss,
+                    'iou_score': iou_score}
+            )
             test_ious = self.iou_validation(self.test_files, last_model)
             self.config['TEST'] = dict()
             for test_iou, class_name in zip(test_ious, self.class_names):

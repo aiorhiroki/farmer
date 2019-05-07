@@ -11,8 +11,6 @@ from configparser import ConfigParser
 import datetime
 import os
 import csv
-import matplotlib as mpl
-mpl.use('Agg')  # to run this script by remote machine
 
 
 class Reporter(Callback):

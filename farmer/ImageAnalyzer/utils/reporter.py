@@ -1,8 +1,8 @@
+import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 from keras.callbacks import Callback
 from keras.models import load_model
 from .model import cce_dice_loss, iou_score
-import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 import requests
@@ -388,53 +388,6 @@ class Reporter(Callback):
         else:  # Segmentation
             one_hot = np.identity(self.nb_classes, dtype=np.uint8)
         return one_hot[labels]
-
-    @staticmethod
-    def horizontal_flip(im1, im2=None, rate=0.5):
-        if im2 is None:
-            if np.random.rand() < rate:
-                im1 = im1[:, ::-1, :]
-            return im1
-        else:
-            if np.random.rand() < rate:
-                im1 = im1[:, ::-1, :]
-                im2 = im2[:, ::-1]
-            return im1, im2
-
-    @staticmethod
-    def vertical_flip(im1, im2=None, rate=0.5):
-        if im2 is None:
-            if np.random.rand() < rate:
-                im1 = im1[::-1, :, :]
-            return im1
-        else:
-            if np.random.rand() < rate:
-                im1 = im1[::-1, :, :]
-                im2 = im2[::-1, :]
-            return im1, im2
-
-    @staticmethod
-    def random_crop(im1, im2, crop_size):
-        h, w, _ = im1.shape
-
-        if h - crop_size[0] == 0:
-            top = 0
-        else:
-            top = np.random.randint(0, h - crop_size[0])
-
-        if w - crop_size[1] == 0:
-            left = 0
-        else:
-            left = np.random.randint(0, w - crop_size[1])
-
-        bottom = top + crop_size[0]
-        right = left + crop_size[1]
-
-        # 決めたtop, bottom, left, rightを使って画像を抜き出す
-        im1 = im1[top:bottom, left:right, :]
-        im2 = im2[top:bottom, left:right, :]
-
-        return im1, im2
 
 
 # 図の保持

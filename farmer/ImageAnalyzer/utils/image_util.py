@@ -12,7 +12,6 @@ class ImageUtil:
         self.nb_classes = nb_classes
         self.size = size
 
-    @staticmethod
     def read_image(
         self,
         file_path: str,

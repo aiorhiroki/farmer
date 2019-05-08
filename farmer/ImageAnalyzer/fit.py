@@ -83,12 +83,14 @@ def _train(task):
         train_gen = ImageSequence(
             annotations=reporter.train_files,
             input_shape=(reporter.height, reporter.width),
-            nb_classes=reporter.nb_classes
+            nb_classes=reporter.nb_classes,
+            task=task
         )
         validation_gen = ImageSequence(
             annotations=reporter.validation_files,
             input_shape=(reporter.height, reporter.width),
-            nb_classes=reporter.nb_classes
+            nb_classes=reporter.nb_classes,
+            task=task
         )
 
         model.fit_generator(
@@ -111,7 +113,8 @@ def _predict(task):
     test_gen = ImageSequence(
         annotations=reporter.test_files,
         input_shape=(reporter.height, reporter.width),
-        nb_classes=reporter.nb_classes
+        nb_classes=reporter.nb_classes,
+        task=task
     )
     prediction = model.predict_generator(
         test_gen,

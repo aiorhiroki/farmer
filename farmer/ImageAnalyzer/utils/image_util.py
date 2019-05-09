@@ -10,7 +10,7 @@ class ImageUtil:
         size: (int, int)
     ):
         self.nb_classes = nb_classes
-        self.size = size
+        self.size = size[::-1]
 
     def read_image(
         self,

@@ -1,1 +1,1 @@
-from .train import classification, segmentation
+from .fit import classification, segmentation

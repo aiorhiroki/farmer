@@ -33,7 +33,7 @@ class ImageSequence(Sequence):
             )
             if self.task == 'segmentation':
                 label = self.image_util.read_image(
-                    input_file, normalization=False
+                    label, normalization=False
                 )
             batch_y.append(label)
 

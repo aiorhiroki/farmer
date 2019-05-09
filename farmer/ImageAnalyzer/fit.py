@@ -84,13 +84,15 @@ def _train(task):
             annotations=reporter.train_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task
+            task=task,
+            batch_size=reporter.batch_size
         )
         validation_gen = ImageSequence(
             annotations=reporter.validation_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task
+            task=task,
+            batch_size=reporter.batch_size
         )
 
         model.fit_generator(

@@ -230,30 +230,6 @@ class Reporter(Callback):
             image_in_pil, image_merged, None, "RGB")
         return image_result
 
-    def generate_batch_arrays(self, training=True):
-        image_files = self.train_files if training else self.validation_files
-        if training and self.shuffle:
-            np.random.shuffle(image_files)
-
-        while True:
-            x, y = [], []
-            for image_file_set in image_files:
-                input_file, label = image_file_set
-                input_image = self.image_util.read_image(
-                    input_file, anti_alias=True)
-                if self.task == 'segmentation':
-                    label = self.image_util.read_image(
-                        label, normalization=False)
-
-                x.append(input_image)
-                y.append(label)
-
-                if len(x) == self.batch_size:
-                    x = np.array(x, dtype=np.float32)
-                    y = self.image_util.cast_to_onehot(y)
-                    yield x, y
-                    x, y = [], []
-
     def on_epoch_end(self, epoch, logs={}):
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(

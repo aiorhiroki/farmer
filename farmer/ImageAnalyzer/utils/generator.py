@@ -26,15 +26,14 @@ class ImageSequence(Sequence):
         batch_x = list()
         batch_y = list()
         for input_file, label in data:
-            batch_x.append(
-                self.image_util.read_image(
-                    input_file, anti_alias=True
-                )
+            input_image = self.image_util.read_image(
+                input_file, anti_alias=True
             )
             if self.task == 'segmentation':
                 label = self.image_util.read_image(
                     label, normalization=False
                 )
+            batch_x.append(input_image)
             batch_y.append(label)
 
         batch_x = np.array(batch_x, dtype=np.float32)

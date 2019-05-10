@@ -118,29 +118,46 @@ class Reporter(Callback):
     def read_annotation_set(self, task):
         target_dir = self.config.get(
             'project_settings', 'target_dir')
-        train_data = self.config.get(
-            'project_settings', 'train_data').split()
-        validation_data = self.config.get(
-            'project_settings', 'validation_data').split()
-        test_data = self.config.get(
-            'project_settings', 'test_data').split()
+        train_data = self.config['project_settings'].get(
+            'train_data') or None
+        validation_data = self.config['project_settings'].get(
+            'validation_data') or None
+        test_data = self.config['project_settings'].get(
+            'test_data') or None
+
+        if train_data is not None:
+            train_data = train_data.split()
+        if validation_data is not None:
+            validation_data = validation_data.split()
+        if test_data is not None:
+            test_data = test_data.split()
 
         class_names = None
+        train_set = list()
+        validation_set = list()
+        test_set = list()
 
         if len(train_data) == 1 and train_data[0].endswith('.csv'):
-            train_set = data_set_from_annotation(train_data[0])
-            validation_set = data_set_from_annotation(validation_data[0])
+            if train_data:
+                train_set = data_set_from_annotation(train_data[0])
+            if validation_data:
+                validation_set = data_set_from_annotation(validation_data[0])
             if test_data:
                 test_set = data_set_from_annotation(test_data[0])
 
         elif task == 'classification':
-            train_set, class_names = classification_set(target_dir, train_data)
-            validation_set, _ = classification_set(
-                target_dir,
-                validation_data,
-                training=False,
-                class_names=class_names
-            )
+            if train_data:
+                train_set, class_names = classification_set(
+                    target_dir,
+                    train_data
+                )
+            if validation_data:
+                validation_set, _ = classification_set(
+                    target_dir,
+                    validation_data,
+                    training=False,
+                    class_names=class_names
+                )
             if test_data:
                 test_set, _ = classification_set(
                     target_dir,

@@ -55,7 +55,7 @@ def _build_model(task):
         reporter.batch_size *= nb_gpu
         return model, reporter, multi_gpu, base_model
     else:
-        return base_model, reporter, multi_gpu, None
+        return base_model, reporter, multi_gpu, base_model
 
 
 def _train(task):
@@ -137,7 +137,8 @@ def segmentation_predict():
         input_image = image_util.read_image(
             input_file, anti_alias=True
         )
-        prediction = model.predict(np.expand_dims(input_image, axis=0))
+        # need to use base model
+        prediction = base_model.predict(np.expand_dims(input_image, axis=0))
         output = image_util.blend_image(
             prediction[0], image_util.current_raw_size)
         cv2.imwrite(os.path.join(reporter.image_test_dir, file_name), output)

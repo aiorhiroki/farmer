@@ -62,6 +62,8 @@ epoch = 100
 batch_size = 4
 optimizer = adam
 augmentation = False
+gpu = 0,1
+model_path = /PATH_TO_MODEL/last_model.h5
 
 [classification_default]
 model = Xception

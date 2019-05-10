@@ -1,9 +1,12 @@
 import sys
 import os
 import numpy as np
+import cv2
+from tqdm import tqdm
 
 from .utils import reporter as rp
 from .utils.model import build_model, cce_dice_loss, iou_score
+from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
 from keras.callbacks import ModelCheckpoint
@@ -24,14 +27,6 @@ def classification():
 
 def segmentation():
     _train('segmentation')
-
-
-def classification_predict():
-    _predict('classification')
-
-
-def segmentation_predict():
-    _predict('segmentation')
 
 
 def _build_model(task):
@@ -60,7 +55,7 @@ def _build_model(task):
         reporter.batch_size *= nb_gpu
         return model, reporter, multi_gpu, base_model
     else:
-        return base_model, reporter, multi_gpu, None
+        return base_model, reporter, multi_gpu, base_model
 
 
 def _train(task):
@@ -84,13 +79,15 @@ def _train(task):
             annotations=reporter.train_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task
+            task=task,
+            batch_size=reporter.batch_size
         )
         validation_gen = ImageSequence(
             annotations=reporter.validation_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task
+            task=task,
+            batch_size=reporter.batch_size
         )
 
         model.fit_generator(
@@ -108,7 +105,8 @@ def _train(task):
             base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
-def _predict(task):
+def classification_predict():
+    task = 'classification'
     model, reporter, multi_gpu, base_model = _build_model(task)
     test_gen = ImageSequence(
         annotations=reporter.test_files,
@@ -125,6 +123,25 @@ def _predict(task):
         verbose=1
     )
     np.save(f'{reporter.model_name}.npy', prediction)
+
+
+def segmentation_predict():
+    task = 'segmentation'
+    model, reporter, multi_gpu, base_model = _build_model(task)
+    image_util = ImageUtil(
+        reporter.nb_classes,
+        (reporter.height, reporter.width)
+    )
+    for input_file, _ in tqdm(reporter.test_files):
+        file_name = os.path.basename(input_file)
+        input_image = image_util.read_image(
+            input_file, anti_alias=True
+        )
+        # need to use base model
+        prediction = base_model.predict(np.expand_dims(input_image, axis=0))
+        output = image_util.blend_image(
+            prediction[0], image_util.current_raw_size)
+        cv2.imwrite(os.path.join(reporter.image_test_dir, file_name), output)
 
 
 def _set_callbacks(multi_gpu, reporter, step, base_model=None):

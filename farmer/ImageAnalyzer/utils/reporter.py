@@ -37,6 +37,7 @@ class Reporter(Callback):
         self._image_train_dir = os.path.join(self._image_dir, "train")
         self._image_validation_dir = os.path.join(
             self._image_dir, "validation")
+        self.image_test_dir = os.path.join(self._image_dir, "test")
         self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
         self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
@@ -107,6 +108,7 @@ class Reporter(Callback):
         os.makedirs(self._image_dir)
         os.makedirs(self._image_train_dir)
         os.makedirs(self._image_validation_dir)
+        os.makedirs(self.image_test_dir)
         os.makedirs(self._learning_dir)
         os.makedirs(self._info_dir)
         os.makedirs(self.model_dir)
@@ -328,7 +330,7 @@ class Reporter(Callback):
             test_ious = self.iou_validation(self.test_files, last_model)
             self.config['TEST'] = dict()
             for test_iou, class_name in zip(test_ious, self.class_names):
-                self.config['TEST'][class_name] = test_iou
+                self.config['TEST'][class_name] = str(test_iou)
             self.save_params(self._parameter)
 
     def _generate_sample_result(self, training=True):

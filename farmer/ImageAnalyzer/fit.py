@@ -75,6 +75,7 @@ def _train(task):
         reporter.epoch = 1  # not to learn same data during split learning
     for step in range(split_steps):
         reporter.train_files = reporter.train_files[step::split_steps]
+        np.random.shuffle(reporter.train_files)
         train_gen = ImageSequence(
             annotations=reporter.train_files,
             input_shape=(reporter.height, reporter.width),

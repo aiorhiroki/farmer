@@ -113,7 +113,8 @@ def classification_predict():
         annotations=reporter.test_files,
         input_shape=(reporter.height, reporter.width),
         nb_classes=reporter.nb_classes,
-        task=task
+        task=task,
+        batch_size=reporter.batch_size
     )
     prediction = model.predict_generator(
         test_gen,

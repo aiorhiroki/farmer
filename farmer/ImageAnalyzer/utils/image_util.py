@@ -2,6 +2,25 @@ from PIL import Image
 import numpy as np
 import cv2
 from ncc.utils import palette
+from albumentations import (
+    PadIfNeeded,
+    HorizontalFlip,
+    VerticalFlip,
+    CenterCrop,
+    Crop,
+    Compose,
+    Transpose,
+    RandomRotate90,
+    ElasticTransform,
+    GridDistortion,
+    OpticalDistortion,
+    RandomSizedCrop,
+    OneOf,
+    CLAHE,
+    RandomBrightnessContrast,
+    RandomGamma,
+    Normalize
+)
 
 
 class ImageUtil:
@@ -77,3 +96,21 @@ class ImageUtil:
             gamma=2.2
         )
         return cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
+
+    def augmentation(self, image, mask):
+        width, height = self.size
+        aug_list = [
+            RandomSizedCrop(
+                min_max_height=(height//2, height),
+                height=height,
+                width=width,
+                p=1
+            ),
+            HorizontalFlip(
+                p=0.5
+            )
+        ]
+
+        aug = Compose(aug_list, p=1)
+        augmented = aug(image=image, mask=mask)
+        return augmented['image'], augmented['mask']

@@ -90,7 +90,7 @@ def _train(task):
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
             task=task,
-            batch_size=reporter.batch_size,
+            batch_size=reporter.batch_size
         )
 
         model.fit_generator(

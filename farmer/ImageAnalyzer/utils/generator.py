@@ -37,7 +37,7 @@ class ImageSequence(Sequence):
                 )
                 if self.augmentation:
                     input_image, label = self.image_util.augmentation(
-                        input_image, label, self.training
+                        input_image, label
                     )
             batch_x.append(input_image)
             batch_y.append(label)

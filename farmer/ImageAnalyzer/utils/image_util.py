@@ -112,5 +112,6 @@ class ImageUtil:
         ]
 
         aug = Compose(aug_list, p=1)
+        image = np.array(image*255, dtype=np.uint8)
         augmented = aug(image=image, mask=mask)
-        return augmented['image'], augmented['mask']
+        return augmented['image']/255, augmented['mask']

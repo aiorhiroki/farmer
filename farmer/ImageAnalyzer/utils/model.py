@@ -16,8 +16,11 @@ def build_model(
         model = xception(nb_classes, width, height)
     elif task == 'segmentation':
         if model_name == "unet":
-            model = Unet(backbone, input_shape=(
-                height, width, 3), classes=nb_classes)
+            model = Unet(
+                backbone,
+                input_shape=(height, width, 3),
+                classes=nb_classes
+            )
         else:
             model = Deeplabv3(
                 input_shape=(height, width, 3),

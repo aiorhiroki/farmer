@@ -101,10 +101,10 @@ class ImageUtil:
         width, height = self.size
         aug_list = [
             RandomSizedCrop(
-                min_max_height=(height//2, height),
+                min_max_height=(height*3//4, height),
                 height=height,
                 width=width,
-                p=1
+                p=0.5
             ),
             HorizontalFlip(
                 p=0.5
@@ -112,6 +112,5 @@ class ImageUtil:
         ]
 
         aug = Compose(aug_list, p=1)
-        image = np.array(image*255, dtype=np.uint8)
         augmented = aug(image=image, mask=mask)
-        return augmented['image']/255, augmented['mask']
+        return augmented['image'], augmented['mask']

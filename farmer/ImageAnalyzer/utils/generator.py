@@ -12,12 +12,14 @@ class ImageSequence(Sequence):
         input_shape: (int, int),
         nb_classes: int,
         task: str,
-        batch_size: int
+        batch_size: int,
+        augmentation=False
     ):
         self.annotations = annotations
         self.batch_size = batch_size
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
+        self.augmentation = augmentation
 
     def __getitem__(self, idx):
         data = self.annotations[
@@ -33,6 +35,10 @@ class ImageSequence(Sequence):
                 label = self.image_util.read_image(
                     label, normalization=False
                 )
+                if self.augmentation:
+                    input_image, label = self.image_util.augmentation(
+                        input_image, label
+                    )
             batch_x.append(input_image)
             batch_y.append(label)
 

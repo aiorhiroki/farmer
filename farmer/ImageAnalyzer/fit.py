@@ -36,6 +36,7 @@ def _build_model(task):
     with tf.device("/cpu:0"):
         base_model = build_model(
             task=task,
+            model_name=reporter.model_name,
             nb_classes=reporter.nb_classes,
             height=reporter.height,
             width=reporter.width,
@@ -81,7 +82,8 @@ def _train(task):
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
             task=task,
-            batch_size=reporter.batch_size
+            batch_size=reporter.batch_size,
+            augmentation=reporter.augmentation
         )
         validation_gen = ImageSequence(
             annotations=reporter.validation_files,

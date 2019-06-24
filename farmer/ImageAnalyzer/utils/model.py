@@ -21,7 +21,7 @@ def build_model(
                 input_shape=(height, width, 3),
                 classes=nb_classes
             )
-        else:
+        elif model_name == "deeplabv3":
             model = Deeplabv3(
                 input_shape=(height, width, 3),
                 classes=nb_classes,

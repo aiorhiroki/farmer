@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
 from keras.callbacks import Callback
 from keras.models import load_model
-from .model import cce_dice_loss, iou_score
+from .model import cce_dice_loss, iou_score, build_model
 from .image_util import ImageUtil
 from PIL import Image
 import numpy as np
@@ -321,11 +321,16 @@ class Reporter(Callback):
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
         # evaluate on test data
         if self.task == 'segmentation':
-            last_model = load_model(
-                os.path.join(self.model_dir, 'best_model.h5'),
-                custom_objects={
-                    'cce_jaccard_loss': cce_dice_loss,
-                    'iou_score': iou_score}
+            last_model = build_model(
+                task=self.task,
+                model_name=self.model_name,
+                nb_classes=self.nb_classes,
+                height=self.height,
+                width=self.width,
+                backbone=self.backbone
+            )
+            last_model.load_wights(
+                os.path.join(self.model_dir, 'best_model.h5')
             )
             test_ious = self.iou_validation(self.test_files, last_model)
             self.config['TEST'] = dict()

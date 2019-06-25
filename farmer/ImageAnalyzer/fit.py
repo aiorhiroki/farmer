@@ -5,7 +5,8 @@ import cv2
 from tqdm import tqdm
 
 from .utils import reporter as rp
-from .utils.model import build_model, cce_dice_loss, iou_score
+from .utils.model import build_model, iou_score
+from .utils.model import lovasz_loss, cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
@@ -65,8 +66,11 @@ def _train(task):
         model.compile(reporter.optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
     elif task == 'segmentation':
-        model.compile(reporter.optimizer, loss=cce_dice_loss,
-                      metrics=[iou_score])
+        model.compile(
+            reporter.optimizer,
+            loss=cce_dice_loss if reporter.loss == 'dice' else lovasz_loss,
+            metrics=[iou_score]
+        )
     else:
         raise NotImplementedError
 

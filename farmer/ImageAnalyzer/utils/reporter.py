@@ -59,6 +59,7 @@ class Reporter(Callback):
         self.optimizer = self.config.get('default', 'optimizer')
         self.augmentation = self.config.getboolean('default', 'augmentation')
         self.gpu = self.config['default'].get('gpu') or None
+        self.loss = self.config['default'].get('loss') or None
         self.model_path = self.config['default'].get('model_path') or None
         self.nb_split = self.config['default'].get('nb_split') or 1
         self.nb_classes = self.config.getint('project_settings', 'nb_classes')

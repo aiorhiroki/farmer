@@ -10,6 +10,7 @@ import requests
 from configparser import ConfigParser
 import datetime
 import os
+from glob import glob
 import csv
 
 
@@ -118,52 +119,70 @@ class Reporter(Callback):
             self.config.write(configfile)
 
     def read_annotation_set(self, task):
-        target_dir = self.config.get(
-            'project_settings', 'target_dir')
-        train_data = self.config['project_settings'].get(
-            'train_data') or None
-        validation_data = self.config['project_settings'].get(
-            'validation_data') or None
-        test_data = self.config['project_settings'].get(
-            'test_data') or None
-
-        if train_data is not None:
-            train_data = train_data.split()
-        if validation_data is not None:
-            validation_data = validation_data.split()
-        if test_data is not None:
-            test_data = test_data.split()
-
         class_names = None
         train_set = list()
         validation_set = list()
         test_set = list()
+        train_dirs = None
+        validation_dirs = None
+        test_dirs = None
 
-        if len(train_data) == 1 and train_data[0].endswith('.csv'):
-            if train_data:
-                train_set = data_set_from_annotation(train_data[0])
-            if validation_data:
-                validation_set = data_set_from_annotation(validation_data[0])
-            if test_data:
-                test_set = data_set_from_annotation(test_data[0])
+        target_dir = self.config.get(
+            'project_settings', 'target_dir')
+        if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
+            train_dir_path = target_dir
+            test_dir_path = target_dir
+            train_dirs = ['train']
+            validation_dirs = ['validation']
+            test_dirs = ['test']
+
+        else:
+            train_dir_path = os.path.join(target_dir, 'train')
+            validation_dir_path = os.path.join(target_dir, 'validation')
+            test_dir_path = os.path.join(target_dir, 'test')
+            if os.path.exists(train_dir_path):
+                train_dirs = [
+                    train_dir for train_dir
+                    in os.listdir(train_dir_path)
+                    if os.path.isdir(os.path.join(train_dir_path, train_dir))
+                ]
+            if os.path.exists(validation_dir_path):
+                validation_dirs = [
+                    validation_dir for validation_dir
+                    in os.listdir(validation_dir_path)
+                    if os.path.isdir(os.path.join(
+                        validation_dir_path, validation_dir))
+                ]
+            if os.path.exists(test_dir_path):
+                test_dirs = [
+                    test_dir for test_dir
+                    in os.listdir(test_dir_path)
+                    if os.path.isdir(os.path.join(test_dir_path, test_dir))
+                ]
+
+        if len(train_dirs) == 1 and train_dirs[0].endswith('.csv'):
+            train_set = data_set_from_annotation(train_dirs[0])
+            if validation_dirs:
+                validation_set = data_set_from_annotation(validation_dirs[0])
+            if test_dirs:
+                test_set = data_set_from_annotation(test_dirs[0])
 
         elif task == 'classification':
-            if train_data:
+            if train_dirs:
                 train_set, class_names = classification_set(
-                    target_dir,
-                    train_data
+                    train_dir_path, train_dirs
                 )
-            if validation_data:
+            if validation_dirs:
                 validation_set, _ = classification_set(
-                    target_dir,
-                    validation_data,
+                    validation_dir_path,
+                    validation_dirs,
                     training=False,
                     class_names=class_names
                 )
-            if test_data:
+            if test_dirs:
                 test_set, _ = classification_set(
-                    target_dir,
-                    test_data,
+                    test_dir_path,
+                    test_dirs,
                     training=False,
                     class_names=class_names
                 )
@@ -172,12 +191,12 @@ class Reporter(Callback):
             image_dir = self.config.get('segmentation_default', 'image_dir')
             label_dir = self.config.get('segmentation_default', 'label_dir')
             train_set = segmentation_set(
-                target_dir, train_data, image_dir, label_dir)
+                train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
-                target_dir, validation_data, image_dir, label_dir)
-            if test_data:
+                validation_dir_path, validation_dirs, image_dir, label_dir)
+            if test_dirs:
                 test_set = segmentation_set(
-                    target_dir, test_data, image_dir, label_dir)
+                    test_dir_path, test_dirs, image_dir, label_dir)
             class_names = self.config.get(
                 'segmentation_default', 'class_names').split()
         else:

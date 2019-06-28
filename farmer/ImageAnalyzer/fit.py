@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from .utils import reporter as rp
 from .utils.model import build_model, iou_score
-from .utils.model import lovasz_loss, cce_dice_loss
+from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
@@ -68,7 +68,7 @@ def _train(task):
     elif task == 'segmentation':
         model.compile(
             reporter.optimizer,
-            loss=cce_dice_loss if reporter.loss == 'dice' else lovasz_loss,
+            loss=cce_dice_loss,
             metrics=[iou_score]
         )
     else:
@@ -150,6 +150,13 @@ def segmentation_predict():
         output = image_util.blend_image(
             prediction[0], image_util.current_raw_size)
         cv2.imwrite(os.path.join(reporter.image_test_dir, file_name), output)
+
+
+def segmentation_evaluation():
+    task = 'segmentation'
+    model, reporter, multi_gpu, base_model = _build_model(task)
+    iou = reporter.iou_validation(reporter.test_files, model)
+    print('IoU: ', iou)
 
 
 def _set_callbacks(multi_gpu, reporter, step, base_model=None):

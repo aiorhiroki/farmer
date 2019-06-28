@@ -1,5 +1,4 @@
 from ncc.models import xception, Deeplabv3
-from ncc.metrics import lovasz_hinge
 from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
@@ -32,11 +31,6 @@ def build_model(
         raise NotImplementedError
 
     return model
-
-
-def lovasz_loss(y_true, y_pred):
-    loss = lovasz_hinge(y_pred, y_true, per_image=True, ignore=None)
-    return loss
 
 
 iou_score = iou_score

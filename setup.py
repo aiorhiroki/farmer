@@ -39,6 +39,7 @@ setup(
             'ncc-seg=farmer.ImageAnalyzer.fit:segmentation',
             'ncc-cls-pred=farmer.ImageAnalyzer.fit:classification_predict',
             'ncc-seg-pred=farmer.ImageAnalyzer.fit:segmentation_predict',
+            'ncc-seg-eval=farmer.ImageAnalyzer.fit:segmentation_evaluation',
         ],
     },
 )

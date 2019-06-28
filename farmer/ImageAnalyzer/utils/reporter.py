@@ -10,6 +10,7 @@ import requests
 from configparser import ConfigParser
 import datetime
 import os
+from tqdm import tqdm
 from glob import glob
 import csv
 
@@ -292,8 +293,8 @@ class Reporter(Callback):
 
     def iou_validation(self, data_set, model):
         conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
-
-        for image_file, seg_file in data_set:
+        print('IoU validation...')
+        for image_file, seg_file in tqdm(data_set):
             # Get a training sample and make a prediction using current model
             sample = self.image_util.read_image(image_file, anti_alias=True)
             target = self.image_util.read_image(seg_file, normalization=False)
@@ -349,7 +350,7 @@ class Reporter(Callback):
                 width=self.width,
                 backbone=self.backbone
             )
-            last_model.load_wights(
+            last_model.load_weights(
                 os.path.join(self.model_dir, 'best_model.h5')
             )
             test_ious = self.iou_validation(self.test_files, last_model)

@@ -2,6 +2,7 @@ from ncc.models import xception, Deeplabv3
 from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
+from farmer.ImageAnalyzer.task import Task
 
 
 def build_model(
@@ -12,9 +13,9 @@ def build_model(
         height=299,
         backbone='resnet50'
 ):
-    if task == 'classification':
+    if task == Task.CLASSIFICATION:
         model = xception(nb_classes, width, height)
-    elif task == 'segmentation':
+    elif task == Task.SEMANTIC_SEGMENTATION:
         if model_name == "unet":
             model = Unet(
                 backbone,

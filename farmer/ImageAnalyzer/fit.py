@@ -3,7 +3,6 @@ import os
 import numpy as np
 import cv2
 from tqdm import tqdm
-
 from .utils import reporter as rp
 from .utils.model import build_model, iou_score
 from .utils.model import cce_dice_loss
@@ -14,6 +13,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.losses import categorical_crossentropy
 import tensorflow as tf
 from keras.utils import multi_gpu_model
+from .task import Task
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -22,21 +22,12 @@ if __name__ == "__main__" and __package__ is None:
     __package__ = "farmer.ImageAnalyzer"
 
 
-def classification():
-    _train('classification')
-
-
-def segmentation():
-    _train('segmentation')
-
-
-def _build_model(task):
+def _build_model(task_id, reporter):
     multi_gpu = False
-    reporter = rp.Reporter(task)
 
     with tf.device("/cpu:0"):
         base_model = build_model(
-            task=task,
+            task=task_id,
             model_name=reporter.model_name,
             nb_classes=reporter.nb_classes,
             height=reporter.height,
@@ -60,12 +51,14 @@ def _build_model(task):
         return base_model, reporter, multi_gpu, base_model
 
 
-def _train(task):
-    model, reporter, multi_gpu, base_model = _build_model(task)
-    if task == 'classification':
+def train(config):
+    task_id = config.get('task_id')
+    reporter = rp.Reporter(config)
+    model, multi_gpu, base_model = _build_model(task_id, reporter)
+    if task_id == Task.CLASSIFICATION:
         model.compile(reporter.optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
-    elif task == 'segmentation':
+    elif task_id == Task.SEMANTIC_SEGMENTATION:
         model.compile(
             reporter.optimizer,
             loss=cce_dice_loss,
@@ -85,7 +78,7 @@ def _train(task):
             annotations=reporter.train_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task,
+            task=task_id,
             batch_size=reporter.batch_size,
             augmentation=reporter.augmentation
         )
@@ -93,7 +86,7 @@ def _train(task):
             annotations=reporter.validation_files,
             input_shape=(reporter.height, reporter.width),
             nb_classes=reporter.nb_classes,
-            task=task,
+            task=task_id,
             batch_size=reporter.batch_size
         )
 

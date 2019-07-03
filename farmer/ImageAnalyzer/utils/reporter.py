@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set
 from ncc.readers import data_set_from_annotation
+from ncc.readers import search_image_profile, search_image_colors
 from keras.callbacks import Callback
 from .model import build_model
 from .image_util import ImageUtil
+from .milk_client import MilkClient
 from PIL import Image
 import numpy as np
 import requests
@@ -66,17 +68,27 @@ class Reporter(Callback):
         self.gpu = self.config.get('gpu')
         self.loss = self.config.get('loss')
         self.model_path = self.config.get('model_path')
-        self.nb_classes = int(self.config.get('nb_classes'))
         self.model_name = self.config.get('model')
-        self.height = int(self.config.get('height'))
-        self.width = int(self.config.get('width'))
+        self.height = self.config.get('height')
+        self.width = self.config.get('width')
         self.backbone = self.config.get('backbone')
 
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
             self.task)
-        if self.class_names is None:
-            self.class_names = [class_id
-                                for class_id in range(self.nb_classes)]
+        if self.height is None or self.width is None:
+            if self.task == Task.OBJECT_DETECTION:
+                train_file_names = [line.split(' ')[0]
+                                    for line in self.train_files]
+            else:
+                train_file_names = [train_set[0]
+                                    for train_set in self.train_files]
+                self.height, self.width, self.channel = search_image_profile(
+                    train_file_names
+                )
+        else:
+            self.height = int(self.height)
+            self.width = int(self.width)
+        self.nb_classes = len(self.class_names)
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.VALIDATION_FILE, self.validation_files)
         self._write_files(self.TEST_FILE, self.test_files)
@@ -94,6 +106,7 @@ class Reporter(Callback):
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
+        self._milk_client = MilkClient()
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -123,8 +136,11 @@ class Reporter(Callback):
         os.makedirs(self.model_dir)
 
     def save_params(self, filename):
-        with open(filename, mode='w') as configfile:
-            self.config.write(configfile)
+        try:
+            with open(filename, mode='w') as configfile:
+                self.config.write(configfile)
+        except:
+            pass
 
     def read_annotation_set(self, task):
         class_names = None
@@ -135,14 +151,24 @@ class Reporter(Callback):
         validation_dirs = None
         test_dirs = None
 
-        target_dir = self.config.get(
-            'project_settings', 'target_dir')
+        target_dir = self.config.get('target_dir')
         if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
             train_dir_path = target_dir
             test_dir_path = target_dir
-            train_dirs = ['train']
-            validation_dirs = ['validation']
-            test_dirs = ['test']
+            validation_dir_path = target_dir
+
+            if not os.path.exists(os.path.join(target_dir, 'train')):
+                train_dirs = None
+            else:
+                train_dirs = ['train']
+            if not os.path.exists(os.path.join(target_dir, 'validation')):
+                validation_dirs = None
+            else:
+                validation_dirs = ['validation']
+            if not os.path.exists(os.path.join(target_dir, 'test')):
+                test_dirs = None
+            else:
+                test_dirs = ['test']
 
         else:
             train_dir_path = os.path.join(target_dir, 'train')
@@ -210,6 +236,11 @@ class Reporter(Callback):
             class_names = self.config.get('class_names')
             if class_names is not None:
                 class_names = class_names.split()
+            else:
+                train_label_files = [train_data[1]
+                                     for train_data in train_set]
+                colors = search_image_colors(train_label_files)
+                class_names = [str(color) for color in colors]
         else:
             raise NotImplementedError
 
@@ -280,6 +311,16 @@ class Reporter(Callback):
         return image_result
 
     def on_epoch_end(self, epoch, logs={}):
+        # post to milk
+        history = dict(
+            train_config_id=self.config.get('id'),
+            epoch_num=epoch,
+            metric=logs.get(self.metric),
+            val_metric=logs.get('val_{}'.format(self.metric)),
+            loss=logs.get('loss'),
+            val_loss=logs.get('val_loss')
+        )
+        self._milk_client.post(history)
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(
             'val_{}'.format(self.metric))], is_update=True)
@@ -349,6 +390,7 @@ class Reporter(Callback):
                       params=param, files=files)
 
     def on_train_end(self, logs=None):
+        self._milk_client.close_session()
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
         # evaluate on test data
         if self.task == Task.SEMANTIC_SEGMENTATION:

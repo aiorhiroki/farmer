@@ -54,7 +54,7 @@ def _build_model(task_id, reporter):
 def train(config):
     task_id = config.get('task_id')
     reporter = rp.Reporter(config)
-    model, multi_gpu, base_model = _build_model(task_id, reporter)
+    model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     if task_id == Task.CLASSIFICATION:
         model.compile(reporter.optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
@@ -67,42 +67,36 @@ def train(config):
     else:
         raise NotImplementedError
 
-    split_steps = int(reporter.nb_split)
-    if split_steps > 1:
-        reporter.validation_files = list()  # empty list
-        reporter.epoch = 1  # not to learn same data during split learning
-    for step in range(split_steps):
-        reporter.train_files = reporter.train_files[step::split_steps]
-        np.random.shuffle(reporter.train_files)
-        train_gen = ImageSequence(
-            annotations=reporter.train_files,
-            input_shape=(reporter.height, reporter.width),
-            nb_classes=reporter.nb_classes,
-            task=task_id,
-            batch_size=reporter.batch_size,
-            augmentation=reporter.augmentation
-        )
-        validation_gen = ImageSequence(
-            annotations=reporter.validation_files,
-            input_shape=(reporter.height, reporter.width),
-            nb_classes=reporter.nb_classes,
-            task=task_id,
-            batch_size=reporter.batch_size
-        )
+    np.random.shuffle(reporter.train_files)
+    train_gen = ImageSequence(
+        annotations=reporter.train_files,
+        input_shape=(reporter.height, reporter.width),
+        nb_classes=reporter.nb_classes,
+        task=task_id,
+        batch_size=reporter.batch_size,
+        augmentation=reporter.augmentation
+    )
+    validation_gen = ImageSequence(
+        annotations=reporter.validation_files,
+        input_shape=(reporter.height, reporter.width),
+        nb_classes=reporter.nb_classes,
+        task=task_id,
+        batch_size=reporter.batch_size
+    )
 
-        model.fit_generator(
-            train_gen,
-            steps_per_epoch=len(train_gen),
-            callbacks=_set_callbacks(multi_gpu, reporter, step, base_model),
-            epochs=reporter.epoch,
-            validation_data=validation_gen,
-            validation_steps=len(validation_gen),
-            workers=16 if multi_gpu else 1,
-            max_queue_size=32 if multi_gpu else 10,
-            use_multiprocessing=multi_gpu
-        )
-        if multi_gpu:
-            base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
+    model.fit_generator(
+        train_gen,
+        steps_per_epoch=len(train_gen),
+        callbacks=_set_callbacks(multi_gpu, reporter, base_model),
+        epochs=reporter.epoch,
+        validation_data=validation_gen,
+        validation_steps=len(validation_gen),
+        workers=16 if multi_gpu else 1,
+        max_queue_size=32 if multi_gpu else 10,
+        use_multiprocessing=multi_gpu
+    )
+    if multi_gpu:
+        base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
 def classification_predict():
@@ -152,11 +146,8 @@ def segmentation_evaluation():
     print('IoU: ', iou)
 
 
-def _set_callbacks(multi_gpu, reporter, step, base_model=None):
-    if step == 0:
-        best_model_name = 'best_model.h5'
-    else:
-        best_model_name = 'best_mode_on_step%d.h5' % step
+def _set_callbacks(multi_gpu, reporter, base_model=None):
+    best_model_name = 'best_model.h5'
 
     if multi_gpu:
         checkpoint = MultiGPUCheckpointCallback(

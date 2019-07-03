@@ -112,3 +112,6 @@ venv.bak/
 
 # For Mac
 .DS_Store
+
+# farmer_local
+result/

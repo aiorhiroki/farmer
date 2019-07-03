@@ -1,12 +1,13 @@
 from requests import Request, Session
 import json
+from farmer import app
 
 
 class MilkClient:
     HEADERS = {'Content-Type': 'application/json'}
 
-    def __init__(self, config):
-        self.api_url = config['MILK_API_URL']
+    def __init__(self):
+        self.api_url = app.config['MILK_API_URL']
         self.obj_session = Session()
 
     def post(self, params: dict):

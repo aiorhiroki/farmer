@@ -8,12 +8,20 @@ flake8 = "*"
 autopep8 = "*"
 
 [packages]
-tensorflow-gpu = "==1.9.0"
+tensorflow = "*"
 keras = "*"
 ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
 opencv-python = "*"
 requests = "*"
 pandas = "*"
+flask = "*"
+marshmallow = "*"
+flask-marshmallow = "*"
+marshmallow-sqlalchemy = "*"
+tqdm = "*"
+segmentation-models = "==0.2.0"
+albumentations = "==0.2.0"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.6"

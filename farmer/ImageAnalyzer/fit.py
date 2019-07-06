@@ -9,10 +9,10 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
-from keras.callbacks import ModelCheckpoint
-from keras.losses import categorical_crossentropy
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
-from keras.utils import multi_gpu_model
+from tensorflow.keras.utils import multi_gpu_model
 from .task import Task
 
 # Allow relative imports when being executed as script.

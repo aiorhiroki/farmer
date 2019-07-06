@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set
 from ncc.readers import data_set_from_annotation
 from ncc.readers import search_image_profile, search_image_colors
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 from .model import build_model
 from .image_util import ImageUtil
 from .milk_client import MilkClient
@@ -315,10 +315,10 @@ class Reporter(Callback):
         history = dict(
             train_config_id=self.config.get('id'),
             epoch_num=epoch,
-            metric=logs.get(self.metric),
-            val_metric=logs.get('val_{}'.format(self.metric)),
-            loss=logs.get('loss'),
-            val_loss=logs.get('val_loss')
+            metric=float(logs.get(self.metric)),
+            val_metric=float(logs.get('val_{}'.format(self.metric))),
+            loss=float(logs.get('loss')),
+            val_loss=float(logs.get('val_loss'))
         )
         self._milk_client.post(history)
         # update learning figure

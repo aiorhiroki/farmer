@@ -320,7 +320,9 @@ class Reporter(Callback):
             loss=float(logs.get('loss')),
             val_loss=float(logs.get('val_loss'))
         )
-        self._milk_client.post(history)
+        farmer_res = self._milk_client.post(history)
+        if farmer_res.get('train_stopped'):
+            self.model.stop_training = True
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(
             'val_{}'.format(self.metric))], is_update=True)

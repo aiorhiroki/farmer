@@ -18,11 +18,12 @@ class MilkClient:
             headers=self.HEADERS
         )
         obj_prepped = self.obj_session.prepare_request(obj_request)
-        self.obj_session.send(
+        res = self.obj_session.send(
             obj_prepped,
             verify=True,
             timeout=60
         )
+        return res.json()
 
     def close_session(self):
         self.obj_session.close()

@@ -10,10 +10,10 @@ class MilkClient:
         self.api_url = app.config['MILK_API_URL']
         self.obj_session = Session()
 
-    def post(self, params: dict):
+    def post(self, params: dict, route: str):
         obj_request = Request(
             "POST",
-            self.api_url,
+            self.api_url + route,
             data=json.dumps(params),
             headers=self.HEADERS
         )

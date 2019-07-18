@@ -107,6 +107,17 @@ class Reporter(Callback):
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
         self._milk_client = MilkClient()
+        self._milk_client.post(
+            params=dict(
+                train_id=self.config.get('id'),
+                nb_classes=self.nb_classes,
+                height=self.height,
+                width=self.width,
+                result_dir=os.path.abspath(self._result_dir),
+                class_names=self.class_names
+            ),
+            route='first_config'
+        )
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -320,7 +331,10 @@ class Reporter(Callback):
             loss=float(logs.get('loss')),
             val_loss=float(logs.get('val_loss'))
         )
-        farmer_res = self._milk_client.post(history)
+        farmer_res = self._milk_client.post(
+            params=history,
+            route='update_history'
+        )
         if farmer_res.get('train_stopped'):
             self.model.stop_training = True
         # update learning figure

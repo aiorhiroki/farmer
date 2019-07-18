@@ -1,17 +1,20 @@
 import matplotlib.pyplot as plt
-from ncc.readers import classification_set, segmentation_set, data_set_from_annotation
-from keras.callbacks import Callback
-from keras.models import load_model
-from .model import cce_dice_loss, iou_score, build_model
+from ncc.readers import classification_set, segmentation_set
+from ncc.readers import data_set_from_annotation
+from ncc.readers import search_image_profile, search_image_colors
+from tensorflow.keras.callbacks import Callback
+from .model import build_model
 from .image_util import ImageUtil
+from .milk_client import MilkClient
 from PIL import Image
 import numpy as np
 import requests
-from configparser import ConfigParser
 import datetime
 import os
 from tqdm import tqdm
 from glob import glob
+from configparser import ConfigParser
+from farmer.ImageAnalyzer.task import Task
 import csv
 
 
@@ -29,7 +32,7 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, task, shuffle=True, result_dir=None):
+    def __init__(self, config, shuffle=True, result_dir=None):
         super().__init__()
         if result_dir is None:
             result_dir = Reporter.generate_dir_name()
@@ -46,31 +49,46 @@ class Reporter(Callback):
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
         self.create_dirs()
         self.shuffle = shuffle
-        self.task = task
-        self.metric = 'acc' if self.task == 'classification' else 'iou_score'
+        self.task = config.get('task_id')
+
+        if self.task == Task.CLASSIFICATION:
+            self.metric = 'acc'
+        else:
+            self.metric = 'iou_score'
         self.palette = self.get_palette()
 
-        self.config = ConfigParser()
-        self.config.read('config.ini')
+        self.config = config
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
 
-        self.epoch = self.config.getint('default', 'epoch')
-        self.batch_size = self.config.getint('default', 'batch_size')
-        self.optimizer = self.config.get('default', 'optimizer')
-        self.augmentation = self.config.getboolean('default', 'augmentation')
-        self.gpu = self.config['default'].get('gpu') or None
-        self.loss = self.config['default'].get('loss') or None
-        self.model_path = self.config['default'].get('model_path') or None
-        self.nb_split = self.config['default'].get('nb_split') or 1
-        self.nb_classes = self.config.getint('project_settings', 'nb_classes')
-        self.model_name = self.config.get(task + '_default', 'model')
-        self.height = self.config.getint(task + '_default', 'height')
-        self.width = self.config.getint(task + '_default', 'width')
-        self.backbone = self.config.get(task + '_default', 'backbone')
+        self.epoch = int(self.config.get('epoch'))
+        self.batch_size = int(self.config.get('batch_size'))
+        self.optimizer = self.config.get('optimizer')
+        self.augmentation = self.config.get('augmentation') == 'yes'
+        self.gpu = self.config.get('gpu')
+        self.loss = self.config.get('loss')
+        self.model_path = self.config.get('model_path')
+        self.model_name = self.config.get('model')
+        self.height = self.config.get('height')
+        self.width = self.config.get('width')
+        self.backbone = self.config.get('backbone')
 
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
-            task)
+            self.task)
+        if self.height is None or self.width is None:
+            if self.task == Task.OBJECT_DETECTION:
+                train_file_names = [line.split(' ')[0]
+                                    for line in self.train_files]
+            else:
+                train_file_names = [train_set[0]
+                                    for train_set in self.train_files]
+                self.height, self.width, self.channel = search_image_profile(
+                    train_file_names
+                )
+        else:
+            self.height = int(self.height)
+            self.width = int(self.width)
+        self.nb_classes = len(self.class_names)
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.VALIDATION_FILE, self.validation_files)
         self._write_files(self.TEST_FILE, self.test_files)
@@ -84,10 +102,22 @@ class Reporter(Callback):
             "Metric", ("epoch", self.metric), ["train", "validation"])
         self.loss_fig = self.create_figure(
             "Loss", ("epoch", "loss"), ["train", "validation"])
-        if task == 'segmentation':
+        if self.task == Task.SEMANTIC_SEGMENTATION:
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
+        self._milk_client = MilkClient()
+        self._milk_client.post(
+            params=dict(
+                train_id=self.config.get('id'),
+                nb_classes=self.nb_classes,
+                height=self.height,
+                width=self.width,
+                result_dir=os.path.abspath(self._result_dir),
+                class_names=self.class_names
+            ),
+            route='first_config'
+        )
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -117,8 +147,11 @@ class Reporter(Callback):
         os.makedirs(self.model_dir)
 
     def save_params(self, filename):
-        with open(filename, mode='w') as configfile:
-            self.config.write(configfile)
+        try:
+            with open(filename, mode='w') as configfile:
+                self.config.write(configfile)
+        except:
+            pass
 
     def read_annotation_set(self, task):
         class_names = None
@@ -129,14 +162,24 @@ class Reporter(Callback):
         validation_dirs = None
         test_dirs = None
 
-        target_dir = self.config.get(
-            'project_settings', 'target_dir')
+        target_dir = self.config.get('target_dir')
         if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
             train_dir_path = target_dir
             test_dir_path = target_dir
-            train_dirs = ['train']
-            validation_dirs = ['validation']
-            test_dirs = ['test']
+            validation_dir_path = target_dir
+
+            if not os.path.exists(os.path.join(target_dir, 'train')):
+                train_dirs = None
+            else:
+                train_dirs = ['train']
+            if not os.path.exists(os.path.join(target_dir, 'validation')):
+                validation_dirs = None
+            else:
+                validation_dirs = ['validation']
+            if not os.path.exists(os.path.join(target_dir, 'test')):
+                test_dirs = None
+            else:
+                test_dirs = ['test']
 
         else:
             train_dir_path = os.path.join(target_dir, 'train')
@@ -161,15 +204,17 @@ class Reporter(Callback):
                     in os.listdir(test_dir_path)
                     if os.path.isdir(os.path.join(test_dir_path, test_dir))
                 ]
+        if len(train_dirs) == 1 and \
+                len(glob(os.path.join(target_dir, 'train', '*.csv'))) == 1:
+            csv_train = glob(os.path.join(target_dir, 'train', '*.csv'))[0]
+            train_set = data_set_from_annotation(csv_train)
 
-        if len(train_dirs) == 1 and train_dirs[0].endswith('.csv'):
-            train_set = data_set_from_annotation(train_dirs[0])
-            if validation_dirs:
-                validation_set = data_set_from_annotation(validation_dirs[0])
-            if test_dirs:
-                test_set = data_set_from_annotation(test_dirs[0])
+            csv_tests = glob(os.path.join(target_dir, 'test', '*.csv'))
+            if len(csv_tests) == 1:
+                csv_test = csv_tests[0]
+                test_set = data_set_from_annotation(csv_test)
 
-        elif task == 'classification':
+        elif task == Task.CLASSIFICATION:
             if train_dirs:
                 train_set, class_names = classification_set(
                     train_dir_path, train_dirs
@@ -189,9 +234,9 @@ class Reporter(Callback):
                     class_names=class_names
                 )
 
-        elif task == 'segmentation':
-            image_dir = self.config.get('segmentation_default', 'image_dir')
-            label_dir = self.config.get('segmentation_default', 'label_dir')
+        elif task == Task.SEMANTIC_SEGMENTATION:
+            image_dir = self.config.get('image_dir')
+            label_dir = self.config.get('label_dir')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
@@ -199,8 +244,14 @@ class Reporter(Callback):
             if test_dirs:
                 test_set = segmentation_set(
                     test_dir_path, test_dirs, image_dir, label_dir)
-            class_names = self.config.get(
-                'segmentation_default', 'class_names').split()
+            class_names = self.config.get('class_names')
+            if class_names is not None:
+                class_names = class_names.split()
+            else:
+                train_label_files = [train_data[1]
+                                     for train_data in train_set]
+                colors = search_image_colors(train_label_files)
+                class_names = [str(color) for color in colors]
         else:
             raise NotImplementedError
 
@@ -271,18 +322,34 @@ class Reporter(Callback):
         return image_result
 
     def on_epoch_end(self, epoch, logs={}):
+        # post to milk
+        history = dict(
+            train_config_id=self.config.get('id'),
+            epoch_num=epoch,
+            metric=float(logs.get(self.metric)),
+            val_metric=float(logs.get('val_{}'.format(self.metric))),
+            loss=float(logs.get('loss')),
+            val_loss=float(logs.get('val_loss'))
+        )
+        farmer_res = self._milk_client.post(
+            params=history,
+            route='update_history'
+        )
+        if farmer_res.get('train_stopped'):
+            self.model.stop_training = True
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(
             'val_{}'.format(self.metric))], is_update=True)
         self.loss_fig.add(
             [logs.get('loss'), logs.get('val_loss')], is_update=True)
-        if self.task == 'segmentation':
+        if self.task == Task.SEMANTIC_SEGMENTATION:
             self.iou_fig.add(self.iou_validation(
                 self.validation_files, self.model), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
-            if self.task == 'segmentation':  # for segmentation evaluation
+            # for segmentation evaluation
+            if self.task == Task.SEMANTIC_SEGMENTATION:
                 train_set = self._generate_sample_result()
                 validation_set = self._generate_sample_result(training=False)
                 self.save_image_from_ndarray(
@@ -315,7 +382,7 @@ class Reporter(Callback):
         false_positive = np.sum(conf, 0) - true_positive
         false_negative = np.sum(conf, 1) - true_positive
 
-        # Just in case we get a division by 0, ignore/hide the error and set the value to 0
+        # Just in case we get a division by 0, set the value to 0
         with np.errstate(divide='ignore', invalid='ignore'):
             iou = true_positive / \
                 (true_positive + false_positive + false_negative)
@@ -339,9 +406,10 @@ class Reporter(Callback):
                       params=param, files=files)
 
     def on_train_end(self, logs=None):
+        self._milk_client.close_session()
         self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
         # evaluate on test data
-        if self.task == 'segmentation':
+        if self.task == Task.SEMANTIC_SEGMENTATION:
             last_model = build_model(
                 task=self.task,
                 model_name=self.model_name,

@@ -35,8 +35,8 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'ncc-cls=farmer.ImageAnalyzer.fit:classification',
-            'ncc-seg=farmer.ImageAnalyzer.fit:segmentation',
+            'ncc-cls=farmer.main:classification',
+            'ncc-seg=farmer.main:segmentation',
             'ncc-cls-pred=farmer.ImageAnalyzer.fit:classification_predict',
             'ncc-seg-pred=farmer.ImageAnalyzer.fit:segmentation_predict',
             'ncc-seg-eval=farmer.ImageAnalyzer.fit:segmentation_evaluation',

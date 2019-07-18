@@ -1,8 +1,9 @@
 import math
 
-from keras.utils import Sequence
+from tensorflow.python.keras.utils import Sequence
 import numpy as np
 from .image_util import ImageUtil
+from farmer.ImageAnalyzer.task import Task
 
 
 class ImageSequence(Sequence):
@@ -31,7 +32,7 @@ class ImageSequence(Sequence):
             input_image = self.image_util.read_image(
                 input_file, anti_alias=True
             )
-            if self.task == 'segmentation':
+            if self.task == Task.SEMANTIC_SEGMENTATION:
                 label = self.image_util.read_image(
                     label, normalization=False
                 )

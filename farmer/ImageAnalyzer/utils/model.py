@@ -1,4 +1,4 @@
-from ncc.models import xception, Deeplabv3, Model2D
+from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
@@ -14,13 +14,16 @@ def build_model(
         backbone='resnet50'
 ):
     if task == Task.CLASSIFICATION:
-        if height < 72 or width < 72:
+        if model_name == 'xception' and (height >= 71 or width >= 71):
+            model = xception(nb_classes, height, width)
+        elif model_name == 'mobilenet' and (height >= 32 or width >= 32):
+            model = mobilenet(nb_classes, height, width)
+        else:
             model = Model2D(
                 input_shape=(height, width, 3),
                 num_classes=nb_classes
             )
-        else:
-            model = xception(nb_classes, height, width)
+
     elif task == Task.SEMANTIC_SEGMENTATION:
         if model_name == "unet":
             model = Unet(

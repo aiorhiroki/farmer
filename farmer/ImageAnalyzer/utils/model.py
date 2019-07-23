@@ -14,9 +14,9 @@ def build_model(
         backbone='resnet50'
 ):
     if task == Task.CLASSIFICATION:
-        if model_name == 'xception' and (height >= 71 or width >= 71):
+        if model_name == 'xception' and (height >= 71 and width >= 71):
             model = xception(nb_classes, height, width)
-        elif model_name == 'mobilenet' and (height >= 32 or width >= 32):
+        elif model_name == 'mobilenet' and (height >= 32 and width >= 32):
             model = mobilenet(nb_classes, height, width)
         else:
             model = Model2D(

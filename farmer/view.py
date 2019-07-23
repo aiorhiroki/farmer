@@ -5,6 +5,8 @@ from tensorflow.keras.models import load_model
 import cv2
 import os
 import numpy as np
+import shutil
+
 
 
 @app.route('/train', methods=["POST"])
@@ -31,3 +33,10 @@ def predict():
     predictions = model.predict(input_img)[0]
     predictions = [float(prediction) for prediction in predictions]
     return make_response(jsonify(dict(prediction=predictions)))
+
+  
+@app.route('/delete_model', methods=["POST"])
+def delete_model():
+    form = request.json
+    shutil.rmtree(form.get('result_dir'))
+    return make_response('', 202)

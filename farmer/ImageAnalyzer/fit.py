@@ -52,7 +52,7 @@ def _build_model(task_id, reporter):
 
 
 def train(config):
-    task_id = config.get('task_id')
+    task_id = config['project_settings'].get('task_id')
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     if task_id == Task.CLASSIFICATION:
@@ -99,14 +99,15 @@ def train(config):
         base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
-def classification_predict():
-    task = 'classification'
-    model, reporter, multi_gpu, base_model = _build_model(task)
+def classification_predict(config, save_npy=False):
+    task_id = config['project_settings'].get('task_id')
+    reporter = rp.Reporter(config)
+    model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     test_gen = ImageSequence(
         annotations=reporter.test_files,
         input_shape=(reporter.height, reporter.width),
         nb_classes=reporter.nb_classes,
-        task=task,
+        task=task_id,
         batch_size=reporter.batch_size
     )
     prediction = model.predict_generator(
@@ -117,7 +118,10 @@ def classification_predict():
         use_multiprocessing=multi_gpu,
         verbose=1
     )
-    np.save(f'{reporter.model_name}.npy', prediction)
+    true = np.array([test_data[1] for test_data in reporter.test_files])
+    if save_npy:
+        np.save(f'{reporter.model_name}.npy', prediction)
+    return prediction, true
 
 
 def segmentation_predict():
@@ -144,6 +148,12 @@ def segmentation_evaluation():
     model, reporter, multi_gpu, base_model = _build_model(task)
     iou = reporter.iou_validation(reporter.test_files, model)
     print('IoU: ', iou)
+
+
+def classification_evaluation(config):
+    prediction, true_cls = classification_predict(config)
+
+    return prediction
 
 
 def _set_callbacks(multi_gpu, reporter, base_model=None):

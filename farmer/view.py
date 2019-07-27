@@ -2,17 +2,19 @@ from farmer import app
 from farmer.ImageAnalyzer import fit
 from flask import request, make_response, jsonify
 from tensorflow.keras.models import load_model
+from configparser import ConfigParser
 import cv2
 import os
 import numpy as np
 import shutil
 
 
-
 @app.route('/train', methods=["POST"])
 def train():
     form = request.json
-    fit.train(form)
+    parser = ConfigParser()
+    parser.read_dict(form)
+    fit.train(parser)
     return make_response('', 202)
 
 
@@ -34,7 +36,7 @@ def predict():
     predictions = [float(prediction) for prediction in predictions]
     return make_response(jsonify(dict(prediction=predictions)))
 
-  
+
 @app.route('/delete_model', methods=["POST"])
 def delete_model():
     form = request.json

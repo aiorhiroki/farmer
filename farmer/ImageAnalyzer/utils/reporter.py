@@ -49,7 +49,7 @@ class Reporter(Callback):
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
         self.create_dirs()
         self.shuffle = shuffle
-        self.task = config.get('task_id')
+        self.task = config['project_settings'].get('task_id')
 
         if self.task == Task.CLASSIFICATION:
             self.metric = 'acc'
@@ -61,17 +61,20 @@ class Reporter(Callback):
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
 
-        self.epoch = int(self.config.get('epoch'))
-        self.batch_size = int(self.config.get('batch_size'))
-        self.optimizer = self.config.get('optimizer')
-        self.augmentation = self.config.get('augmentation') == 'yes'
-        self.gpu = self.config.get('gpu')
-        self.loss = self.config.get('loss')
-        self.model_path = self.config.get('model_path')
-        self.model_name = self.config.get('model')
-        self.height = self.config.get('height')
-        self.width = self.config.get('width')
-        self.backbone = self.config.get('backbone')
+        config_default = self.config['default']
+        self.epoch = int(config_default.get('epoch'))
+        self.batch_size = int(config_default.get('batch_size'))
+        self.optimizer = config_default.get('optimizer')
+        self.augmentation = config_default.get('augmentation') == 'yes'
+        self.gpu = config_default.get('gpu')
+        self.loss = config_default.get('loss')
+        self.model_path = config_default.get('model_path')
+
+        config_params = self.config['training params']
+        self.model_name = config_params.get('model')
+        self.height = config_params.get('height')
+        self.width = config_params.get('width')
+        self.backbone = config_params.get('backbone')
 
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
             self.task)
@@ -106,18 +109,20 @@ class Reporter(Callback):
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
-        self._milk_client = MilkClient()
-        self._milk_client.post(
-            params=dict(
-                train_id=self.config.get('id'),
-                nb_classes=self.nb_classes,
-                height=self.height,
-                width=self.width,
-                result_dir=os.path.abspath(self._result_dir),
-                class_names=self.class_names
-            ),
-            route='first_config'
-        )
+        milk_id = self.config['project_settings'].get('id')
+        if milk_id:
+            self._milk_client = MilkClient()
+            self._milk_client.post(
+                params=dict(
+                    train_id=milk_id,
+                    nb_classes=self.nb_classes,
+                    height=self.height,
+                    width=self.width,
+                    result_dir=os.path.abspath(self._result_dir),
+                    class_names=self.class_names
+                ),
+                route='first_config'
+            )
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -147,11 +152,8 @@ class Reporter(Callback):
         os.makedirs(self.model_dir)
 
     def save_params(self, filename):
-        try:
-            with open(filename, mode='w') as configfile:
-                self.config.write(configfile)
-        except:
-            pass
+        with open(filename, mode='w') as configfile:
+            self.config.write(configfile)
 
     def read_annotation_set(self, task):
         class_names = None
@@ -235,8 +237,8 @@ class Reporter(Callback):
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config.get('image_dir')
-            label_dir = self.config.get('label_dir')
+            image_dir = self.config['training params'].get('image_dir')
+            label_dir = self.config['training params'].get('label_dir')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
@@ -244,7 +246,7 @@ class Reporter(Callback):
             if test_dirs:
                 test_set = segmentation_set(
                     test_dir_path, test_dirs, image_dir, label_dir)
-            class_names = self.config.get('class_names')
+            class_names = self.config['training params'].get('class_names')
             if class_names is not None:
                 class_names = class_names.split()
             else:
@@ -323,20 +325,22 @@ class Reporter(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         # post to milk
-        history = dict(
-            train_config_id=self.config.get('id'),
-            epoch_num=epoch,
-            metric=float(logs.get(self.metric)),
-            val_metric=float(logs.get('val_{}'.format(self.metric))),
-            loss=float(logs.get('loss')),
-            val_loss=float(logs.get('val_loss'))
-        )
-        farmer_res = self._milk_client.post(
-            params=history,
-            route='update_history'
-        )
-        if farmer_res.get('train_stopped'):
-            self.model.stop_training = True
+        milk_id = self.config['project_settings'].get('id')
+        if milk_id:
+            history = dict(
+                train_config_id=milk_id,
+                epoch_num=epoch,
+                metric=float(logs.get(self.metric)),
+                val_metric=float(logs.get('val_{}'.format(self.metric))),
+                loss=float(logs.get('loss')),
+                val_loss=float(logs.get('val_loss'))
+            )
+            farmer_res = self._milk_client.post(
+                params=history,
+                route='update_history'
+            )
+            if farmer_res.get('train_stopped'):
+                self.model.stop_training = True
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(
             'val_{}'.format(self.metric))], is_update=True)

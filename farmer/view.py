@@ -38,6 +38,16 @@ def predict():
     return make_response(jsonify(dict(prediction=predictions)))
 
 
+@app.route('/test', methods=["POST"])
+def test():
+    form = request.json
+    form = {k: v for (k, v) in form.items() if v}
+    parser = ConfigParser()
+    parser['project_settings'] = form
+    report = fit.evaluate(parser)
+    return make_response(jsonify(report))
+
+
 @app.route('/delete_model', methods=["POST"])
 def delete_model():
     form = request.json

@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import cv2
+from sklearn import metrics
 from tqdm import tqdm
 from .utils import reporter as rp
 from .utils.model import build_model, iou_score
@@ -143,6 +144,15 @@ def segmentation_predict():
         cv2.imwrite(os.path.join(reporter.image_test_dir, file_name), output)
 
 
+def evaluate(config):
+    task_id = int(config['project_settings'].get('task_id'))
+    if task_id == Task.CLASSIFICATION:
+        eval_report = classification_evaluation(config)
+    elif task_id == Task.SEMANTIC_SEGMENTATION:
+        eval_report = segmentation_evaluation(config)
+    return eval_report
+
+
 def segmentation_evaluation():
     task = 'segmentation'
     model, reporter, multi_gpu, base_model = _build_model(task)
@@ -151,9 +161,22 @@ def segmentation_evaluation():
 
 
 def classification_evaluation(config):
+    class_names = config['project_settings'].get('class_names')
     prediction, true_cls = classification_predict(config)
+    prediction_cls = np.argmax(prediction)
+    true = np.eye(len(class_names), dtype=np.uint8)[true_cls]
+    eval_report = metrics.classification_report(
+        true_cls, prediction_cls
+    )
+    fpr, tpr, thresholds = metrics.roc_curve(true, prediction)
+    auc = metrics.auc(fpr, tpr)
+    eval_report.update(
+        dict(
+            fpr=fpr, tpr=tpr, thresholds=thresholds, auc=auc
+        )
+    )
 
-    return prediction
+    return eval_report
 
 
 def _set_callbacks(multi_gpu, reporter, base_model=None):

@@ -52,7 +52,7 @@ def _build_model(task_id, reporter):
 
 
 def train(config):
-    task_id = config['project_settings'].get('task_id')
+    task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     if task_id == Task.CLASSIFICATION:
@@ -100,7 +100,7 @@ def train(config):
 
 
 def classification_predict(config, save_npy=False):
-    task_id = config['project_settings'].get('task_id')
+    task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     test_gen = ImageSequence(

@@ -12,8 +12,9 @@ import shutil
 @app.route('/train', methods=["POST"])
 def train():
     form = request.json
+    form = {k: v for (k, v) in form.items() if v}
     parser = ConfigParser()
-    parser.read_dict(form)
+    parser['project_settings'] = form
     fit.train(parser)
     return make_response('', 202)
 

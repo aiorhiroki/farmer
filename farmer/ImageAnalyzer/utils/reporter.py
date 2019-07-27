@@ -49,7 +49,7 @@ class Reporter(Callback):
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
         self.create_dirs()
         self.shuffle = shuffle
-        self.task = config['project_settings'].get('task_id')
+        self.task = int(config['project_settings'].get('task_id'))
 
         if self.task == Task.CLASSIFICATION:
             self.metric = 'acc'
@@ -61,16 +61,15 @@ class Reporter(Callback):
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
 
-        config_default = self.config['default']
-        self.epoch = int(config_default.get('epoch'))
-        self.batch_size = int(config_default.get('batch_size'))
-        self.optimizer = config_default.get('optimizer')
-        self.augmentation = config_default.get('augmentation') == 'yes'
-        self.gpu = config_default.get('gpu')
-        self.loss = config_default.get('loss')
-        self.model_path = config_default.get('model_path')
+        config_params = self.config['project_settings']
+        self.epoch = int(config_params.get('epoch'))
+        self.batch_size = int(config_params.get('batch_size'))
+        self.optimizer = config_params.get('optimizer')
+        self.augmentation = config_params.get('augmentation') == 'yes'
+        self.gpu = config_params.get('gpu')
+        self.loss = config_params.get('loss')
+        self.model_path = config_params.get('model_path')
 
-        config_params = self.config['training params']
         self.model_name = config_params.get('model')
         self.height = config_params.get('height')
         self.width = config_params.get('width')
@@ -114,7 +113,7 @@ class Reporter(Callback):
             self._milk_client = MilkClient()
             self._milk_client.post(
                 params=dict(
-                    train_id=milk_id,
+                    train_id=int(milk_id),
                     nb_classes=self.nb_classes,
                     height=self.height,
                     width=self.width,
@@ -164,7 +163,7 @@ class Reporter(Callback):
         validation_dirs = None
         test_dirs = None
 
-        target_dir = self.config.get('target_dir')
+        target_dir = self.config['project_settings'].get('target_dir')
         if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
             train_dir_path = target_dir
             test_dir_path = target_dir
@@ -237,8 +236,8 @@ class Reporter(Callback):
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config['training params'].get('image_dir')
-            label_dir = self.config['training params'].get('label_dir')
+            image_dir = self.config['project_settings'].get('image_dir')
+            label_dir = self.config['project_settings'].get('label_dir')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
@@ -246,7 +245,7 @@ class Reporter(Callback):
             if test_dirs:
                 test_set = segmentation_set(
                     test_dir_path, test_dirs, image_dir, label_dir)
-            class_names = self.config['training params'].get('class_names')
+            class_names = self.config['project_settings'].get('class_names')
             if class_names is not None:
                 class_names = class_names.split()
             else:
@@ -328,7 +327,7 @@ class Reporter(Callback):
         milk_id = self.config['project_settings'].get('id')
         if milk_id:
             history = dict(
-                train_config_id=milk_id,
+                train_config_id=int(milk_id),
                 epoch_num=epoch,
                 metric=float(logs.get(self.metric)),
                 val_metric=float(logs.get('val_{}'.format(self.metric))),

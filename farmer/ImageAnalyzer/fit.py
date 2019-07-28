@@ -10,6 +10,7 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
+from ncc.metrics import roc
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
@@ -161,21 +162,19 @@ def segmentation_evaluation():
 
 
 def classification_evaluation(config):
-    class_names = config['project_settings'].get('class_names')
+    nb_classes = int(config['project_settings'].get('nb_classes'))
     prediction, true_cls = classification_predict(config)
-    prediction_cls = np.argmax(prediction)
-    true = np.eye(len(class_names), dtype=np.uint8)[true_cls]
+    prediction_cls = np.argmax(prediction, axis=1)
+    true = np.eye(nb_classes, dtype=np.uint8)[true_cls]
     eval_report = metrics.classification_report(
-        true_cls, prediction_cls
+        true_cls, prediction_cls, output_dict=True
     )
-    fpr, tpr, thresholds = metrics.roc_curve(true, prediction)
-    auc = metrics.auc(fpr, tpr)
+    fpr, tpr, auc = roc(true, prediction, nb_classes, show_plot=False)
     eval_report.update(
         dict(
-            fpr=fpr, tpr=tpr, thresholds=thresholds, auc=auc
+            fpr=list(fpr['macro']), tpr=list(tpr['macro']), auc=auc['macro']
         )
     )
-
     return eval_report
 
 

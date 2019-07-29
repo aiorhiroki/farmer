@@ -44,6 +44,12 @@ def test():
     form = {k: v for (k, v) in form.items() if v}
     parser = ConfigParser()
     parser['project_settings'] = form
+    model_path = os.path.join(
+        form["result_dir"],
+        'model',
+        'best_model.h5'
+    )
+    parser['project_settings']['model_path'] = model_path
     report = fit.evaluate(parser)
     return make_response(jsonify(report))
 

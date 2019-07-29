@@ -16,7 +16,7 @@ def train():
     parser = ConfigParser()
     parser['project_settings'] = form
     fit.train(parser)
-    return make_response('', 202)
+    return make_response(jsonify(dict()), 200)
 
 
 @app.route('/predict', methods=["POST"])

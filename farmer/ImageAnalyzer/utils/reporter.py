@@ -77,7 +77,8 @@ class Reporter(Callback):
         self.backbone = config_params.get('backbone')
 
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
-            self.task)
+            self.task, training
+        )
         if self.height is None or self.width is None:
             if self.task == Task.OBJECT_DETECTION:
                 train_file_names = [line.split(' ')[0]

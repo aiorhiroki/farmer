@@ -64,6 +64,7 @@ class Reporter(Callback):
         config_params = self.config['project_settings']
         self.epoch = int(config_params.get('epoch'))
         self.batch_size = int(config_params.get('batch_size'))
+        self.learning_rate = float(config_params.get('learning_rate'))
         self.optimizer = config_params.get('optimizer')
         self.augmentation = config_params.get('augmentation') == 'yes'
         self.gpu = config_params.get('gpu')

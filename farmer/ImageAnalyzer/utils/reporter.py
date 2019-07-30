@@ -32,7 +32,7 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, config, shuffle=True, result_dir=None):
+    def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
         if result_dir is None:
             result_dir = Reporter.generate_dir_name()
@@ -47,7 +47,8 @@ class Reporter(Callback):
         self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
-        self.create_dirs()
+        if training:
+            self.create_dirs()
         self.shuffle = shuffle
         self.task = int(config['project_settings'].get('task_id'))
 
@@ -97,7 +98,8 @@ class Reporter(Callback):
 
         self.config['Data'] = {'train files': len(self.train_files),
                                'validation_files': len(self.validation_files)}
-        self.save_params(self._parameter)
+        if training:
+            self.save_params(self._parameter)
 
         self._plot_manager = MatPlotManager(self._learning_dir)
         self.accuracy_fig = self.create_figure(
@@ -109,7 +111,7 @@ class Reporter(Callback):
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
         milk_id = self.config['project_settings'].get('id')
-        if milk_id:
+        if milk_id and training:
             self._milk_client = MilkClient()
             self._milk_client.post(
                 params=dict(

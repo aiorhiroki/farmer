@@ -103,7 +103,7 @@ def train(config):
 
 def classification_predict(config, save_npy=False):
     task_id = int(config['project_settings'].get('task_id'))
-    reporter = rp.Reporter(config)
+    reporter = rp.Reporter(config, training=False)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     test_gen = ImageSequence(
         annotations=reporter.test_files,

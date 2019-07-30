@@ -9,9 +9,10 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
+from keras import optimizers
 from tensorflow.keras.utils import multi_gpu_model
 from .task import Task
 
@@ -55,12 +56,21 @@ def train(config):
     task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
+    if reporter.optimizer == 'adam':
+        optimizer = optimizers.Adam(
+            lr=reporter.learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+        )
+    else:
+        optimizer = optimizers.SGD(
+            lr=reporter.learning_rate, momentum=0.9, decay=0.001
+        )
+
     if task_id == Task.CLASSIFICATION:
-        model.compile(reporter.optimizer,
+        model.compile(optimizer,
                       loss=categorical_crossentropy, metrics=['acc'])
     elif task_id == Task.SEMANTIC_SEGMENTATION:
         model.compile(
-            reporter.optimizer,
+            optimizer,
             loss=cce_dice_loss,
             metrics=[iou_score]
         )
@@ -170,4 +180,5 @@ def _set_callbacks(multi_gpu, reporter, base_model=None):
             filepath=os.path.join(reporter.model_dir, best_model_name),
             save_best_only=True,
         )
-    return [reporter, checkpoint]
+    reduce_lr = ReduceLROnPlateau(factor=0.1, patience=3, verbose=1)
+    return [reporter, checkpoint, reduce_lr]

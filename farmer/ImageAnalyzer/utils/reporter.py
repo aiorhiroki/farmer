@@ -92,9 +92,9 @@ class Reporter(Callback):
             self.height = int(self.height)
             self.width = int(self.width)
         self.nb_classes = len(self.class_names)
-        self._write_files(self.TRAIN_FILE, self.train_files)
-        self._write_files(self.VALIDATION_FILE, self.validation_files)
-        self._write_files(self.TEST_FILE, self.test_files)
+        if training:
+            self._write_files(self.TRAIN_FILE, self.train_files)
+            self._write_files(self.VALIDATION_FILE, self.validation_files)
 
         self.config['Data'] = {'train files': len(self.train_files),
                                'validation_files': len(self.validation_files)}
@@ -156,7 +156,7 @@ class Reporter(Callback):
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
 
-    def read_annotation_set(self, task):
+    def read_annotation_set(self, task, training):
         class_names = None
         train_set = list()
         validation_set = list()
@@ -179,15 +179,17 @@ class Reporter(Callback):
                 validation_dirs = None
             else:
                 validation_dirs = ['validation']
-            if not os.path.exists(os.path.join(target_dir, 'test')):
+            if not os.path.exists(target_dir) or training:
                 test_dirs = None
             else:
-                test_dirs = ['test']
+                target_dir_paths = target_dir.split('/')
+                test_dir_path = '/'.join(target_dir_paths[:-1])
+                test_dirs = [target_dir_paths[-1]]
 
         else:
             train_dir_path = os.path.join(target_dir, 'train')
             validation_dir_path = os.path.join(target_dir, 'validation')
-            test_dir_path = os.path.join(target_dir, 'test')
+            test_dir_path = target_dir
             if os.path.exists(train_dir_path):
                 train_dirs = [
                     train_dir for train_dir
@@ -201,7 +203,7 @@ class Reporter(Callback):
                     if os.path.isdir(os.path.join(
                         validation_dir_path, validation_dir))
                 ]
-            if os.path.exists(test_dir_path):
+            if not training and os.path.exists(test_dir_path):
                 test_dirs = [
                     test_dir for test_dir
                     in os.listdir(test_dir_path)

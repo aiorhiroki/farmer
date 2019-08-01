@@ -17,6 +17,7 @@ from tensorflow.keras.utils import multi_gpu_model
 from .task import Task
 from keras import backend as K
 import random as rn
+import multiprocessing as mp
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -26,6 +27,21 @@ if __name__ == "__main__" and __package__ is None:
 
 
 def _build_model(task_id, reporter):
+    # set random_seed
+    os.environ['PYTHONHASHSEED'] = '1'
+    np.random.seed(1)
+    rn.seed(1)
+    core_num = mp.cpu_count()
+    
+    session_conf = tf.ConfigProto(
+        intra_op_parallelism_threads=core_num,
+        inter_op_parallelism_threads=core_num
+    )
+
+    tf.set_random_seed(1)
+    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+    K.set_session(sess)
+    
     multi_gpu = False
 
     with tf.device("/cpu:0"):
@@ -55,21 +71,6 @@ def _build_model(task_id, reporter):
 
 
 def train(config):
-    # set random_seed
-    os.environ['PYTHONHASHSEED'] = '1'
-    np.random.seed(1)
-    rn.seed(1)
-
-    session_conf = tf.ConfigProto(
-        intra_op_parallelism_threads=1,
-        inter_op_parallelism_threads=1
-    )
-
-    tf.set_random_seed(1)
-    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-    K.set_session(sess)
-
-
     task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)

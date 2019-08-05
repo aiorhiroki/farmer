@@ -12,7 +12,7 @@ from ncc.callbacks import MultiGPUCheckpointCallback
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
-from keras import optimizers
+from tensorflow.keras import optimizers
 from tensorflow.keras.utils import multi_gpu_model
 from .task import Task
 from keras import backend as K
@@ -32,7 +32,7 @@ def _build_model(task_id, reporter):
     np.random.seed(1)
     rn.seed(1)
     core_num = mp.cpu_count()
-    
+
     session_conf = tf.ConfigProto(
         intra_op_parallelism_threads=core_num,
         inter_op_parallelism_threads=core_num
@@ -41,7 +41,7 @@ def _build_model(task_id, reporter):
     tf.set_random_seed(1)
     sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
     K.set_session(sess)
-    
+
     multi_gpu = False
 
     with tf.device("/cpu:0"):
@@ -84,11 +84,14 @@ def train(config):
         )
 
     if task_id == Task.CLASSIFICATION:
-        model.compile(optimizer,
-                      loss=categorical_crossentropy, metrics=['acc'])
+        model.compile(
+            optimizer=optimizer,
+            loss=categorical_crossentropy,
+            metrics=['acc']
+        )
     elif task_id == Task.SEMANTIC_SEGMENTATION:
         model.compile(
-            optimizer,
+            optimizer=optimizer,
             loss=cce_dice_loss,
             metrics=[iou_score]
         )

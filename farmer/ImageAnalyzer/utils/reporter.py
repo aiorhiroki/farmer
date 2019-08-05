@@ -158,7 +158,8 @@ class Reporter(Callback):
             self.config.write(configfile)
 
     def read_annotation_set(self, task, training):
-        class_names = None
+        class_names = self.config['project_settings'].get('class_names')
+        class_names = class_names.split()
         train_set = list()
         validation_set = list()
         test_set = list()
@@ -210,17 +211,8 @@ class Reporter(Callback):
                     in os.listdir(test_dir_path)
                     if os.path.isdir(os.path.join(test_dir_path, test_dir))
                 ]
-        if len(train_dirs) == 1 and \
-                len(glob(os.path.join(target_dir, 'train', '*.csv'))) == 1:
-            csv_train = glob(os.path.join(target_dir, 'train', '*.csv'))[0]
-            train_set = data_set_from_annotation(csv_train)
 
-            csv_tests = glob(os.path.join(target_dir, 'test', '*.csv'))
-            if len(csv_tests) == 1:
-                csv_test = csv_tests[0]
-                test_set = data_set_from_annotation(csv_test)
-
-        elif task == Task.CLASSIFICATION:
+        if task == Task.CLASSIFICATION:
             if train_dirs:
                 train_set, class_names = classification_set(
                     train_dir_path, train_dirs

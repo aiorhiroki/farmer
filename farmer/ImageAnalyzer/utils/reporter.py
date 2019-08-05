@@ -71,7 +71,7 @@ class Reporter(Callback):
         self.loss = config_params.get('loss')
         self.model_path = config_params.get('model_path')
 
-        self.model_name = config_params.get('model')
+        self.model_name = config_params.get('model_name')
         self.height = config_params.get('height')
         self.width = config_params.get('width')
         self.backbone = config_params.get('backbone')
@@ -237,8 +237,8 @@ class Reporter(Callback):
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config['project_settings'].get('image_dir')
-            label_dir = self.config['project_settings'].get('label_dir')
+            image_dir = self.config['project_settings'].get('image_folder')
+            label_dir = self.config['project_settings'].get('mask_folder')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(

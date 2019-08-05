@@ -25,13 +25,14 @@ def build_model(
             )
 
     elif task == Task.SEMANTIC_SEGMENTATION:
+        print(model_name)
         if model_name == "unet":
             model = Unet(
                 backbone,
                 input_shape=(height, width, 3),
                 classes=nb_classes
             )
-        elif model_name == "deeplabv3":
+        elif model_name == "deeplab_v3":
             model = Deeplabv3(
                 input_shape=(height, width, 3),
                 classes=nb_classes,

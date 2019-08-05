@@ -158,8 +158,11 @@ class Reporter(Callback):
             self.config.write(configfile)
 
     def read_annotation_set(self, task, training):
-        class_names = self.config['project_settings'].get('class_names')
-        class_names = class_names.split()
+        if training:
+            class_names = None
+        else:
+            class_names = self.config['project_settings'].get('class_names')
+            class_names = class_names.split()
         train_set = list()
         validation_set = list()
         test_set = list()

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set
 from ncc.readers import data_set_from_annotation
 from ncc.readers import search_image_profile, search_image_colors
+from ncc.utils import palette
 from tensorflow.keras.callbacks import Callback
 from .model import build_model
 from .image_util import ImageUtil
@@ -55,27 +56,7 @@ class Reporter(Callback):
             self.metric = 'acc'
         else:
             self.metric = 'iou_score'
-        self.palette = self.get_palette()
-
-        self.config = config
-        self.secret_config = ConfigParser()
-        self.secret_config.read('secret.ini')
-
-        config_params = self.config['project_settings']
-        self.epoch = int(config_params.get('epoch'))
-        self.batch_size = int(config_params.get('batch_size'))
-        self.learning_rate = float(config_params.get('learning_rate'))
-        self.optimizer = config_params.get('optimizer')
-        self.augmentation = config_params.get('augmentation') == 'yes'
-        self.gpu = config_params.get('gpu')
-        self.loss = config_params.get('loss')
-        self.model_path = config_params.get('model_path')
-
-        self.model_name = config_params.get('model_name')
-        self.height = config_params.get('height')
-        self.width = config_params.get('width')
-        self.backbone = config_params.get('backbone')
-
+        self._set_config_variables(config)
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
             self.task)
         if self.height is None or self.width is None:
@@ -124,6 +105,27 @@ class Reporter(Callback):
                 route='first_config'
             )
 
+    def _set_config_variables(self, config):
+        # configに入っている値をインスタンス変数にする。
+        self.config = config
+        config_params = self.config['project_settings']
+        self.epoch = int(config_params.get('epoch'))
+        self.batch_size = int(config_params.get('batch_size'))
+        self.learning_rate = float(config_params.get('learning_rate'))
+        self.optimizer = config_params.get('optimizer')
+        self.augmentation = config_params.get('augmentation') == 'yes'
+        self.gpu = config_params.get('gpu')
+        self.loss = config_params.get('loss')
+        self.model_path = config_params.get('model_path')
+
+        self.model_name = config_params.get('model_name')
+        self.height = config_params.get('height')
+        self.width = config_params.get('width')
+        self.backbone = config_params.get('backbone')
+
+        self.secret_config = ConfigParser()
+        self.secret_config.read('secret.ini')
+
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
         with open(csv_path, 'w') as fw:
@@ -133,12 +135,6 @@ class Reporter(Callback):
     @staticmethod
     def generate_dir_name():
         return datetime.datetime.today().strftime("%Y%m%d_%H%M")
-
-    # カラーパレットを取得
-    @staticmethod
-    def get_palette():
-        from ncc.utils import palette
-        return palette.palettes
 
     def create_dirs(self):
         os.makedirs(self._root_dir, exist_ok=True)
@@ -357,7 +353,7 @@ class Reporter(Callback):
                 train_set = self._generate_sample_result()
                 validation_set = self._generate_sample_result(training=False)
                 self.save_image_from_ndarray(
-                    train_set, validation_set, self.palette, epoch)
+                    train_set, validation_set, palette.palettes, epoch)
 
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()

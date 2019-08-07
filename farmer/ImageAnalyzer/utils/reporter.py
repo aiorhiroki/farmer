@@ -35,20 +35,7 @@ class Reporter(Callback):
 
     def __init__(self, config, shuffle=True, result_dir=None):
         super().__init__()
-        if result_dir is None:
-            result_dir = Reporter.generate_dir_name()
-        self._root_dir = self.ROOT_DIR
-        self._result_dir = os.path.join(self._root_dir, result_dir)
-        self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
-        self._image_train_dir = os.path.join(self._image_dir, "train")
-        self._image_validation_dir = os.path.join(
-            self._image_dir, "validation")
-        self.image_test_dir = os.path.join(self._image_dir, "test")
-        self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
-        self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
-        self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
-        self._parameter = os.path.join(self._info_dir, self.PARAMETER)
-        self.create_dirs()
+        self._create_dirs(result_dir)
         self.shuffle = shuffle
         self.task = int(config['project_settings'].get('task_id'))
 
@@ -132,11 +119,29 @@ class Reporter(Callback):
             writer = csv.writer(fw)
             writer.writerows(file_names)
 
-    @staticmethod
-    def generate_dir_name():
-        return datetime.datetime.today().strftime("%Y%m%d_%H%M")
+    def _create_dirs(self, result_dir):
+        # 結果を保存するディレクトリを目的別に作ります。
+        if result_dir is None:
+            result_dir = datetime.datetime.today().strftime("%Y%m%d_%H%M")
 
-    def create_dirs(self):
+        self._root_dir = self.ROOT_DIR
+        self._result_dir = os.path.join(self._root_dir, result_dir)
+        self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
+        self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
+        self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
+        self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
+        self._parameter = os.path.join(self._info_dir, self.PARAMETER)
+
+        self._image_train_dir = os.path.join(
+            self._image_dir, "train"
+        )
+        self._image_validation_dir = os.path.join(
+            self._image_dir, "validation"
+        )
+        self.image_test_dir = os.path.join(
+            self._image_dir, "test"
+        )
+
         os.makedirs(self._root_dir, exist_ok=True)
         os.makedirs(self._result_dir)
         os.makedirs(self._image_dir)

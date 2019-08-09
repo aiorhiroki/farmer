@@ -142,15 +142,12 @@ class Reporter(Callback):
             self._image_dir, "test"
         )
 
-        os.makedirs(self._root_dir, exist_ok=True)
-        os.makedirs(self._result_dir)
-        os.makedirs(self._image_dir)
-        os.makedirs(self._image_train_dir)
-        os.makedirs(self._image_validation_dir)
-        os.makedirs(self.image_test_dir)
-        os.makedirs(self._learning_dir)
-        os.makedirs(self._info_dir)
-        os.makedirs(self.model_dir)
+        os.makedirs(self._image_train_dir, exist_ok=True)
+        os.makedirs(self._image_validation_dir, exist_ok=True)
+        os.makedirs(self.image_test_dir, exist_ok=True)
+        os.makedirs(self._learning_dir, exist_ok=True)
+        os.makedirs(self._info_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
     def save_params(self, filename):
         with open(filename, mode='w') as configfile:

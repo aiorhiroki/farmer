@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set
 from ncc.readers import data_set_from_annotation
 from ncc.readers import search_image_profile, search_image_colors
-from ncc.utils import palette
 from tensorflow.keras.callbacks import Callback
 from .model import build_model
 from .image_util import ImageUtil
@@ -35,7 +34,20 @@ class Reporter(Callback):
 
     def __init__(self, config, shuffle=True, result_dir=None):
         super().__init__()
-        self._create_dirs(result_dir)
+        if result_dir is None:
+            result_dir = Reporter.generate_dir_name()
+        self._root_dir = self.ROOT_DIR
+        self._result_dir = os.path.join(self._root_dir, result_dir)
+        self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
+        self._image_train_dir = os.path.join(self._image_dir, "train")
+        self._image_validation_dir = os.path.join(
+            self._image_dir, "validation")
+        self.image_test_dir = os.path.join(self._image_dir, "test")
+        self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
+        self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
+        self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
+        self._parameter = os.path.join(self._info_dir, self.PARAMETER)
+        self.create_dirs()
         self.shuffle = shuffle
         self.task = int(config['project_settings'].get('task_id'))
 
@@ -43,7 +55,27 @@ class Reporter(Callback):
             self.metric = 'acc'
         else:
             self.metric = 'iou_score'
-        self._set_config_variables(config)
+        self.palette = self.get_palette()
+
+        self.config = config
+        self.secret_config = ConfigParser()
+        self.secret_config.read('secret.ini')
+
+        config_params = self.config['project_settings']
+        self.epoch = int(config_params.get('epoch'))
+        self.batch_size = int(config_params.get('batch_size'))
+        self.learning_rate = float(config_params.get('learning_rate'))
+        self.optimizer = config_params.get('optimizer')
+        self.augmentation = config_params.get('augmentation') == 'yes'
+        self.gpu = config_params.get('gpu')
+        self.loss = config_params.get('loss')
+        self.model_path = config_params.get('model_path')
+
+        self.model_name = config_params.get('model')
+        self.height = config_params.get('height')
+        self.width = config_params.get('width')
+        self.backbone = config_params.get('backbone')
+
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
             self.task)
         if self.height is None or self.width is None:
@@ -92,65 +124,32 @@ class Reporter(Callback):
                 route='first_config'
             )
 
-    def _set_config_variables(self, config):
-        # configに入っている値をインスタンス変数にする。
-        self.config = config
-        config_params = self.config['project_settings']
-        self.epoch = int(config_params.get('epoch'))
-        self.batch_size = int(config_params.get('batch_size'))
-        self.learning_rate = float(config_params.get('learning_rate'))
-        self.optimizer = config_params.get('optimizer')
-        self.augmentation = config_params.get('augmentation') == 'yes'
-        self.gpu = config_params.get('gpu')
-        self.loss = config_params.get('loss')
-        self.model_path = config_params.get('model_path')
-
-        self.model_name = config_params.get('model_name')
-        self.height = config_params.get('height')
-        self.width = config_params.get('width')
-        self.backbone = config_params.get('backbone')
-
-        self.secret_config = ConfigParser()
-        self.secret_config.read('secret.ini')
-
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
         with open(csv_path, 'w') as fw:
             writer = csv.writer(fw)
             writer.writerows(file_names)
 
-    def _create_dirs(self, result_dir):
-        # 結果を保存するディレクトリを目的別に作ります。
-        if result_dir is None:
-            result_dir = datetime.datetime.today().strftime("%Y%m%d_%H%M")
+    @staticmethod
+    def generate_dir_name():
+        return datetime.datetime.today().strftime("%Y%m%d_%H%M")
 
-        self._root_dir = self.ROOT_DIR
-        self._result_dir = os.path.join(self._root_dir, result_dir)
-        self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
-        self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
-        self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
-        self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
-        self._parameter = os.path.join(self._info_dir, self.PARAMETER)
+    # カラーパレットを取得
+    @staticmethod
+    def get_palette():
+        from ncc.utils import palette
+        return palette.palettes
 
-        self._image_train_dir = os.path.join(
-            self._image_dir, "train"
-        )
-        self._image_validation_dir = os.path.join(
-            self._image_dir, "validation"
-        )
-        self.image_test_dir = os.path.join(
-            self._image_dir, "test"
-        )
-
+    def create_dirs(self):
         os.makedirs(self._root_dir, exist_ok=True)
-        os.makedirs(self._result_dir)
-        os.makedirs(self._image_dir)
-        os.makedirs(self._image_train_dir)
-        os.makedirs(self._image_validation_dir)
-        os.makedirs(self.image_test_dir)
-        os.makedirs(self._learning_dir)
-        os.makedirs(self._info_dir)
-        os.makedirs(self.model_dir)
+        os.makedirs(self._result_dir, exist_ok=True)
+        os.makedirs(self._image_dir, exist_ok=True)
+        os.makedirs(self._image_train_dir, exist_ok=True)
+        os.makedirs(self._image_validation_dir, exist_ok=True)
+        os.makedirs(self.image_test_dir, exist_ok=True)
+        os.makedirs(self._learning_dir, exist_ok=True)
+        os.makedirs(self._info_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
     def save_params(self, filename):
         with open(filename, mode='w') as configfile:
@@ -238,8 +237,8 @@ class Reporter(Callback):
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config['project_settings'].get('image_folder')
-            label_dir = self.config['project_settings'].get('mask_folder')
+            image_dir = self.config['project_settings'].get('image_dir')
+            label_dir = self.config['project_settings'].get('label_dir')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
@@ -358,7 +357,7 @@ class Reporter(Callback):
                 train_set = self._generate_sample_result()
                 validation_set = self._generate_sample_result(training=False)
                 self.save_image_from_ndarray(
-                    train_set, validation_set, palette.palettes, epoch)
+                    train_set, validation_set, self.palette, epoch)
 
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()

@@ -142,9 +142,6 @@ class Reporter(Callback):
             self._image_dir, "test"
         )
 
-        os.makedirs(self._root_dir, exist_ok=True)
-        os.makedirs(self._result_dir, exist_ok=True)
-        os.makedirs(self._image_dir, exist_ok=True)
         os.makedirs(self._image_train_dir, exist_ok=True)
         os.makedirs(self._image_validation_dir, exist_ok=True)
         os.makedirs(self.image_test_dir, exist_ok=True)

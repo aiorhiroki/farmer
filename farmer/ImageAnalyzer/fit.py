@@ -31,8 +31,13 @@ def _build_model(task_id, reporter):
     os.environ['PYTHONHASHSEED'] = '1'
     np.random.seed(1)
     rn.seed(1)
-    core_num = mp.cpu_count()
 
+    if reporter.gpu is not None:
+        os.environ['CUDA_VISIBLE_DEVICES'] = reporter.gpu
+        nb_gpu = len(reporter.gpu.split(','))
+        multi_gpu = nb_gpu > 1
+
+    core_num = mp.cpu_count()
     session_conf = tf.ConfigProto(
         intra_op_parallelism_threads=core_num,
         inter_op_parallelism_threads=core_num
@@ -53,11 +58,6 @@ def _build_model(task_id, reporter):
             width=reporter.width,
             backbone=reporter.backbone
         )
-
-    if reporter.gpu is not None:
-        os.environ['CUDA_VISIBLE_DEVICES'] = reporter.gpu
-        nb_gpu = len(reporter.gpu.split(','))
-        multi_gpu = nb_gpu > 1
 
     if reporter.model_path is not None:
         base_model.load_weights(reporter.model_path)

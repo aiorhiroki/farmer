@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 from ncc.readers import classification_set, segmentation_set
-from ncc.readers import data_set_from_annotation
 from ncc.readers import search_image_profile, search_image_colors
 from ncc.utils import palette
+import tensorflow as tf
+from keras import backend as K
 from keras.callbacks import Callback
+import random as rn
+import multiprocessing as mp
 from .model import build_model
 from .image_util import ImageUtil
 from .milk_client import MilkClient
@@ -31,22 +34,14 @@ class Reporter(Callback):
     TEST_FILE = "test_files.csv"
     IMAGE_PREFIX = "epoch_"
     IMAGE_EXTENSION = ".png"
-    CONFIG_SECTION = 'default'
 
     def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
-        
-        if training:
-            self._create_dirs(result_dir)
 
-        self.shuffle = shuffle
-        self.task = int(config['project_settings'].get('task_id'))
-
-        if self.task == Task.CLASSIFICATION:
-            self.metric = 'acc'
-        else:
-            self.metric = 'iou_score'
+        self._create_dirs(result_dir)
         self._set_config_variables(config)
+        self._set_env()
+
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
             self.task, training
         )
@@ -82,12 +77,12 @@ class Reporter(Callback):
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
-        milk_id = self.config['project_settings'].get('id')
-        if milk_id and training:
+
+        if self.milk_id and training:
             self._milk_client = MilkClient()
             self._milk_client.post(
                 params=dict(
-                    train_id=int(milk_id),
+                    train_id=int(self.milk_id),
                     nb_classes=self.nb_classes,
                     height=self.height,
                     width=self.width,
@@ -106,17 +101,47 @@ class Reporter(Callback):
         self.learning_rate = float(config_params.get('learning_rate'))
         self.optimizer = config_params.get('optimizer')
         self.augmentation = config_params.get('augmentation') == 'yes'
-        self.gpu = config_params.get('gpu')
+        self.gpu = config_params.get('gpu') or '-1'
         self.loss = config_params.get('loss')
         self.model_path = config_params.get('model_path')
+
+        self.nb_gpu = len(self.gpu.split(',')) if self.gpu else 0
+        self.multi_gpu = self.nb_gpu > 1
+        self.batch_size *= self.nb_gpu if self.multi_gpu else 1
 
         self.model_name = config_params.get('model_name')
         self.height = config_params.get('height')
         self.width = config_params.get('width')
         self.backbone = config_params.get('backbone')
 
+        self.task = int(config_params.get('task_id'))
+        self.milk_id = config_params.get('id')
+
+        if self.task == Task.CLASSIFICATION:
+            self.metric = 'acc'
+        elif self.task == Task.SEMANTIC_SEGMENTATION:
+            self.metric = 'iou_score'
+        else:
+            raise NotImplementedError
+
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
+
+    def _set_env(self):
+        # set random_seed
+        os.environ['PYTHONHASHSEED'] = '1'
+        np.random.seed(1)
+        rn.seed(1)
+        tf.set_random_seed(1)
+
+        os.environ['CUDA_VISIBLE_DEVICES'] = self.gpu
+        core_num = mp.cpu_count()
+        session_conf = tf.ConfigProto(
+            intra_op_parallelism_threads=core_num,
+            inter_op_parallelism_threads=core_num
+        )
+        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+        K.set_session(sess)
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -311,16 +336,28 @@ class Reporter(Callback):
         return image
 
     @staticmethod
-    def get_imageset(image_in_np, image_out_np, image_gt_np,
-                     palette, index_void=None):
-        assert image_in_np.shape[:2] == image_out_np.shape[:2] == image_gt_np.shape[:2]
-        image_out, image_tc = Reporter.cast_to_pil(image_out_np, palette, index_void),\
-            Reporter.cast_to_pil(image_gt_np, palette, index_void)
+    def get_imageset(
+        image_in_np,
+        image_out_np,
+        image_gt_np,
+        palette,
+        index_void=None
+    ):
+        image_out = Reporter.cast_to_pil(
+            image_out_np, palette, index_void
+        )
+        image_tc = Reporter.cast_to_pil(
+            image_gt_np, palette, index_void
+        )
         image_merged = Reporter.concat_images(
-            image_out, image_tc, palette, "P").convert("RGB")
-        image_in_pil = Image.fromarray(np.uint8(image_in_np * 255), mode="RGB")
+            image_out, image_tc, palette, "P"
+        ).convert("RGB")
+        image_in_pil = Image.fromarray(
+            np.uint8(image_in_np * 255), mode="RGB"
+        )
         image_result = Reporter.concat_images(
-            image_in_pil, image_merged, None, "RGB")
+            image_in_pil, image_merged, None, "RGB"
+        )
         return image_result
 
     def on_epoch_end(self, epoch, logs={}):
@@ -400,12 +437,12 @@ class Reporter(Callback):
         else:
             file_name = os.path.join(self._learning_dir, 'Metric.png')
         files = {'file': open(file_name, 'rb')}
-        param = {
-            'token': self.secret_config.get(self.CONFIG_SECTION, 'slack_token'),
-            'channels': self.secret_config.get(self.CONFIG_SECTION, 'slack_channel'),
-            'filename': "Metric Figure",
-            'title': self.model_name
-        }
+        param = dict(
+            token=self.secret_config.get('default', 'slack_token'),
+            channels=self.secret_config.get('default', 'slack_channel'),
+            filename="Metric Figure",
+            title=self.model_name
+        )
         requests.post(url='https://slack.com/api/files.upload',
                       params=param, files=files)
 
@@ -432,10 +469,18 @@ class Reporter(Callback):
             self.save_params(self._parameter)
 
     def _generate_sample_result(self, training=True):
-        file_length = len(self.train_files) if training else len(
-            self.validation_files)
+        if training:
+            file_length = len(self.train_files)
+        else:
+            file_length = len(self.validation_files)
+
         random_index = np.random.randint(file_length)
-        sample_image_path = self.train_files[random_index] if training else self.validation_files[random_index]
+
+        if training:
+            sample_image_path = self.train_files[random_index]
+        else:
+            sample_image_path = self.validation_files[random_index]
+
         sample_image = self.image_util.read_image(
             sample_image_path[0],
             anti_alias=True
@@ -492,7 +537,7 @@ class MatPlot:
 
     def add(self, series, is_update=False):
         series = np.asarray(series).reshape((len(series), 1))
-        assert series.shape[0] == self._series.shape[0], "series must have same length."
+        assert series.shape[0] == self._series.shape[0], 'not same length'
         self._series = np.concatenate([self._series, series], axis=1)
         if is_update:
             self.save()

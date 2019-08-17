@@ -282,6 +282,8 @@ class Reporter(Callback):
         else:
             raise NotImplementedError
 
+        np.random.shuffle(train_set)
+
         return train_set, validation_set, test_set, class_names
 
     def _save_image(self, train, validation, epoch):

@@ -22,10 +22,7 @@ if __name__ == "__main__" and __package__ is None:
 def train(config):
     reporter = rp.Reporter(config)
     model, base_model = build_model(reporter)
-
-    np.random.shuffle(reporter.train_files)
-
-    train_gen = ImageSequence(
+    sequence_args = dict(
         annotations=reporter.train_files,
         input_shape=(reporter.height, reporter.width),
         nb_classes=reporter.nb_classes,
@@ -33,13 +30,13 @@ def train(config):
         batch_size=reporter.batch_size,
         augmentation=reporter.augmentation
     )
-    validation_gen = ImageSequence(
+    train_gen = ImageSequence(**sequence_args)
+
+    sequence_args.update(
         annotations=reporter.validation_files,
-        input_shape=(reporter.height, reporter.width),
-        nb_classes=reporter.nb_classes,
-        task=reporter.task,
-        batch_size=reporter.batch_size
+        augmentation=False
     )
+    validation_gen = ImageSequence(**sequence_args)
 
     model.fit_generator(
         train_gen,

@@ -32,7 +32,7 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, config, shuffle=True, result_dir=None):
+    def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
         if result_dir is None:
             result_dir = Reporter.generate_dir_name()
@@ -47,9 +47,10 @@ class Reporter(Callback):
         self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
-        self.create_dirs()
+        if training:
+            self.create_dirs()
         self.shuffle = shuffle
-        self.task = config.get('task_id')
+        self.task = int(config['project_settings'].get('task_id'))
 
         if self.task == Task.CLASSIFICATION:
             self.metric = 'acc'
@@ -61,20 +62,23 @@ class Reporter(Callback):
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
 
-        self.epoch = int(self.config.get('epoch'))
-        self.batch_size = int(self.config.get('batch_size'))
-        self.optimizer = self.config.get('optimizer')
-        self.augmentation = self.config.get('augmentation') == 'yes'
-        self.gpu = self.config.get('gpu')
-        self.loss = self.config.get('loss')
-        self.model_path = self.config.get('model_path')
-        self.model_name = self.config.get('model')
-        self.height = self.config.get('height')
-        self.width = self.config.get('width')
-        self.backbone = self.config.get('backbone')
+        config_params = self.config['project_settings']
+        self.epoch = int(config_params.get('epoch'))
+        self.batch_size = int(config_params.get('batch_size'))
+        self.optimizer = config_params.get('optimizer')
+        self.augmentation = config_params.get('augmentation') == 'yes'
+        self.gpu = config_params.get('gpu')
+        self.loss = config_params.get('loss')
+        self.model_path = config_params.get('model_path')
+
+        self.model_name = config_params.get('model')
+        self.height = config_params.get('height')
+        self.width = config_params.get('width')
+        self.backbone = config_params.get('backbone')
 
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
-            self.task)
+            self.task, training
+        )
         if self.height is None or self.width is None:
             if self.task == Task.OBJECT_DETECTION:
                 train_file_names = [line.split(' ')[0]
@@ -89,13 +93,14 @@ class Reporter(Callback):
             self.height = int(self.height)
             self.width = int(self.width)
         self.nb_classes = len(self.class_names)
-        self._write_files(self.TRAIN_FILE, self.train_files)
-        self._write_files(self.VALIDATION_FILE, self.validation_files)
-        self._write_files(self.TEST_FILE, self.test_files)
+        if training:
+            self._write_files(self.TRAIN_FILE, self.train_files)
+            self._write_files(self.VALIDATION_FILE, self.validation_files)
 
         self.config['Data'] = {'train files': len(self.train_files),
                                'validation_files': len(self.validation_files)}
-        self.save_params(self._parameter)
+        if training:
+            self.save_params(self._parameter)
 
         self._plot_manager = MatPlotManager(self._learning_dir)
         self.accuracy_fig = self.create_figure(
@@ -106,18 +111,20 @@ class Reporter(Callback):
             self.iou_fig = self.create_figure(
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
-        self._milk_client = MilkClient()
-        self._milk_client.post(
-            params=dict(
-                train_id=self.config.get('id'),
-                nb_classes=self.nb_classes,
-                height=self.height,
-                width=self.width,
-                result_dir=os.path.abspath(self._result_dir),
-                class_names=self.class_names
-            ),
-            route='first_config'
-        )
+        milk_id = self.config['project_settings'].get('id')
+        if milk_id and training:
+            self._milk_client = MilkClient()
+            self._milk_client.post(
+                params=dict(
+                    train_id=int(milk_id),
+                    nb_classes=self.nb_classes,
+                    height=self.height,
+                    width=self.width,
+                    result_dir=os.path.abspath(self._result_dir),
+                    class_names=self.class_names
+                ),
+                route='first_config'
+            )
 
     def _write_files(self, csv_file, file_names):
         csv_path = os.path.join(self._info_dir, csv_file)
@@ -147,14 +154,15 @@ class Reporter(Callback):
         os.makedirs(self.model_dir)
 
     def save_params(self, filename):
-        try:
-            with open(filename, mode='w') as configfile:
-                self.config.write(configfile)
-        except:
-            pass
+        with open(filename, mode='w') as configfile:
+            self.config.write(configfile)
 
-    def read_annotation_set(self, task):
-        class_names = None
+    def read_annotation_set(self, task, training):
+        if training:
+            class_names = None
+        else:
+            class_names = self.config['project_settings'].get('class_names')
+            class_names = class_names.split()
         train_set = list()
         validation_set = list()
         test_set = list()
@@ -162,7 +170,7 @@ class Reporter(Callback):
         validation_dirs = None
         test_dirs = None
 
-        target_dir = self.config.get('target_dir')
+        target_dir = self.config['project_settings'].get('target_dir')
         if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
             train_dir_path = target_dir
             test_dir_path = target_dir
@@ -176,15 +184,17 @@ class Reporter(Callback):
                 validation_dirs = None
             else:
                 validation_dirs = ['validation']
-            if not os.path.exists(os.path.join(target_dir, 'test')):
+            if not os.path.exists(target_dir) or training:
                 test_dirs = None
             else:
-                test_dirs = ['test']
+                target_dir_paths = target_dir.split('/')
+                test_dir_path = '/'.join(target_dir_paths[:-1])
+                test_dirs = [target_dir_paths[-1]]
 
         else:
             train_dir_path = os.path.join(target_dir, 'train')
             validation_dir_path = os.path.join(target_dir, 'validation')
-            test_dir_path = os.path.join(target_dir, 'test')
+            test_dir_path = target_dir
             if os.path.exists(train_dir_path):
                 train_dirs = [
                     train_dir for train_dir
@@ -198,23 +208,14 @@ class Reporter(Callback):
                     if os.path.isdir(os.path.join(
                         validation_dir_path, validation_dir))
                 ]
-            if os.path.exists(test_dir_path):
+            if not training and os.path.exists(test_dir_path):
                 test_dirs = [
                     test_dir for test_dir
                     in os.listdir(test_dir_path)
                     if os.path.isdir(os.path.join(test_dir_path, test_dir))
                 ]
-        if len(train_dirs) == 1 and \
-                len(glob(os.path.join(target_dir, 'train', '*.csv'))) == 1:
-            csv_train = glob(os.path.join(target_dir, 'train', '*.csv'))[0]
-            train_set = data_set_from_annotation(csv_train)
 
-            csv_tests = glob(os.path.join(target_dir, 'test', '*.csv'))
-            if len(csv_tests) == 1:
-                csv_test = csv_tests[0]
-                test_set = data_set_from_annotation(csv_test)
-
-        elif task == Task.CLASSIFICATION:
+        if task == Task.CLASSIFICATION:
             if train_dirs:
                 train_set, class_names = classification_set(
                     train_dir_path, train_dirs
@@ -235,8 +236,8 @@ class Reporter(Callback):
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config.get('image_dir')
-            label_dir = self.config.get('label_dir')
+            image_dir = self.config['project_settings'].get('image_dir')
+            label_dir = self.config['project_settings'].get('label_dir')
             train_set = segmentation_set(
                 train_dir_path, train_dirs, image_dir, label_dir)
             validation_set = segmentation_set(
@@ -244,7 +245,7 @@ class Reporter(Callback):
             if test_dirs:
                 test_set = segmentation_set(
                     test_dir_path, test_dirs, image_dir, label_dir)
-            class_names = self.config.get('class_names')
+            class_names = self.config['project_settings'].get('class_names')
             if class_names is not None:
                 class_names = class_names.split()
             else:
@@ -323,20 +324,22 @@ class Reporter(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         # post to milk
-        history = dict(
-            train_config_id=self.config.get('id'),
-            epoch_num=epoch,
-            metric=float(logs.get(self.metric)),
-            val_metric=float(logs.get('val_{}'.format(self.metric))),
-            loss=float(logs.get('loss')),
-            val_loss=float(logs.get('val_loss'))
-        )
-        farmer_res = self._milk_client.post(
-            params=history,
-            route='update_history'
-        )
-        if farmer_res.get('train_stopped'):
-            self.model.stop_training = True
+        milk_id = self.config['project_settings'].get('id')
+        if milk_id:
+            history = dict(
+                train_config_id=int(milk_id),
+                epoch_num=epoch,
+                metric=float(logs.get(self.metric)),
+                val_metric=float(logs.get('val_{}'.format(self.metric))),
+                loss=float(logs.get('loss')),
+                val_loss=float(logs.get('val_loss'))
+            )
+            farmer_res = self._milk_client.post(
+                params=history,
+                route='update_history'
+            )
+            if farmer_res.get('train_stopped'):
+                self.model.stop_training = True
         # update learning figure
         self.accuracy_fig.add([logs.get(self.metric), logs.get(
             'val_{}'.format(self.metric))], is_update=True)

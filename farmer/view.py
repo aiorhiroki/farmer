@@ -2,18 +2,21 @@ from farmer import app
 from farmer.ImageAnalyzer import fit
 from flask import request, make_response, jsonify
 from tensorflow.keras.models import load_model
+from configparser import ConfigParser
 import cv2
 import os
 import numpy as np
 import shutil
 
 
-
 @app.route('/train', methods=["POST"])
 def train():
     form = request.json
-    fit.train(form)
-    return make_response('', 202)
+    form = {k: v for (k, v) in form.items() if v}
+    parser = ConfigParser()
+    parser['project_settings'] = form
+    fit.train(parser)
+    return make_response(jsonify(dict()), 200)
 
 
 @app.route('/predict', methods=["POST"])
@@ -34,7 +37,23 @@ def predict():
     predictions = [float(prediction) for prediction in predictions]
     return make_response(jsonify(dict(prediction=predictions)))
 
-  
+
+@app.route('/test', methods=["POST"])
+def test():
+    form = request.json
+    form = {k: v for (k, v) in form.items() if v}
+    parser = ConfigParser()
+    parser['project_settings'] = form
+    model_path = os.path.join(
+        form["result_dir"],
+        'model',
+        'best_model.h5'
+    )
+    parser['project_settings']['model_path'] = model_path
+    report = fit.evaluate(parser)
+    return make_response(jsonify(report))
+
+
 @app.route('/delete_model', methods=["POST"])
 def delete_model():
     form = request.json

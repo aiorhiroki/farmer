@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import cv2
+from sklearn import metrics
 from tqdm import tqdm
 from .utils import reporter as rp
 from .utils.model import build_model, iou_score
@@ -9,6 +10,7 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
+from ncc.metrics import roc
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
@@ -52,7 +54,7 @@ def _build_model(task_id, reporter):
 
 
 def train(config):
-    task_id = config.get('task_id')
+    task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     if task_id == Task.CLASSIFICATION:
@@ -99,14 +101,15 @@ def train(config):
         base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
-def classification_predict():
-    task = 'classification'
-    model, reporter, multi_gpu, base_model = _build_model(task)
+def classification_predict(config, save_npy=False):
+    task_id = int(config['project_settings'].get('task_id'))
+    reporter = rp.Reporter(config, training=False)
+    model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
     test_gen = ImageSequence(
         annotations=reporter.test_files,
         input_shape=(reporter.height, reporter.width),
         nb_classes=reporter.nb_classes,
-        task=task,
+        task=task_id,
         batch_size=reporter.batch_size
     )
     prediction = model.predict_generator(
@@ -117,7 +120,10 @@ def classification_predict():
         use_multiprocessing=multi_gpu,
         verbose=1
     )
-    np.save(f'{reporter.model_name}.npy', prediction)
+    true = np.array([test_data[1] for test_data in reporter.test_files])
+    if save_npy:
+        np.save(f'{reporter.model_name}.npy', prediction)
+    return prediction, true
 
 
 def segmentation_predict():
@@ -139,11 +145,37 @@ def segmentation_predict():
         cv2.imwrite(os.path.join(reporter.image_test_dir, file_name), output)
 
 
+def evaluate(config):
+    task_id = int(config['project_settings'].get('task_id'))
+    if task_id == Task.CLASSIFICATION:
+        eval_report = classification_evaluation(config)
+    elif task_id == Task.SEMANTIC_SEGMENTATION:
+        eval_report = segmentation_evaluation(config)
+    return eval_report
+
+
 def segmentation_evaluation():
     task = 'segmentation'
     model, reporter, multi_gpu, base_model = _build_model(task)
     iou = reporter.iou_validation(reporter.test_files, model)
     print('IoU: ', iou)
+
+
+def classification_evaluation(config):
+    nb_classes = int(config['project_settings'].get('nb_classes'))
+    prediction, true_cls = classification_predict(config)
+    prediction_cls = np.argmax(prediction, axis=1)
+    true = np.eye(nb_classes, dtype=np.uint8)[true_cls]
+    eval_report = metrics.classification_report(
+        true_cls, prediction_cls, output_dict=True
+    )
+    fpr, tpr, auc = roc(true, prediction, nb_classes, show_plot=False)
+    eval_report.update(
+        dict(
+            fpr=list(fpr['macro']), tpr=list(tpr['macro']), auc=auc['macro']
+        )
+    )
+    return eval_report
 
 
 def _set_callbacks(multi_gpu, reporter, base_model=None):

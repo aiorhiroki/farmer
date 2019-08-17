@@ -16,7 +16,7 @@ def train():
     parser = ConfigParser()
     parser['project_settings'] = form
     fit.train(parser)
-    return make_response('', 202)
+    return make_response(jsonify(dict()), 200)
 
 
 @app.route('/predict', methods=["POST"])
@@ -36,6 +36,22 @@ def predict():
     predictions = model.predict(input_img)[0]
     predictions = [float(prediction) for prediction in predictions]
     return make_response(jsonify(dict(prediction=predictions)))
+
+
+@app.route('/test', methods=["POST"])
+def test():
+    form = request.json
+    form = {k: v for (k, v) in form.items() if v}
+    parser = ConfigParser()
+    parser['project_settings'] = form
+    model_path = os.path.join(
+        form["result_dir"],
+        'model',
+        'best_model.h5'
+    )
+    parser['project_settings']['model_path'] = model_path
+    report = fit.evaluate(parser)
+    return make_response(jsonify(report))
 
 
 @app.route('/delete_model', methods=["POST"])

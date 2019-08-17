@@ -33,9 +33,12 @@ class Reporter(Callback):
     IMAGE_EXTENSION = ".png"
     CONFIG_SECTION = 'default'
 
-    def __init__(self, config, shuffle=True, result_dir=None):
+    def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
-        self._create_dirs(result_dir)
+        
+        if training:
+            self._create_dirs(result_dir)
+
         self.shuffle = shuffle
         self.task = int(config['project_settings'].get('task_id'))
 
@@ -45,7 +48,8 @@ class Reporter(Callback):
             self.metric = 'iou_score'
         self._set_config_variables(config)
         self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
-            self.task)
+            self.task, training
+        )
         if self.height is None or self.width is None:
             if self.task == Task.OBJECT_DETECTION:
                 train_file_names = [line.split(' ')[0]
@@ -60,13 +64,14 @@ class Reporter(Callback):
             self.height = int(self.height)
             self.width = int(self.width)
         self.nb_classes = len(self.class_names)
-        self._write_files(self.TRAIN_FILE, self.train_files)
-        self._write_files(self.VALIDATION_FILE, self.validation_files)
-        self._write_files(self.TEST_FILE, self.test_files)
+        if training:
+            self._write_files(self.TRAIN_FILE, self.train_files)
+            self._write_files(self.VALIDATION_FILE, self.validation_files)
 
         self.config['Data'] = {'train files': len(self.train_files),
                                'validation_files': len(self.validation_files)}
-        self.save_params(self._parameter)
+        if training:
+            self.save_params(self._parameter)
 
         self._plot_manager = MatPlotManager(self._learning_dir)
         self.accuracy_fig = self.create_figure(
@@ -78,7 +83,7 @@ class Reporter(Callback):
                 "IoU", ("epoch", "iou"), self.class_names)
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
         milk_id = self.config['project_settings'].get('id')
-        if milk_id:
+        if milk_id and training:
             self._milk_client = MilkClient()
             self._milk_client.post(
                 params=dict(
@@ -153,8 +158,12 @@ class Reporter(Callback):
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
 
-    def read_annotation_set(self, task):
-        class_names = None
+    def read_annotation_set(self, task, training):
+        if training:
+            class_names = None
+        else:
+            class_names = self.config['project_settings'].get('class_names')
+            class_names = class_names.split()
         train_set = list()
         validation_set = list()
         test_set = list()
@@ -176,15 +185,17 @@ class Reporter(Callback):
                 validation_dirs = None
             else:
                 validation_dirs = ['validation']
-            if not os.path.exists(os.path.join(target_dir, 'test')):
+            if not os.path.exists(target_dir) or training:
                 test_dirs = None
             else:
-                test_dirs = ['test']
+                target_dir_paths = target_dir.split('/')
+                test_dir_path = '/'.join(target_dir_paths[:-1])
+                test_dirs = [target_dir_paths[-1]]
 
         else:
             train_dir_path = os.path.join(target_dir, 'train')
             validation_dir_path = os.path.join(target_dir, 'validation')
-            test_dir_path = os.path.join(target_dir, 'test')
+            test_dir_path = target_dir
             if os.path.exists(train_dir_path):
                 train_dirs = [
                     train_dir for train_dir
@@ -198,23 +209,14 @@ class Reporter(Callback):
                     if os.path.isdir(os.path.join(
                         validation_dir_path, validation_dir))
                 ]
-            if os.path.exists(test_dir_path):
+            if not training and os.path.exists(test_dir_path):
                 test_dirs = [
                     test_dir for test_dir
                     in os.listdir(test_dir_path)
                     if os.path.isdir(os.path.join(test_dir_path, test_dir))
                 ]
-        if len(train_dirs) == 1 and \
-                len(glob(os.path.join(target_dir, 'train', '*.csv'))) == 1:
-            csv_train = glob(os.path.join(target_dir, 'train', '*.csv'))[0]
-            train_set = data_set_from_annotation(csv_train)
 
-            csv_tests = glob(os.path.join(target_dir, 'test', '*.csv'))
-            if len(csv_tests) == 1:
-                csv_test = csv_tests[0]
-                test_set = data_set_from_annotation(csv_test)
-
-        elif task == Task.CLASSIFICATION:
+        if task == Task.CLASSIFICATION:
             if train_dirs:
                 train_set, class_names = classification_set(
                     train_dir_path, train_dirs

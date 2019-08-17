@@ -10,12 +10,16 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from ncc.metrics import roc
-from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.losses import categorical_crossentropy
 import tensorflow as tf
+from tensorflow.keras import optimizers
 from tensorflow.keras.utils import multi_gpu_model
 from .task import Task
+from keras import backend as K
+import random as rn
+import multiprocessing as mp
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -25,6 +29,26 @@ if __name__ == "__main__" and __package__ is None:
 
 
 def _build_model(task_id, reporter):
+    # set random_seed
+    os.environ['PYTHONHASHSEED'] = '1'
+    np.random.seed(1)
+    rn.seed(1)
+
+    if reporter.gpu is not None:
+        os.environ['CUDA_VISIBLE_DEVICES'] = reporter.gpu
+        nb_gpu = len(reporter.gpu.split(','))
+        multi_gpu = nb_gpu > 1
+
+    core_num = mp.cpu_count()
+    session_conf = tf.ConfigProto(
+        intra_op_parallelism_threads=core_num,
+        inter_op_parallelism_threads=core_num
+    )
+
+    tf.set_random_seed(1)
+    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+    K.set_session(sess)
+
     multi_gpu = False
 
     with tf.device("/cpu:0"):
@@ -36,11 +60,6 @@ def _build_model(task_id, reporter):
             width=reporter.width,
             backbone=reporter.backbone
         )
-
-    if reporter.gpu is not None:
-        os.environ['CUDA_VISIBLE_DEVICES'] = reporter.gpu
-        nb_gpu = len(reporter.gpu.split(','))
-        multi_gpu = nb_gpu > 1
 
     if reporter.model_path is not None:
         base_model.load_weights(reporter.model_path)
@@ -57,12 +76,24 @@ def train(config):
     task_id = int(config['project_settings'].get('task_id'))
     reporter = rp.Reporter(config)
     model, reporter, multi_gpu, base_model = _build_model(task_id, reporter)
+    if reporter.optimizer == 'adam':
+        optimizer = optimizers.Adam(
+            lr=reporter.learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+        )
+    else:
+        optimizer = optimizers.SGD(
+            lr=reporter.learning_rate, momentum=0.9, decay=0.001
+        )
+
     if task_id == Task.CLASSIFICATION:
-        model.compile(reporter.optimizer,
-                      loss=categorical_crossentropy, metrics=['acc'])
+        model.compile(
+            optimizer=optimizer,
+            loss=categorical_crossentropy,
+            metrics=['acc']
+        )
     elif task_id == Task.SEMANTIC_SEGMENTATION:
         model.compile(
-            reporter.optimizer,
+            optimizer=optimizer,
             loss=cce_dice_loss,
             metrics=[iou_score]
         )
@@ -192,4 +223,5 @@ def _set_callbacks(multi_gpu, reporter, base_model=None):
             filepath=os.path.join(reporter.model_dir, best_model_name),
             save_best_only=True,
         )
-    return [reporter, checkpoint]
+    reduce_lr = ReduceLROnPlateau(factor=0.1, patience=3, verbose=1)
+    return [reporter, checkpoint, reduce_lr]

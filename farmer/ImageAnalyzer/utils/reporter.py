@@ -3,7 +3,7 @@ from ncc.readers import classification_set, segmentation_set
 from ncc.readers import data_set_from_annotation
 from ncc.readers import search_image_profile, search_image_colors
 from ncc.utils import palette
-from tensorflow.keras.callbacks import Callback
+from keras.callbacks import Callback
 from .model import build_model
 from .image_util import ImageUtil
 from .milk_client import MilkClient

@@ -3,9 +3,9 @@ from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
 from farmer.ImageAnalyzer.task import Task
-from tensorflow.keras.losses import categorical_crossentropy
-from tensorflow.keras import optimizers
-from tensorflow.keras.utils import multi_gpu_model
+from keras.losses import categorical_crossentropy
+from keras import optimizers
+from keras.utils import multi_gpu_model
 import tensorflow as tf
 
 

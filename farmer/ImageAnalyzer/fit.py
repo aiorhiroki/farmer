@@ -3,6 +3,7 @@ import os
 import numpy as np
 import cv2
 from sklearn import metrics
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 from tqdm import tqdm
 from .utils import reporter as rp
 from .utils.model import build_model

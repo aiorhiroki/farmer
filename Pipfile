@@ -8,16 +8,12 @@ flake8 = "*"
 autopep8 = "*"
 
 [packages]
-tensorflow = "*"
-keras = "*"
+keras = "==2.2.4"
 ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
 opencv-python = "*"
 requests = "*"
 pandas = "*"
 flask = "*"
-marshmallow = "*"
-flask-marshmallow = "*"
-marshmallow-sqlalchemy = "*"
 tqdm = "*"
 segmentation-models = "==0.2.0"
 albumentations = "==0.2.0"

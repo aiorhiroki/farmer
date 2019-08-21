@@ -10,12 +10,12 @@ from .utils.model import cce_dice_loss
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
 from ncc.callbacks import MultiGPUCheckpointCallback
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from ncc.metrics import roc
-from tensorflow.keras.losses import categorical_crossentropy
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.losses import categorical_crossentropy
 import tensorflow as tf
-from tensorflow.keras import optimizers
-from tensorflow.keras.utils import multi_gpu_model
+from keras import optimizers
+from keras.utils import multi_gpu_model
 from .task import Task
 from keras import backend as K
 import random as rn
@@ -153,7 +153,7 @@ def classification_predict(config, save_npy=False):
     )
     true = np.array([test_data[1] for test_data in reporter.test_files])
     if save_npy:
-        np.save(f'{reporter.model_name}.npy', prediction)
+        np.save('{}.npy'.format(reporter.model_name), prediction)
     return prediction, true
 
 

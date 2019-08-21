@@ -1,7 +1,7 @@
 from farmer import app
 from farmer.ImageAnalyzer import fit
 from flask import request, make_response, jsonify
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from configparser import ConfigParser
 import cv2
 import os

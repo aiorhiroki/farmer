@@ -1,5 +1,5 @@
 from ncc.readers import search_image_profile
-from ncc.utils import palette, MatPlot
+from ncc.utils import palette, MatPlot, slack_logging
 import tensorflow as tf
 from keras import backend as K
 from keras.callbacks import Callback
@@ -10,7 +10,6 @@ from .image_util import ImageUtil
 from .milk_client import MilkClient
 from PIL import Image
 import numpy as np
-import requests
 import datetime
 import os
 from tqdm import tqdm
@@ -345,7 +344,17 @@ class Reporter(Callback):
                     train_set, validation_set, palette.palettes, epoch)
 
             if len(self.secret_config.sections()) > 0:
-                self._slack_logging()
+                secret_data = self.secret_config['default']
+                if self.task == Task.SEMANTIC_SEGMENTATION:
+                    file_name = os.path.join(self._learning_dir, 'IoU.png')
+                else:
+                    file_name = os.path.join(self._learning_dir, 'Metric.png')
+                slack_logging(
+                    file_name=file_name,
+                    token=secret_data.get('slack_token'),
+                    channel=secret_data.get('slack_channel'),
+                    title=self.model_name
+                )
 
     def on_train_end(self, logs=None):
         self._milk_client.close_session()
@@ -400,21 +409,6 @@ class Reporter(Callback):
         iou[np.isnan(iou)] = 0
 
         return iou
-
-    def _slack_logging(self):
-        if os.path.exists(os.path.join(self._learning_dir, 'IoU.png')):
-            file_name = os.path.join(self._learning_dir, 'IoU.png')
-        else:
-            file_name = os.path.join(self._learning_dir, 'Metric.png')
-        files = {'file': open(file_name, 'rb')}
-        param = dict(
-            token=self.secret_config.get('default', 'slack_token'),
-            channels=self.secret_config.get('default', 'slack_channel'),
-            filename="Metric Figure",
-            title=self.model_name
-        )
-        requests.post(url='https://slack.com/api/files.upload',
-                      params=param, files=files)
 
     def _generate_sample_result(self, training=True):
         if training:

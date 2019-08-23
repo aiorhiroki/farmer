@@ -51,19 +51,23 @@ class Reporter(Callback):
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.VALIDATION_FILE, self.validation_files)
 
-        self.config['Data'] = {'train files': len(self.train_files),
-                               'validation_files': len(self.validation_files)}
-        if training:
-            self.save_params(self._parameter)
-
+        self.config['Data'] = dict(
+            train_files=len(self.train_files),
+            validation_files=len(self.validation_files)
+        )
+        self.save_params(self._parameter)
         self._plot_manager = MatPlotManager(self._learning_dir)
         self.accuracy_fig = self.create_figure(
-            "Metric", ("epoch", self.metric), ["train", "validation"])
+            "Metric", ("epoch", self.metric), ["train", "validation"]
+        )
         self.loss_fig = self.create_figure(
-            "Loss", ("epoch", "loss"), ["train", "validation"])
+            "Loss", ("epoch", "loss"), ["train", "validation"]
+        )
         if self.task == Task.SEMANTIC_SEGMENTATION:
             self.iou_fig = self.create_figure(
-                "IoU", ("epoch", "iou"), self.class_names)
+                "IoU", ("epoch", "iou"), self.class_names
+            )
+
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
 
         if self.milk_id and training:

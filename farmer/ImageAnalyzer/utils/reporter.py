@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
-from ncc.readers import classification_set, segmentation_set
-from ncc.readers import search_image_profile, search_image_colors
+from ncc.readers import search_image_profile
 from ncc.utils import palette
 import tensorflow as tf
 from keras import backend as K
@@ -42,9 +41,10 @@ class Reporter(Callback):
         self._set_config_variables(config)
         self._set_env()
 
-        self.train_files, self.validation_files, self.test_files, self.class_names = self.read_annotation_set(
-            self.task, training
-        )
+        self.train_files = self.read_annotation_set('train')
+        self.validation_files = self.read_annotation_set('validation')
+        self.test_files = self.read_annotation_set('test')
+
         if self.height is None or self.width is None:
             if self.task == Task.OBJECT_DETECTION:
                 train_file_names = [line.split(' ')[0]
@@ -104,6 +104,10 @@ class Reporter(Callback):
         self.gpu = config_params.get('gpu') or '-1'
         self.loss = config_params.get('loss')
         self.model_path = config_params.get('model_path')
+        self.target_dir = config_params.get('target_dir')
+        self.class_names = config_params.get('class_names')
+        self.image_dir = config_params.get('image_folder')
+        self.mask_dir = config_params.get('mask_folder')
 
         self.nb_gpu = len(self.gpu.split(',')) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
@@ -183,108 +187,53 @@ class Reporter(Callback):
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
 
-    def read_annotation_set(self, task, training):
-        if training:
-            class_names = None
-        else:
-            class_names = self.config['project_settings'].get('class_names')
-            class_names = class_names.split()
-        train_set = list()
-        validation_set = list()
-        test_set = list()
-        train_dirs = None
-        validation_dirs = None
-        test_dirs = None
+    def read_annotation_set(self, phase):
+        target_dir_path = os.path.join(self.target_dir, phase)
+        IMAGE_EXTENTINS = ['*.jpg', '*.png', '*.JPG']
 
-        target_dir = self.config['project_settings'].get('target_dir')
-        if len(glob(os.path.join(target_dir, 'train', '*/*/*'))) == 0:
-            train_dir_path = target_dir
-            test_dir_path = target_dir
-            validation_dir_path = target_dir
-
-            if not os.path.exists(os.path.join(target_dir, 'train')):
-                train_dirs = None
-            else:
-                train_dirs = ['train']
-            if not os.path.exists(os.path.join(target_dir, 'validation')):
-                validation_dirs = None
-            else:
-                validation_dirs = ['validation']
-            if not os.path.exists(target_dir) or training:
-                test_dirs = None
-            else:
-                target_dir_paths = target_dir.split('/')
-                test_dir_path = '/'.join(target_dir_paths[:-1])
-                test_dirs = [target_dir_paths[-1]]
-
-        else:
-            train_dir_path = os.path.join(target_dir, 'train')
-            validation_dir_path = os.path.join(target_dir, 'validation')
-            test_dir_path = target_dir
-            if os.path.exists(train_dir_path):
-                train_dirs = [
-                    train_dir for train_dir
-                    in os.listdir(train_dir_path)
-                    if os.path.isdir(os.path.join(train_dir_path, train_dir))
+        if self.task == Task.CLASSIFICATION:
+            for class_id, class_name in enumerate(self.class_names):
+                image_paths = list()
+                class_dir_paths = [
+                    os.path.join(target_dir_path,  class_name),
+                    os.path.join(target_dir_path, '*',  class_name)
                 ]
-            if os.path.exists(validation_dir_path):
-                validation_dirs = [
-                    validation_dir for validation_dir
-                    in os.listdir(validation_dir_path)
-                    if os.path.isdir(os.path.join(
-                        validation_dir_path, validation_dir))
-                ]
-            if not training and os.path.exists(test_dir_path):
-                test_dirs = [
-                    test_dir for test_dir
-                    in os.listdir(test_dir_path)
-                    if os.path.isdir(os.path.join(test_dir_path, test_dir))
+                for class_dir_path in class_dir_paths:
+                    for image_ex in IMAGE_EXTENTINS:
+                        image_paths += glob(class_dir_path, image_ex)
+
+                annotations = [
+                    [image_path, class_id] for image_path in image_paths
                 ]
 
-        if task == Task.CLASSIFICATION:
-            if train_dirs:
-                train_set, class_names = classification_set(
-                    train_dir_path, train_dirs
-                )
-            if validation_dirs:
-                validation_set, _ = classification_set(
-                    validation_dir_path,
-                    validation_dirs,
-                    training=False,
-                    class_names=class_names
-                )
-            if test_dirs:
-                test_set, _ = classification_set(
-                    test_dir_path,
-                    test_dirs,
-                    training=False,
-                    class_names=class_names
-                )
+        elif self.task == Task.SEMANTIC_SEGMENTATION:
+            mask_dir_paths = [
+                os.path.join(target_dir_path, self.image_dir),
+                os.path.join(target_dir_path, '*', self.image_dir)
+            ]
+            for mask_dir_path in mask_dir_paths:
+                for image_ex in IMAGE_EXTENTINS:
+                    mask_paths = glob(mask_dir_path, image_ex)
 
-        elif task == Task.SEMANTIC_SEGMENTATION:
-            image_dir = self.config['project_settings'].get('image_folder')
-            label_dir = self.config['project_settings'].get('mask_folder')
-            train_set = segmentation_set(
-                train_dir_path, train_dirs, image_dir, label_dir)
-            validation_set = segmentation_set(
-                validation_dir_path, validation_dirs, image_dir, label_dir)
-            if test_dirs:
-                test_set = segmentation_set(
-                    test_dir_path, test_dirs, image_dir, label_dir)
-            class_names = self.config['project_settings'].get('class_names')
-            if class_names is not None:
-                class_names = class_names.split()
-            else:
-                train_label_files = [train_data[1]
-                                     for train_data in train_set]
-                colors = search_image_colors(train_label_files)
-                class_names = [str(color) for color in colors]
+            annotations = [
+                [
+                    os.path.join(
+                        os.path.splitext(mask_path)[0].replace(
+                            '/{}/'.format(self.mask_dir),
+                            '/{}/'.format(self.image_dir)
+                        ),
+                        image_ex
+                    ),
+                    mask_path
+                ]
+                for mask_path in mask_paths
+                for image_ex in IMAGE_EXTENTINS
+            ]
+
         else:
             raise NotImplementedError
 
-        np.random.shuffle(train_set)
-
-        return train_set, validation_set, test_set, class_names
+        return annotations
 
     def _save_image(self, train, validation, epoch):
         file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION

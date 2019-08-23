@@ -44,24 +44,12 @@ class Reporter(Callback):
         self.train_files = self.read_annotation_set('train')
         self.validation_files = self.read_annotation_set('validation')
         self.test_files = self.read_annotation_set('test')
+        self.height, self.width, self.channel = search_image_profile(
+            [train_set[0] for train_set in self.train_files]
+        )
 
-        if self.height is None or self.width is None:
-            if self.task == Task.OBJECT_DETECTION:
-                train_file_names = [line.split(' ')[0]
-                                    for line in self.train_files]
-            else:
-                train_file_names = [train_set[0]
-                                    for train_set in self.train_files]
-                self.height, self.width, self.channel = search_image_profile(
-                    train_file_names
-                )
-        else:
-            self.height = int(self.height)
-            self.width = int(self.width)
-        self.nb_classes = len(self.class_names)
-        if training:
-            self._write_files(self.TRAIN_FILE, self.train_files)
-            self._write_files(self.VALIDATION_FILE, self.validation_files)
+        self._write_files(self.TRAIN_FILE, self.train_files)
+        self._write_files(self.VALIDATION_FILE, self.validation_files)
 
         self.config['Data'] = {'train files': len(self.train_files),
                                'validation_files': len(self.validation_files)}
@@ -106,6 +94,7 @@ class Reporter(Callback):
         self.model_path = config_params.get('model_path')
         self.target_dir = config_params.get('target_dir')
         self.class_names = config_params.get('class_names')
+        self.nb_classes = len(self.class_names)
         self.image_dir = config_params.get('image_folder')
         self.mask_dir = config_params.get('mask_folder')
 
@@ -114,8 +103,8 @@ class Reporter(Callback):
         self.batch_size *= self.nb_gpu if self.multi_gpu else 1
 
         self.model_name = config_params.get('model_name')
-        self.height = config_params.get('height')
-        self.width = config_params.get('width')
+        self.height = config_params.getint('height')
+        self.width = config_params.getint('width')
         self.backbone = config_params.get('backbone')
 
         self.task = int(config_params.get('task_id'))

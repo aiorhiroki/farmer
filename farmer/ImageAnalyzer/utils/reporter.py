@@ -1,5 +1,3 @@
-from ncc.readers import search_image_profile
-from ncc.utils import palette, MatPlot, slack_logging
 import tensorflow as tf
 from keras import backend as K
 from keras.callbacks import Callback
@@ -8,7 +6,6 @@ import multiprocessing as mp
 from .model import build_model
 from .image_util import ImageUtil
 from .milk_client import MilkClient
-from PIL import Image
 import numpy as np
 import datetime
 import os
@@ -17,6 +14,10 @@ from glob import glob
 from configparser import ConfigParser
 from farmer.ImageAnalyzer.task import Task
 import csv
+
+from ncc.readers import search_image_profile
+from ncc.utils import palette, MatPlot, slack_logging
+from ncc.utils import get_imageset
 
 
 class Reporter(Callback):
@@ -225,11 +226,19 @@ class Reporter(Callback):
     def save_image_from_ndarray(self, train_set, validation_set,
                                 palette, epoch, index_void=None):
         assert len(train_set) == len(validation_set) == 3
-        train_image = Reporter.get_imageset(
-            train_set[0], train_set[1], train_set[2], palette, index_void)
-        validation_image = Reporter.get_imageset(
-            validation_set[0], validation_set[1], validation_set[2],
-            palette, index_void
+        train_image = get_imageset(
+            image_in_np=train_set[0],
+            image_out_np=train_set[1],
+            image_gt_np=train_set[2],
+            palette=palette,
+            index_void=index_void
+        )
+        validation_image = get_imageset(
+            image_in_np=validation_set[0],
+            image_out_np=validation_set[1],
+            image_gt_np=validation_set[2],
+            palette=palette,
+            index_void=index_void
         )
         self._save_image(train_image, validation_image, epoch)
 
@@ -253,59 +262,6 @@ class Reporter(Callback):
                 self.class_names,
                 self._learning_dir
             )
-
-    @staticmethod
-    def concat_images(im1, im2, palette, mode):
-        if mode == "P":
-            assert palette is not None
-            dst = Image.new("P", (im1.width + im2.width, im1.height))
-            dst.paste(im1, (0, 0))
-            dst.paste(im2, (im1.width, 0))
-            dst.putpalette(palette)
-        elif mode == "RGB":
-            dst = Image.new("RGB", (im1.width + im2.width, im1.height))
-            dst.paste(im1, (0, 0))
-            dst.paste(im2, (im1.width, 0))
-        else:
-            raise NotImplementedError
-
-        return dst
-
-    # index_void: 境界線のindexで学習・可視化の際は背景色と同じにする。
-    @staticmethod
-    def cast_to_pil(ndarray, palette, index_void=None):
-        assert len(ndarray.shape) == 3
-        res = np.argmax(ndarray, axis=2)
-        if index_void is not None:
-            res = np.where(res == index_void, 0, res)
-        image = Image.fromarray(np.uint8(res), mode="P")
-        image.putpalette(palette)
-        return image
-
-    @staticmethod
-    def get_imageset(
-        image_in_np,
-        image_out_np,
-        image_gt_np,
-        palette,
-        index_void=None
-    ):
-        image_out = Reporter.cast_to_pil(
-            image_out_np, palette, index_void
-        )
-        image_tc = Reporter.cast_to_pil(
-            image_gt_np, palette, index_void
-        )
-        image_merged = Reporter.concat_images(
-            image_out, image_tc, palette, "P"
-        ).convert("RGB")
-        image_in_pil = Image.fromarray(
-            np.uint8(image_in_np * 255), mode="RGB"
-        )
-        image_result = Reporter.concat_images(
-            image_in_pil, image_merged, None, "RGB"
-        )
-        return image_result
 
     def on_epoch_end(self, epoch, logs={}):
         # post to milk

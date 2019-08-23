@@ -30,8 +30,6 @@ class Reporter(Callback):
     TRAIN_FILE = "train_files.csv"
     VALIDATION_FILE = "validation_files.csv"
     TEST_FILE = "test_files.csv"
-    IMAGE_PREFIX = "epoch_"
-    IMAGE_EXTENSION = ".png"
 
     def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
@@ -216,7 +214,7 @@ class Reporter(Callback):
         return annotations
 
     def _save_image(self, train, validation, epoch):
-        file_name = self.IMAGE_PREFIX + str(epoch) + self.IMAGE_EXTENSION
+        file_name = 'epoch_{}.png'.format(epoch)
         train_filename = os.path.join(self._image_train_dir, file_name)
         validation_filename = os.path.join(
             self._image_validation_dir, file_name)

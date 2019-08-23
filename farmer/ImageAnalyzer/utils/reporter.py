@@ -4,7 +4,6 @@ from keras.callbacks import Callback
 import random as rn
 import multiprocessing as mp
 from .model import build_model
-from .image_util import ImageUtil
 from .milk_client import MilkClient
 import numpy as np
 import datetime
@@ -17,7 +16,7 @@ import csv
 
 from ncc.readers import search_image_profile
 from ncc.utils import palette, MatPlot, slack_logging
-from ncc.utils import get_imageset
+from ncc.utils import get_imageset, ImageUtil
 
 
 class Reporter(Callback):
@@ -292,8 +291,20 @@ class Reporter(Callback):
         if epoch % 3 == 0:
             # for segmentation evaluation
             if self.task == Task.SEMANTIC_SEGMENTATION:
-                train_set = self._generate_sample_result()
-                validation_set = self._generate_sample_result(training=False)
+                train_set = self.generate_sample_result(
+                    self.model,
+                    self.train_files,
+                    self.nb_classes,
+                    self.height,
+                    self.width
+                )
+                validation_set = self._generate_sample_result(
+                    self.model,
+                    self.validation_files,
+                    self.nb_classes,
+                    self.height,
+                    self.width
+                )
                 self.save_image_from_ndarray(
                     train_set, validation_set, palette.palettes, epoch)
 
@@ -363,33 +374,3 @@ class Reporter(Callback):
         iou[np.isnan(iou)] = 0
 
         return iou
-
-    def _generate_sample_result(self, training=True):
-        if training:
-            file_length = len(self.train_files)
-        else:
-            file_length = len(self.validation_files)
-
-        random_index = np.random.randint(file_length)
-
-        if training:
-            sample_image_path = self.train_files[random_index]
-        else:
-            sample_image_path = self.validation_files[random_index]
-
-        sample_image = self.image_util.read_image(
-            sample_image_path[0],
-            anti_alias=True
-        )
-        segmented = self.image_util.read_image(
-            sample_image_path[1],
-            normalization=False
-        )
-
-        sample_image = np.asarray(sample_image, dtype=np.float32)
-        segmented = np.asarray(segmented, dtype=np.uint8)
-        segmented = self.image_util.cast_to_onehot(segmented)
-
-        output = self.model.predict(np.expand_dims(sample_image, axis=0))
-
-        return [sample_image, output[0], segmented]

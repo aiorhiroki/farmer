@@ -2,8 +2,8 @@ import math
 
 from keras.utils import Sequence
 import numpy as np
-from .image_util import ImageUtil
 from farmer.ImageAnalyzer.task import Task
+from ncc.utils import ImageUtil
 
 
 class ImageSequence(Sequence):

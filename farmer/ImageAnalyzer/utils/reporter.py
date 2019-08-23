@@ -57,17 +57,7 @@ class Reporter(Callback):
         )
         self.save_params(self._parameter)
         self._plot_manager = MatPlotManager(self._learning_dir)
-        self.accuracy_fig = self.create_figure(
-            "Metric", ("epoch", self.metric), ["train", "validation"]
-        )
-        self.loss_fig = self.create_figure(
-            "Loss", ("epoch", "loss"), ["train", "validation"]
-        )
-        if self.task == Task.SEMANTIC_SEGMENTATION:
-            self.iou_fig = self.create_figure(
-                "IoU", ("epoch", "iou"), self.class_names
-            )
-
+        self._create_plot_figures()
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
 
         if self.milk_id and training:
@@ -246,6 +236,18 @@ class Reporter(Callback):
             palette, index_void
         )
         self._save_image(train_image, validation_image, epoch)
+
+    def _create_plot_figures(self):
+        self.accuracy_fig = self.create_figure(
+            "Metric", ("epoch", self.metric), ["train", "validation"]
+        )
+        self.loss_fig = self.create_figure(
+            "Loss", ("epoch", "loss"), ["train", "validation"]
+        )
+        if self.task == Task.SEMANTIC_SEGMENTATION:
+            self.iou_fig = self.create_figure(
+                "IoU", ("epoch", "iou"), self.class_names
+            )
 
     def create_figure(self, title, xy_labels, labels, filename=None):
         return self._plot_manager.add_figure(title, xy_labels,

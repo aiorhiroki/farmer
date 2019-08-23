@@ -387,15 +387,11 @@ class Reporter(Callback):
             sample_image_path[1],
             normalization=False
         )
-        sample_image, segmented = self._process_input(sample_image, segmented)
+
+        sample_image = np.asarray(sample_image, dtype=np.float32)
+        segmented = np.asarray(segmented, dtype=np.uint8)
+        segmented = self.image_util.cast_to_onehot(segmented)
+
         output = self.model.predict(np.expand_dims(sample_image, axis=0))
 
         return [sample_image, output[0], segmented]
-
-    def _process_input(self, images_original, labels):
-        # Cast to ndarray
-        images_original = np.asarray(images_original, dtype=np.float32)
-        labels = np.asarray(labels, dtype=np.uint8)
-        images_segmented = self.image_util.cast_to_onehot(labels)
-
-        return images_original, images_segmented

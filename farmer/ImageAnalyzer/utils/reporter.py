@@ -4,7 +4,6 @@ from keras.callbacks import Callback
 import random as rn
 import multiprocessing as mp
 from .model import build_model
-from .milk_client import MilkClient
 import numpy as np
 import datetime
 import os
@@ -12,11 +11,13 @@ from tqdm import tqdm
 from glob import glob
 from configparser import ConfigParser
 from farmer.ImageAnalyzer.task import Task
+from farmer import app
 import csv
 
 from ncc.readers import search_image_profile
 from ncc.utils import palette, MatPlot, slack_logging
 from ncc.utils import get_imageset, ImageUtil
+from ncc.utils import PostClient
 
 
 class Reporter(Callback):
@@ -151,7 +152,9 @@ class Reporter(Callback):
     def _init_milk(self, training):
         if self.milk_id is None or not training:
             return
-        self._milk_client = MilkClient()
+        self._milk_client = PostClient(
+            root_url=app.config['MILK_API_URL']
+        )
         self._milk_client.post(
             params=dict(
                 train_id=int(self.milk_id),

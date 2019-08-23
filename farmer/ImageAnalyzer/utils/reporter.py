@@ -1,6 +1,5 @@
-import matplotlib.pyplot as plt
 from ncc.readers import search_image_profile
-from ncc.utils import palette
+from ncc.utils import palette, MatPlot
 import tensorflow as tf
 from keras import backend as K
 from keras.callbacks import Callback
@@ -36,51 +35,33 @@ class Reporter(Callback):
 
     def __init__(self, config, shuffle=True, result_dir=None, training=True):
         super().__init__()
-
         self._create_dirs(result_dir)
         self._set_config_variables(config)
+        self._create_plot_figures()
         self._set_env()
-
         self.train_files = self.read_annotation_set('train')
         self.validation_files = self.read_annotation_set('validation')
         self.test_files = self.read_annotation_set('test')
         self.height, self.width, self.channel = search_image_profile(
             [train_set[0] for train_set in self.train_files]
         )
-
         self._write_files(self.TRAIN_FILE, self.train_files)
         self._write_files(self.VALIDATION_FILE, self.validation_files)
-
         self.config['Data'] = dict(
             train_files=len(self.train_files),
             validation_files=len(self.validation_files)
         )
         self.save_params(self._parameter)
-        self._plot_manager = MatPlotManager(self._learning_dir)
-        self._create_plot_figures()
         self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
-
-        if self.milk_id and training:
-            self._milk_client = MilkClient()
-            self._milk_client.post(
-                params=dict(
-                    train_id=int(self.milk_id),
-                    nb_classes=self.nb_classes,
-                    height=self.height,
-                    width=self.width,
-                    result_dir=os.path.abspath(self._result_dir),
-                    class_names=self.class_names
-                ),
-                route='first_config'
-            )
+        self._init_milk()
 
     def _set_config_variables(self, config):
         # configに入っている値をインスタンス変数にする。
         self.config = config
         config_params = self.config['project_settings']
-        self.epoch = int(config_params.get('epoch'))
-        self.batch_size = int(config_params.get('batch_size'))
-        self.learning_rate = float(config_params.get('learning_rate'))
+        self.epoch = config_params.getint('epoch')
+        self.batch_size = config_params.getint('batch_size')
+        self.learning_rate = config_params.getfloat('learning_rate')
         self.optimizer = config_params.get('optimizer')
         self.augmentation = config_params.get('augmentation') == 'yes'
         self.gpu = config_params.get('gpu') or '-1'
@@ -101,7 +82,7 @@ class Reporter(Callback):
         self.width = config_params.getint('width')
         self.backbone = config_params.get('backbone')
 
-        self.task = int(config_params.get('task_id'))
+        self.task = config_params.getint('task_id')
         self.milk_id = config_params.get('id')
 
         if self.task == Task.CLASSIFICATION:
@@ -169,6 +150,22 @@ class Reporter(Callback):
     def save_params(self, filename):
         with open(filename, mode='w') as configfile:
             self.config.write(configfile)
+
+    def _init_milk(self, training):
+        if self.milk_id is None or not training:
+            return
+        self._milk_client = MilkClient()
+        self._milk_client.post(
+            params=dict(
+                train_id=int(self.milk_id),
+                nb_classes=self.nb_classes,
+                height=self.height,
+                width=self.width,
+                result_dir=os.path.abspath(self._result_dir),
+                class_names=self.class_names
+            ),
+            route='first_config'
+        )
 
     def read_annotation_set(self, phase):
         target_dir_path = os.path.join(self.target_dir, phase)
@@ -238,20 +235,25 @@ class Reporter(Callback):
         self._save_image(train_image, validation_image, epoch)
 
     def _create_plot_figures(self):
-        self.accuracy_fig = self.create_figure(
-            "Metric", ("epoch", self.metric), ["train", "validation"]
+        self.accuracy_fig = MatPlot(
+            "Metric",
+            ("epoch", self.metric),
+            ["train", "validation"],
+            self._learning_dir
         )
-        self.loss_fig = self.create_figure(
-            "Loss", ("epoch", "loss"), ["train", "validation"]
+        self.loss_fig = MatPlot(
+            "Loss",
+            ("epoch", "loss"),
+            ["train", "validation"],
+            self._learning_dir
         )
         if self.task == Task.SEMANTIC_SEGMENTATION:
-            self.iou_fig = self.create_figure(
-                "IoU", ("epoch", "iou"), self.class_names
+            self.iou_fig = MatPlot(
+                "IoU",
+                ("epoch", "iou"),
+                self.class_names,
+                self._learning_dir
             )
-
-    def create_figure(self, title, xy_labels, labels, filename=None):
-        return self._plot_manager.add_figure(title, xy_labels,
-                                             labels, filename)
 
     @staticmethod
     def concat_images(im1, im2, palette, mode):
@@ -345,6 +347,28 @@ class Reporter(Callback):
             if len(self.secret_config.sections()) > 0:
                 self._slack_logging()
 
+    def on_train_end(self, logs=None):
+        self._milk_client.close_session()
+        self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
+        # evaluate on test data
+        if self.task == Task.SEMANTIC_SEGMENTATION:
+            last_model = build_model(
+                task=self.task,
+                model_name=self.model_name,
+                nb_classes=self.nb_classes,
+                height=self.height,
+                width=self.width,
+                backbone=self.backbone
+            )
+            last_model.load_weights(
+                os.path.join(self.model_dir, 'best_model.h5')
+            )
+            test_ious = self.iou_validation(self.test_files, last_model)
+            self.config['TEST'] = dict()
+            for test_iou, class_name in zip(test_ious, self.class_names):
+                self.config['TEST'][class_name] = str(test_iou)
+            self.save_params(self._parameter)
+
     def iou_validation(self, data_set, model):
         conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
         print('IoU validation...')
@@ -392,28 +416,6 @@ class Reporter(Callback):
         requests.post(url='https://slack.com/api/files.upload',
                       params=param, files=files)
 
-    def on_train_end(self, logs=None):
-        self._milk_client.close_session()
-        self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
-        # evaluate on test data
-        if self.task == Task.SEMANTIC_SEGMENTATION:
-            last_model = build_model(
-                task=self.task,
-                model_name=self.model_name,
-                nb_classes=self.nb_classes,
-                height=self.height,
-                width=self.width,
-                backbone=self.backbone
-            )
-            last_model.load_weights(
-                os.path.join(self.model_dir, 'best_model.h5')
-            )
-            test_ious = self.iou_validation(self.test_files, last_model)
-            self.config['TEST'] = dict()
-            for test_iou, class_name in zip(test_ious, self.class_names):
-                self.config['TEST'][class_name] = str(test_iou)
-            self.save_params(self._parameter)
-
     def _generate_sample_result(self, training=True):
         if training:
             file_length = len(self.train_files)
@@ -447,55 +449,3 @@ class Reporter(Callback):
         images_segmented = self.image_util.cast_to_onehot(labels)
 
         return images_original, images_segmented
-
-
-# 図の保持
-class MatPlotManager:
-    def __init__(self, root_dir):
-        self._root_dir = root_dir
-        self._figures = {}
-
-    def add_figure(self, title, xy_labels, labels, filename=None):
-        assert not(title in self._figures.keys()), "This title already exists."
-        self._figures[title] = MatPlot(
-            title, xy_labels, labels, self._root_dir, filename=filename)
-        return self._figures[title]
-
-    def get_figure(self, title):
-        return self._figures[title]
-
-
-# 学習履歴のプロット
-class MatPlot:
-    EXTENSION = ".png"
-
-    def __init__(self, title, xy_labels, labels, root_dir, filename=None):
-        assert len(labels) > 0 and len(xy_labels) == 2
-        if filename is None:
-            self._filename = title
-        else:
-            self._filename = filename
-        self._title = title
-        self._x_label, self._y_label = xy_labels[0], xy_labels[1]
-        self._labels = labels
-        self._root_dir = root_dir
-        self._series = np.zeros((len(labels), 0))
-
-    def add(self, series, is_update=False):
-        series = np.asarray(series).reshape((len(series), 1))
-        assert series.shape[0] == self._series.shape[0], 'not same length'
-        self._series = np.concatenate([self._series, series], axis=1)
-        if is_update:
-            self.save()
-
-    def save(self):
-        plt.cla()
-        for s, l in zip(self._series, self._labels):
-            plt.plot(s, label=l)
-        plt.legend()
-        plt.grid()
-        plt.xlabel(self._x_label)
-        plt.ylabel(self._y_label)
-        plt.title(self._title)
-        plt.savefig(os.path.join(self._root_dir,
-                                 self._filename+self.EXTENSION))

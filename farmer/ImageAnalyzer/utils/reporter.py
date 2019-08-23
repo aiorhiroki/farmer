@@ -213,14 +213,6 @@ class Reporter(Callback):
 
         return annotations
 
-    def _save_image(self, train, validation, epoch):
-        file_name = 'epoch_{}.png'.format(epoch)
-        train_filename = os.path.join(self._image_train_dir, file_name)
-        validation_filename = os.path.join(
-            self._image_validation_dir, file_name)
-        train.save(train_filename)
-        validation.save(validation_filename)
-
     def save_image_from_ndarray(self, train_set, validation_set,
                                 palette, epoch, index_void=None):
         assert len(train_set) == len(validation_set) == 3
@@ -238,7 +230,15 @@ class Reporter(Callback):
             palette=palette,
             index_void=index_void
         )
-        self._save_image(train_image, validation_image, epoch)
+        file_name = 'epoch_{}.png'.format(epoch)
+        train_filename = os.path.join(
+            self._image_train_dir, file_name
+        )
+        validation_filename = os.path.join(
+            self._image_validation_dir, file_name
+        )
+        train_image.save(train_filename)
+        validation_image.save(validation_filename)
 
     def _create_plot_figures(self):
         self.accuracy_fig = MatPlot(

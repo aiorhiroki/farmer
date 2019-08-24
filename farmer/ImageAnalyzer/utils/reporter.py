@@ -123,7 +123,7 @@ class Reporter(Callback):
         self._root_dir = self.ROOT_DIR
         self._result_dir = os.path.join(self._root_dir, result_dir)
         self._image_dir = os.path.join(self._result_dir, self.IMAGE_DIR)
-        self._learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
+        self.learning_dir = os.path.join(self._result_dir, self.LEARNING_DIR)
         self._info_dir = os.path.join(self._result_dir, self.INFO_DIR)
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
@@ -141,7 +141,7 @@ class Reporter(Callback):
         os.makedirs(self._image_train_dir, exist_ok=True)
         os.makedirs(self._image_validation_dir, exist_ok=True)
         os.makedirs(self.image_test_dir, exist_ok=True)
-        os.makedirs(self._learning_dir, exist_ok=True)
+        os.makedirs(self.learning_dir, exist_ok=True)
         os.makedirs(self._info_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
 
@@ -243,24 +243,12 @@ class Reporter(Callback):
         validation_image.save(validation_filename)
 
     def _create_plot_figures(self):
-        self.accuracy_fig = MatPlot(
-            "Metric",
-            ("epoch", self.metric),
-            ["train", "validation"],
-            self._learning_dir
-        )
-        self.loss_fig = MatPlot(
-            "Loss",
-            ("epoch", "loss"),
-            ["train", "validation"],
-            self._learning_dir
-        )
         if self.task == Task.SEMANTIC_SEGMENTATION:
             self.iou_fig = MatPlot(
                 "IoU",
                 ("epoch", "iou"),
                 self.class_names,
-                self._learning_dir
+                self.learning_dir
             )
 
     def on_epoch_end(self, epoch, logs={}):
@@ -281,11 +269,7 @@ class Reporter(Callback):
             )
             if farmer_res.get('train_stopped'):
                 self.model.stop_training = True
-        # update learning figure
-        self.accuracy_fig.add([logs.get(self.metric), logs.get(
-            'val_{}'.format(self.metric))], is_update=True)
-        self.loss_fig.add(
-            [logs.get('loss'), logs.get('val_loss')], is_update=True)
+
         if self.task == Task.SEMANTIC_SEGMENTATION:
             self.iou_fig.add(self.iou_validation(
                 self.validation_files, self.model), is_update=True)
@@ -314,9 +298,9 @@ class Reporter(Callback):
             if len(self.secret_config.sections()) > 0:
                 secret_data = self.secret_config['default']
                 if self.task == Task.SEMANTIC_SEGMENTATION:
-                    file_name = os.path.join(self._learning_dir, 'IoU.png')
+                    file_name = os.path.join(self.learning_dir, 'IoU.png')
                 else:
-                    file_name = os.path.join(self._learning_dir, 'Metric.png')
+                    file_name = os.path.join(self.learning_dir, 'Metric.png')
                 slack_logging(
                     file_name=file_name,
                     token=secret_data.get('slack_token'),

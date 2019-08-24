@@ -9,8 +9,8 @@ from .utils import reporter as rp
 from .utils.model import build_model
 from .utils.image_util import ImageUtil
 from .utils.generator import ImageSequence
-from ncc.callbacks import MultiGPUCheckpointCallback
-from ncc.metrics import roc
+
+import ncc
 from .task import Task
 
 # Allow relative imports when being executed as script.
@@ -124,10 +124,14 @@ def classification_evaluation(config):
     eval_report = metrics.classification_report(
         true_cls, prediction_cls, output_dict=True
     )
-    fpr, tpr, auc = roc(true, prediction, nb_classes, show_plot=False)
+    fpr, tpr, auc = ncc.metrics.roc(
+        true, prediction, nb_classes, show_plot=False
+    )
     eval_report.update(
         dict(
-            fpr=list(fpr['macro']), tpr=list(tpr['macro']), auc=auc['macro']
+            fpr=list(fpr['macro']),
+            tpr=list(tpr['macro']),
+            auc=auc['macro']
         )
     )
     return eval_report
@@ -135,9 +139,8 @@ def classification_evaluation(config):
 
 def _set_callbacks(multi_gpu, reporter, base_model=None):
     best_model_name = 'best_model.h5'
-
     if multi_gpu:
-        checkpoint = MultiGPUCheckpointCallback(
+        checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
             filepath=os.path.join(reporter.model_dir, best_model_name),
             base_model=base_model,
             save_best_only=True,
@@ -148,4 +151,5 @@ def _set_callbacks(multi_gpu, reporter, base_model=None):
             save_best_only=True,
         )
     reduce_lr = ReduceLROnPlateau(factor=0.1, patience=3, verbose=1)
-    return [reporter, checkpoint, reduce_lr]
+    plot_history = ncc.callbacks.PlotHistory(reporter.learning_dir)
+    return [reporter, checkpoint, reduce_lr, plot_history]

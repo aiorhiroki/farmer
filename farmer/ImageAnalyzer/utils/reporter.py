@@ -7,7 +7,6 @@ from .model import build_model
 import numpy as np
 import datetime
 import os
-from tqdm import tqdm
 from glob import glob
 from configparser import ConfigParser
 from farmer.ImageAnalyzer.task import Task
@@ -15,8 +14,8 @@ from farmer import app
 import csv
 
 from ncc.readers import search_image_profile
-from ncc.utils import palette, MatPlot, slack_logging
-from ncc.utils import get_imageset, ImageUtil
+from ncc.utils import palette, slack_logging
+from ncc.utils import get_imageset
 from ncc.utils import PostClient
 
 
@@ -35,7 +34,6 @@ class Reporter(Callback):
         super().__init__()
         self._create_dirs(result_dir)
         self._set_config_variables(config)
-        self._create_plot_figures()
         self._set_env()
         self.train_files = self.read_annotation_set('train')
         self.validation_files = self.read_annotation_set('validation')
@@ -50,7 +48,6 @@ class Reporter(Callback):
             validation_files=len(self.validation_files)
         )
         self.save_params(self._parameter)
-        self.image_util = ImageUtil(self.nb_classes, (self.height, self.width))
         self._init_milk()
 
     def _set_config_variables(self, config):
@@ -242,15 +239,6 @@ class Reporter(Callback):
         train_image.save(train_filename)
         validation_image.save(validation_filename)
 
-    def _create_plot_figures(self):
-        if self.task == Task.SEMANTIC_SEGMENTATION:
-            self.iou_fig = MatPlot(
-                "IoU",
-                ("epoch", "iou"),
-                self.class_names,
-                self.learning_dir
-            )
-
     def on_epoch_end(self, epoch, logs={}):
         # post to milk
         milk_id = self.config['project_settings'].get('id')
@@ -269,10 +257,6 @@ class Reporter(Callback):
             )
             if farmer_res.get('train_stopped'):
                 self.model.stop_training = True
-
-        if self.task == Task.SEMANTIC_SEGMENTATION:
-            self.iou_fig.add(self.iou_validation(
-                self.validation_files, self.model), is_update=True)
 
         # display sample predict
         if epoch % 3 == 0:
@@ -329,35 +313,3 @@ class Reporter(Callback):
             for test_iou, class_name in zip(test_ious, self.class_names):
                 self.config['TEST'][class_name] = str(test_iou)
             self.save_params(self._parameter)
-
-    def iou_validation(self, data_set, model):
-        conf = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
-        print('IoU validation...')
-        for image_file, seg_file in tqdm(data_set):
-            # Get a training sample and make a prediction using current model
-            sample = self.image_util.read_image(image_file, anti_alias=True)
-            target = self.image_util.read_image(seg_file, normalization=False)
-            predicted = np.asarray(model.predict_on_batch(
-                np.expand_dims(sample, axis=0)))[0]
-
-            # Convert predictions and target from categorical to integer format
-            predicted = np.argmax(predicted, axis=-1).ravel()
-            target = target.ravel()
-            x = predicted + self.nb_classes * target
-            bincount_2d = np.bincount(
-                x.astype(np.int32), minlength=self.nb_classes**2)
-            assert bincount_2d.size == self.nb_classes**2
-            conf += bincount_2d.reshape((self.nb_classes, self.nb_classes))
-
-        # Compute the IoU and mean IoU from the confusion matrix
-        true_positive = np.diag(conf)
-        false_positive = np.sum(conf, 0) - true_positive
-        false_negative = np.sum(conf, 1) - true_positive
-
-        # Just in case we get a division by 0, set the value to 0
-        with np.errstate(divide='ignore', invalid='ignore'):
-            iou = true_positive / \
-                (true_positive + false_positive + false_negative)
-        iou[np.isnan(iou)] = 0
-
-        return iou

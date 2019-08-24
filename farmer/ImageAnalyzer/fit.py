@@ -152,4 +152,11 @@ def _set_callbacks(multi_gpu, reporter, base_model=None):
         )
     reduce_lr = ReduceLROnPlateau(factor=0.1, patience=3, verbose=1)
     plot_history = ncc.callbacks.PlotHistory(reporter.learning_dir)
-    return [reporter, checkpoint, reduce_lr, plot_history]
+    iou_history = ncc.callbacks.IouHistory(
+        save_dir=reporter.learning_dir,
+        validation_files=reporter.validation_files,
+        nb_classes=reporter.nb_classes,
+        height=reporter.height,
+        width=reporter.width
+    )
+    return [reporter, checkpoint, reduce_lr, plot_history, iou_history]

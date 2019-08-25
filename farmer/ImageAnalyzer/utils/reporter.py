@@ -3,7 +3,6 @@ from keras import backend as K
 from keras.callbacks import Callback
 import random as rn
 import multiprocessing as mp
-from .model import build_model
 import numpy as np
 import datetime
 import os
@@ -12,10 +11,7 @@ from configparser import ConfigParser
 from farmer.ImageAnalyzer.task import Task
 from farmer import app
 import csv
-
 from ncc.readers import search_image_profile
-from ncc.utils import palette, slack_logging
-from ncc.utils import get_imageset
 from ncc.utils import PostClient
 
 
@@ -125,18 +121,18 @@ class Reporter(Callback):
         self.model_dir = os.path.join(self._result_dir, self.MODEL_DIR)
         self._parameter = os.path.join(self._info_dir, self.PARAMETER)
 
-        self._image_train_dir = os.path.join(
+        self.image_train_dir = os.path.join(
             self._image_dir, "train"
         )
-        self._image_validation_dir = os.path.join(
+        self.image_validation_dir = os.path.join(
             self._image_dir, "validation"
         )
         self.image_test_dir = os.path.join(
             self._image_dir, "test"
         )
 
-        os.makedirs(self._image_train_dir, exist_ok=True)
-        os.makedirs(self._image_validation_dir, exist_ok=True)
+        os.makedirs(self.image_train_dir, exist_ok=True)
+        os.makedirs(self.image_validation_dir, exist_ok=True)
         os.makedirs(self.image_test_dir, exist_ok=True)
         os.makedirs(self.learning_dir, exist_ok=True)
         os.makedirs(self._info_dir, exist_ok=True)
@@ -163,6 +159,7 @@ class Reporter(Callback):
             ),
             route='first_config'
         )
+        self._milk_client.close_session()
 
     def read_annotation_set(self, phase):
         target_dir_path = os.path.join(self.target_dir, phase)
@@ -211,105 +208,3 @@ class Reporter(Callback):
             raise NotImplementedError
 
         return annotations
-
-    def save_image_from_ndarray(self, train_set, validation_set,
-                                palette, epoch, index_void=None):
-        assert len(train_set) == len(validation_set) == 3
-        train_image = get_imageset(
-            image_in_np=train_set[0],
-            image_out_np=train_set[1],
-            image_gt_np=train_set[2],
-            palette=palette,
-            index_void=index_void
-        )
-        validation_image = get_imageset(
-            image_in_np=validation_set[0],
-            image_out_np=validation_set[1],
-            image_gt_np=validation_set[2],
-            palette=palette,
-            index_void=index_void
-        )
-        file_name = 'epoch_{}.png'.format(epoch)
-        train_filename = os.path.join(
-            self._image_train_dir, file_name
-        )
-        validation_filename = os.path.join(
-            self._image_validation_dir, file_name
-        )
-        train_image.save(train_filename)
-        validation_image.save(validation_filename)
-
-    def on_epoch_end(self, epoch, logs={}):
-        # post to milk
-        milk_id = self.config['project_settings'].get('id')
-        if milk_id:
-            history = dict(
-                train_config_id=int(milk_id),
-                epoch_num=epoch,
-                metric=float(logs.get(self.metric)),
-                val_metric=float(logs.get('val_{}'.format(self.metric))),
-                loss=float(logs.get('loss')),
-                val_loss=float(logs.get('val_loss'))
-            )
-            farmer_res = self._milk_client.post(
-                params=history,
-                route='update_history'
-            )
-            if farmer_res.get('train_stopped'):
-                self.model.stop_training = True
-
-        # display sample predict
-        if epoch % 3 == 0:
-            # for segmentation evaluation
-            if self.task == Task.SEMANTIC_SEGMENTATION:
-                train_set = self.generate_sample_result(
-                    self.model,
-                    self.train_files,
-                    self.nb_classes,
-                    self.height,
-                    self.width
-                )
-                validation_set = self._generate_sample_result(
-                    self.model,
-                    self.validation_files,
-                    self.nb_classes,
-                    self.height,
-                    self.width
-                )
-                self.save_image_from_ndarray(
-                    train_set, validation_set, palette.palettes, epoch)
-
-            if len(self.secret_config.sections()) > 0:
-                secret_data = self.secret_config['default']
-                if self.task == Task.SEMANTIC_SEGMENTATION:
-                    file_name = os.path.join(self.learning_dir, 'IoU.png')
-                else:
-                    file_name = os.path.join(self.learning_dir, 'Metric.png')
-                slack_logging(
-                    file_name=file_name,
-                    token=secret_data.get('slack_token'),
-                    channel=secret_data.get('slack_channel'),
-                    title=self.model_name
-                )
-
-    def on_train_end(self, logs=None):
-        self._milk_client.close_session()
-        self.model.save(os.path.join(self.model_dir, 'last_model.h5'))
-        # evaluate on test data
-        if self.task == Task.SEMANTIC_SEGMENTATION:
-            last_model = build_model(
-                task=self.task,
-                model_name=self.model_name,
-                nb_classes=self.nb_classes,
-                height=self.height,
-                width=self.width,
-                backbone=self.backbone
-            )
-            last_model.load_weights(
-                os.path.join(self.model_dir, 'best_model.h5')
-            )
-            test_ious = self.iou_validation(self.test_files, last_model)
-            self.config['TEST'] = dict()
-            for test_iou, class_name in zip(test_ious, self.class_names):
-                self.config['TEST'][class_name] = str(test_iou)
-            self.save_params(self._parameter)

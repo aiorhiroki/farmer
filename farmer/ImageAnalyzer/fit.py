@@ -42,7 +42,7 @@ def train(config):
     model.fit_generator(
         train_gen,
         steps_per_epoch=len(train_gen),
-        callbacks=_set_callbacks(reporter.multi_gpu, reporter, base_model),
+        callbacks=_set_callbacks(reporter, base_model),
         epochs=reporter.epoch,
         validation_data=validation_gen,
         validation_steps=len(validation_gen),
@@ -52,6 +52,8 @@ def train(config):
     )
     if reporter.multi_gpu:
         base_model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
+    else:
+        model.save(os.path.join(reporter.model_dir, 'last_model.h5'))
 
 
 def classification_predict(config, save_npy=False):
@@ -137,9 +139,10 @@ def classification_evaluation(config):
     return eval_report
 
 
-def _set_callbacks(multi_gpu, reporter, base_model=None):
+def _set_callbacks(reporter, base_model=None):
+    callbacks = list()
     best_model_name = 'best_model.h5'
-    if multi_gpu:
+    if reporter.multi_gpu:
         checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
             filepath=os.path.join(reporter.model_dir, best_model_name),
             base_model=base_model,
@@ -152,11 +155,42 @@ def _set_callbacks(multi_gpu, reporter, base_model=None):
         )
     reduce_lr = ReduceLROnPlateau(factor=0.1, patience=3, verbose=1)
     plot_history = ncc.callbacks.PlotHistory(reporter.learning_dir)
-    iou_history = ncc.callbacks.IouHistory(
-        save_dir=reporter.learning_dir,
-        validation_files=reporter.validation_files,
-        nb_classes=reporter.nb_classes,
-        height=reporter.height,
-        width=reporter.width
-    )
-    return [reporter, checkpoint, reduce_lr, plot_history, iou_history]
+    callbacks = [
+        reporter,
+        checkpoint,
+        reduce_lr,
+        plot_history
+    ]
+    if reporter.task == Task.SEMANTIC_SEGMENTATION:
+        iou_history = ncc.callbacks.IouHistory(
+            save_dir=reporter.learning_dir,
+            validation_files=reporter.validation_files,
+            nb_classes=reporter.nb_classes,
+            height=reporter.height,
+            width=reporter.width
+        )
+        generate_sample_result = ncc.callbacks.GenerateSampleResult(
+            train_save_dir=reporter.image_train_dir,
+            val_save_dir=reporter.image_validation_dir,
+            train_files=reporter.train_files,
+            validation_files=reporter.validation_files,
+            nb_classes=reporter.nb_classes,
+            height=reporter.height,
+            width=reporter.width
+        )
+        callbacks.append([iou_history, generate_sample_result])
+    if len(reporter.secret_config.sections()) > 0:
+        secret_data = reporter.secret_config['default']
+        if reporter.task == Task.SEMANTIC_SEGMENTATION:
+            file_name = os.path.join(reporter.learning_dir, 'IoU.png')
+        else:
+            file_name = os.path.join(reporter.learning_dir, 'Metric.png')
+
+        slack_logging = ncc.callbacks.SlackLogger(
+            file_name=file_name,
+            token=secret_data.get('slack_token'),
+            channel=secret_data.get('slack_channel'),
+            title=reporter.model_name
+        )
+        callbacks.append(slack_logging)
+    return callbacks

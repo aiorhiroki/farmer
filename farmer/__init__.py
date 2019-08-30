@@ -1,5 +1,5 @@
 from flask import Flask
-from farmer.config import Config
+from farmer.ImageAnalyzer.config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)

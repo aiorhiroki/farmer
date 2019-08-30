@@ -19,6 +19,7 @@ segmentation-models = "==0.2.0"
 albumentations = "==0.2.0"
 python-dotenv = "*"
 sklearn = "*"
+dataclasses = "*"
 
 [requires]
 python_version = "3.6"

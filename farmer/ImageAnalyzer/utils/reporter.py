@@ -47,42 +47,6 @@ class Reporter(Callback):
         self._init_milk()
 
     def _set_config_variables(self, config):
-        # configに入っている値をインスタンス変数にする。
-        self.config = config
-        config_params = self.config['project_settings']
-        self.epoch = config_params.getint('epoch')
-        self.batch_size = config_params.getint('batch_size')
-        self.learning_rate = config_params.getfloat('learning_rate')
-        self.optimizer = config_params.get('optimizer')
-        self.augmentation = config_params.get('augmentation') == 'yes'
-        self.gpu = config_params.get('gpu') or '-1'
-        self.loss = config_params.get('loss')
-        self.model_path = config_params.get('model_path')
-        self.target_dir = config_params.get('target_dir')
-        self.class_names = config_params.get('class_names')
-        self.nb_classes = len(self.class_names)
-        self.image_dir = config_params.get('image_folder')
-        self.mask_dir = config_params.get('mask_folder')
-
-        self.nb_gpu = len(self.gpu.split(',')) if self.gpu else 0
-        self.multi_gpu = self.nb_gpu > 1
-        self.batch_size *= self.nb_gpu if self.multi_gpu else 1
-
-        self.model_name = config_params.get('model_name')
-        self.height = config_params.getint('height')
-        self.width = config_params.getint('width')
-        self.backbone = config_params.get('backbone')
-
-        self.task = config_params.getint('task_id')
-        self.milk_id = config_params.get('id')
-
-        if self.task == Task.CLASSIFICATION:
-            self.metric = 'acc'
-        elif self.task == Task.SEMANTIC_SEGMENTATION:
-            self.metric = 'iou_score'
-        else:
-            raise NotImplementedError
-
         self.secret_config = ConfigParser()
         self.secret_config.read('secret.ini')
 

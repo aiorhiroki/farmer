@@ -1,6 +1,9 @@
+import json
+
 from configparser import ConfigParser
 from farmer.ImageAnalyzer import fit
 from farmer.ImageAnalyzer.task import Task
+from farmer.ImageAnalyzer.model import Trainer
 
 
 def classification():
@@ -16,6 +19,9 @@ def segmentation():
 def _read_config(task_id):
     parser = ConfigParser()
     parser.read('config.ini')
-    parser['project_settings']['task_id'] = str(task_id.value)
+    config = json(parser['project_settings'])
+    config['task_id'] = task_id.value
 
-    return parser
+    trainer = Trainer(**config)
+
+    return trainer

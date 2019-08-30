@@ -7,15 +7,15 @@ import cv2
 import os
 import numpy as np
 import shutil
+from farmer.ImageAnalyzer.model import Trainer
 
 
 @app.route('/train', methods=["POST"])
 def train():
     form = request.json
     form = {k: v for (k, v) in form.items() if v}
-    parser = ConfigParser()
-    parser['project_settings'] = form
-    fit.train(parser)
+    trainer = Trainer(**form)
+    fit.train(trainer)
     return make_response(jsonify(dict()), 200)
 
 

@@ -1,19 +1,19 @@
 import json
 from configparser import ConfigParser
 
-from farmer.ImageAnalyzer import fit
-from farmer.ImageAnalyzer.task import Task
-from farmer.ImageAnalyzer.model import Trainer
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.workflows.train_workflow import TrainWorkflow
+from farmer.domain.model.task_model import Task
 
 
 def classification():
-    config = _read_config(Task.CLASSIFICATION)
-    fit.train(config)
+    trainer = _read_config(Task.CLASSIFICATION)
+    TrainWorkflow(trainer).command()
 
 
 def segmentation():
-    config = _read_config(Task.SEMANTIC_SEGMENTATION)
-    fit.train(config)
+    trainer = _read_config(Task.SEMANTIC_SEGMENTATION)
+    TrainWorkflow(trainer).command()
 
 
 def _read_config(task_id):

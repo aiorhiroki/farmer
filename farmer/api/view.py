@@ -1,13 +1,14 @@
 from farmer import app
-from farmer.ImageAnalyzer import fit
 from flask import request, make_response, jsonify
 from keras.models import load_model
-from configparser import ConfigParser
 import cv2
 import os
 import numpy as np
 import shutil
-from farmer.ImageAnalyzer.model import Trainer
+
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.workflows.train_workflow import TrainWorkflow
+from farmer.domain.workflows.test_workflow import TestWorkflow
 
 
 @app.route('/train', methods=["POST"])
@@ -15,7 +16,7 @@ def train():
     form = request.json
     form = {k: v for (k, v) in form.items() if v}
     trainer = Trainer(**form)
-    fit.train(trainer)
+    TrainWorkflow(trainer).command()
     return make_response(jsonify(dict()), 200)
 
 
@@ -42,15 +43,13 @@ def predict():
 def test():
     form = request.json
     form = {k: v for (k, v) in form.items() if v}
-    parser = ConfigParser()
-    parser['project_settings'] = form
     model_path = os.path.join(
         form["result_dir"],
         'model',
         'best_model.h5'
     )
-    parser['project_settings']['model_path'] = model_path
-    report = fit.evaluate(parser)
+    form['model_path'] = model_path
+    report = TestWorkflow(form).command()
     return make_response(jsonify(report))
 
 

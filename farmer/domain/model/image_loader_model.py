@@ -8,18 +8,13 @@ import ncc
 @dataclass
 class ImageLoader:
     task: int = None
-    target_dir: str
+    target_dir: str = None
     class_names: List[str] = field(default_factory=list)
     nb_classes: int = None
-    image_dir: str = None
+    input_dir: str = None
     mask_dir: str = None
     height: int = None
     width: int = None
-
-    def __post_init__(self):
-        self.class_names = self.get_class_names()
-        self.nb_classes = self.getint(self.nb_classes)
-        self.height, self.width = self.get_image_shape()
 
     def get_class_names(self):
         if self.class_names:

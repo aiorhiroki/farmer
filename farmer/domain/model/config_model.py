@@ -1,5 +1,3 @@
-import os
-from datetime import datetime
 from dataclasses import dataclass
 
 
@@ -12,9 +10,11 @@ class Config:
     result_dir: str = None
     result_path: str = None
     info_dir: str = 'info'
+    model_dir: str = 'model'
+    learning_dir: str = 'learning'
+    image_dir: str = 'image'
+    info_path: str = None
+    model_path: str = None
+    learning_path: str = None
+    image_path: str = None
     return_result: bool = False
-
-    def __post_init__(self):
-        if self.result_dir is None:
-            self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
-        self.result_path = os.path.join(self.root_dir, self.result_dir)

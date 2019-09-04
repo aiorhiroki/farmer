@@ -1,0 +1,13 @@
+version: '2.3'
+services:
+  farmer:
+    build: .
+    command: bash
+    runtime: nvidia
+    volumes:
+      - .:/app
+      - /mnt:/mnt
+      - /media:/media
+      - ${HOME}:${HOME}
+    ports:
+      - "5000:5000"

@@ -4,7 +4,7 @@ from ..tasks.set_train_env_task import SetTrainEnvTask
 from ..tasks.read_annotation_task import ReadAnnotationTask
 from ..tasks.eda_task import EdaTask
 from ..tasks.predict_classification_task import PredictClassificationTask
-from ..tasks.eval_claddification_task import EvalClassificationTask
+from ..tasks.eval_classification_task import EvalClassificationTask
 from ..tasks.eval_segmentation_task import EvalSegmentationTask
 from ..model.task_model import Task
 

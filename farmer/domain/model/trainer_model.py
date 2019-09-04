@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from config_model import Config
-from image_loader_model import ImageLoader
+import os
+from datetime import datetime
+from .config_model import Config
+from .image_loader_model import ImageLoader
 
 
 @dataclass
@@ -15,7 +17,7 @@ class Trainer(Config, ImageLoader):
     nb_gpu: int = None
     multi_gpu: bool = None
     loss: str = None
-    model_path: str = None
+    trained_model_path: str = None
     model_name: str = None
     backbone: str = None
     nb_train_data: int = 0
@@ -32,3 +34,15 @@ class Trainer(Config, ImageLoader):
         self.nb_gpu = len(self.gpu.split(',')) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         self.batch_size *= self.nb_gpu if self.multi_gpu else 1
+
+        if self.result_dir is None:
+            self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
+        self.result_path = os.path.join(self.root_dir, self.result_dir)
+        self.info_path = os.path.join(self.result_path, self.info_dir)
+        self.model_path = os.path.join(self.result_path, self.model_dir)
+        self.learning_path = os.path.join(self.result_path, self.learning_dir)
+        self.image_path = os.path.join(self.result_path, self.image_dir)
+
+        self.class_names = self.get_class_names()
+        self.nb_classes = self.getint(self.nb_classes)
+        self.height, self.width = self.get_image_shape()

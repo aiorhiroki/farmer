@@ -27,12 +27,17 @@ class BuildModelTask:
             backbone=self.config.backbone
         )
         base_model = self._do_load_model_task(
-            base_model, self.config.model_path
+            base_model, self.config.trained_model_path
         )
         model = self._do_multi_gpu_task(
             base_model, self.config.multi_gpu, self.config.nb_gpu
         )
-        compiled_model = self.do_compile_model_task(model)
+        compiled_model = self._do_compile_model_task(
+            model,
+            self.config.optimizer,
+            self.config.learning_rate,
+            self.config.task
+        )
 
         return compiled_model, base_model
 
@@ -112,9 +117,9 @@ class BuildModelTask:
 
         return model
 
-    def _do_load_model_task(self, model, model_path):
-        if model_path:
-            model.load_weights(model_path)
+    def _do_load_model_task(self, model, trained_model_path):
+        if trained_model_path:
+            model.load_weights(trained_model_path)
         return model
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):

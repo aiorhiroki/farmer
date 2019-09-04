@@ -1,4 +1,3 @@
-import json
 from configparser import ConfigParser
 
 from farmer.domain.model.trainer_model import Trainer
@@ -19,13 +18,13 @@ def segmentation():
 def _read_config(task_id):
     parser = ConfigParser()
     parser.read('config.ini')
-    config = json(parser['project_settings'])
-    config['task_id'] = task_id.value
+    config = parser.defaults()
+    config['task'] = task_id.value
 
     secret_parser = ConfigParser()
     secret_parser.read('secret.ini')
     if len(secret_parser.sections()) > 0:
-        secret_config = json(secret_parser['default'])
+        secret_config = secret_parser.defaults()
         config.update(secret_config)
 
     trainer = Trainer(**config)

@@ -13,7 +13,9 @@ class TrainTask:
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set
         )
-        callbacks = self._do_set_callbacks_task(base_model)
+        callbacks = self._do_set_callbacks_task(
+            base_model, train_set, validation_set
+        )
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
         )
@@ -45,7 +47,7 @@ class TrainTask:
             train_gen,
             steps_per_epoch=len(train_gen),
             callbacks=callbacks,
-            epochs=self.config.epoch,
+            epochs=self.config.epochs,
             validation_data=validation_gen,
             validation_steps=len(validation_gen),
             workers=16 if self.config.multi_gpu else 1,
@@ -62,24 +64,27 @@ class TrainTask:
         else:
             model.save(model_path)
 
-    def _do_set_callbacks_task(self, base_model=None):
-        callbacks = list()
+    def _do_set_callbacks_task(self, base_model, train_set, validation_set):
         best_model_name = 'best_model.h5'
+        model_save_file = os.path.join(
+            self.config.model_path,
+            best_model_name
+        )
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
-                filepath=os.path.join(self.config.model_dir, best_model_name),
+                filepath=model_save_file,
                 base_model=base_model,
                 save_best_only=True,
             )
         else:
             checkpoint = keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(self.config.model_dir, best_model_name),
+                filepath=model_save_file,
                 save_best_only=True,
             )
         reduce_lr = keras.callbacks.ReduceLROnPlateau(
             factor=0.1, patience=3, verbose=1
         )
-        plot_history = ncc.callbacks.PlotHistory(self.config.learning_dir)
+        plot_history = ncc.callbacks.PlotHistory(self.config.learning_path)
         callbacks = [
             checkpoint,
             reduce_lr,
@@ -87,34 +92,38 @@ class TrainTask:
         ]
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(
-                save_dir=self.config.learning_dir,
-                validation_files=self.config.validation_files,
-                nb_classes=self.config.nb_classes,
+                save_dir=self.config.learning_path,
+                validation_files=validation_set,
+                class_names=self.config.class_names,
                 height=self.config.height,
                 width=self.config.width
             )
+            train_save_dir = os.path.join(self.config.image_path, 'train')
+            val_save_dir = os.path.join(self.config.image_path, 'validation')
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
-                train_save_dir=self.config.image_train_dir,
-                val_save_dir=self.config.image_validation_dir,
-                train_files=self.config.train_files,
-                validation_files=self.config.validation_files,
+                train_save_dir=train_save_dir,
+                val_save_dir=val_save_dir,
+                train_files=train_set,
+                validation_files=validation_set,
                 nb_classes=self.config.nb_classes,
                 height=self.config.height,
                 width=self.config.width
             )
-            callbacks.append([iou_history, generate_sample_result])
-        if len(self.config.secret_self.config.sections()) > 0:
-            secret_data = self.config.secret_self.config['default']
+            callbacks.extend([iou_history, generate_sample_result])
+        if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-                file_name = os.path.join(self.config.learning_dir, 'IoU.png')
+                file_name = os.path.join(
+                    self.config.learning_path, 'IoU.png'
+                )
             else:
                 file_name = os.path.join(
-                    self.config.learning_dir, 'Metric.png')
+                    self.config.learning_path, 'Metric.png'
+                )
 
             slack_logging = ncc.callbacks.SlackLogger(
                 file_name=file_name,
-                token=secret_data.get('slack_token'),
-                channel=secret_data.get('slack_channel'),
+                token=self.config.slack_token,
+                channel=self.config.slack_channel,
                 title=self.config.model_name
             )
             callbacks.append(slack_logging)

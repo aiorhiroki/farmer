@@ -15,7 +15,9 @@ class EdaTask:
 
     def _do_save_params_task(self):
         parser = configparser.ConfigParser()
-        parser['project_settings'] = dataclasses.asdict(self.config)
+        config_dict = dataclasses.asdict(self.config)
+        config_dict = {k: v for (k, v) in config_dict.items() if v}
+        parser['project_settings'] = config_dict
         with open('parameter.txt', mode='w') as configfile:
             parser.write(configfile)
 

@@ -1,2 +1,3 @@
-from .fit import train
-from .fit import classification_predict, segmentation_predict
+from .model import *
+from .tasks import *
+from .workflows import *

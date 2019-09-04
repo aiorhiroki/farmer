@@ -14,7 +14,7 @@ class SetTrainEnvTask:
     def command(self):
         self._do_set_random_seed()
         self._do_set_cpu_gpu_devices(self.config.gpu)
-        self.do_create_dirs_task(result_path=self.config.result_path)
+        self._do_create_dirs_task(result_path=self.config.result_path)
 
     def _do_create_dirs_task(self, result_path):
         # 結果を保存するディレクトリを目的別に作ります。

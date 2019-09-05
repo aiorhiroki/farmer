@@ -34,7 +34,7 @@ class EdaTaskTest(unittest.TestCase):
     def test_do_save_params_task(self):
         # ファイルが作られるかのみ確認。中身は確認していない。
         eda_task = EdaTask(self.config)
-        eda_task.command()
+        eda_task._do_save_params_task()
         self.assertTrue(
             os.path.exists(
                 os.path.join(self.config.info_path, "parameter.txt")

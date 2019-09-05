@@ -42,7 +42,9 @@ class ImageLoader:
         IMAGE_EXTENTINS = [".jpg", ".png", ".JPG"]
         train_files = list()
         for image_ex in IMAGE_EXTENTINS:
-            train_files += glob(self.target_dir, "train", "*", image_ex)
+            train_files += glob(
+                os.path.join(self.target_dir, "train", "*", "*" + image_ex)
+            )
         return train_files
 
     @classmethod

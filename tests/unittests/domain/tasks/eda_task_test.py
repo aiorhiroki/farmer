@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from farmer.domain.model.trainer_model import Trainer
 from farmer.domain.tasks.eda_task import EdaTask
@@ -20,14 +21,15 @@ class EdaTaskTest(unittest.TestCase):
             backbone="xception",
             input_dir="image",
             mask_dir="label",
-            info_path="result/20180905_1512/info",
+            root_dir="test_result",
+            info_path="test_result/20180905_1512/info",
             class_names="0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l",
         )
 
         os.makedirs(self.config.info_path)
 
     def tearDown(self):
-        os.remove(os.path.join(self.config.info_path, "parameter.txt"))
+        shutil.rmtree(self.config.root_dir)
 
     def test_do_save_params_task(self):
         # ファイルが作られるかのみ確認。中身は確認していない。

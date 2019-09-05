@@ -18,7 +18,11 @@ class ReadAnnotationTask:
 
         return annotation_set
 
-    def _do_read_annotation_set_task(self, phase, config):
+    def _do_read_annotation_set_task(
+        self,
+        phase: str,
+        config
+    ):
 
         target_dir = config.target_dir
         task = config.task

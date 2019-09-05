@@ -8,7 +8,13 @@ class TrainTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, model, base_model, train_set, validation_set):
+    def command(
+        self,
+        model,
+        base_model,
+        train_set,
+        validation_set
+    ):
 
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set
@@ -19,9 +25,13 @@ class TrainTask:
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
         )
-        self._do_save_model(trained_model, base_model)
+        self._do_save_model_task(trained_model, base_model)
 
-    def _do_generate_batch_task(self, train_set, validation_set):
+    def _do_generate_batch_task(
+        self,
+        train_set,
+        validation_set
+    ):
         sequence_args = dict(
             annotations=train_set,
             input_shape=(self.config.height, self.config.width),
@@ -40,31 +50,12 @@ class TrainTask:
 
         return train_gen, validation_gen
 
-    def _do_model_optimization_task(
-            self, model, train_gen, validation_gen, callbacks):
-
-        model.fit_generator(
-            train_gen,
-            steps_per_epoch=len(train_gen),
-            callbacks=callbacks,
-            epochs=self.config.epochs,
-            validation_data=validation_gen,
-            validation_steps=len(validation_gen),
-            workers=16 if self.config.multi_gpu else 1,
-            max_queue_size=32 if self.config.multi_gpu else 10,
-            use_multiprocessing=self.config.multi_gpu
-        )
-
-        return model
-
-    def _do_save_model(self, model, base_model):
-        model_path = os.path.join(self.config.model_dir, 'last_model.h5')
-        if self.config.multi_gpu:
-            base_model.save(model_path)
-        else:
-            model.save(model_path)
-
-    def _do_set_callbacks_task(self, base_model, train_set, validation_set):
+    def _do_set_callbacks_task(
+        self,
+        base_model,
+        train_set,
+        validation_set
+    ):
         best_model_name = 'best_model.h5'
         model_save_file = os.path.join(
             self.config.model_path,
@@ -128,3 +119,36 @@ class TrainTask:
             )
             callbacks.append(slack_logging)
         return callbacks
+
+    def _do_model_optimization_task(
+        self,
+        model,
+        train_gen,
+        validation_gen,
+        callbacks
+    ):
+
+        model.fit_generator(
+            train_gen,
+            steps_per_epoch=len(train_gen),
+            callbacks=callbacks,
+            epochs=self.config.epochs,
+            validation_data=validation_gen,
+            validation_steps=len(validation_gen),
+            workers=16 if self.config.multi_gpu else 1,
+            max_queue_size=32 if self.config.multi_gpu else 10,
+            use_multiprocessing=self.config.multi_gpu
+        )
+
+        return model
+
+    def _do_save_model_task(
+        self,
+        model,
+        base_model
+    ):
+        model_path = os.path.join(self.config.model_dir, 'last_model.h5')
+        if self.config.multi_gpu:
+            base_model.save(model_path)
+        else:
+            model.save(model_path)

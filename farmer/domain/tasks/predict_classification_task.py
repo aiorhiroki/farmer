@@ -7,16 +7,23 @@ class PredictClassificationTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, test_set, model):
+    def command(
+        self,
+        test_set,
+        model
+    ):
         prediction_gen = self._do_generate_batch_task(
             test_set
         )
-        prediction = self._do_classification_predict(
+        prediction = self._do_classification_predict_task(
             model, prediction_gen
         )
         return prediction
 
-    def _do_generate_batch_task(self, annotation_set):
+    def _do_generate_batch_task(
+        self,
+        annotation_set
+    ):
         test_gen = ncc.generators.ImageSequence(
             annotations=self.config.test_files,
             input_shape=(self.config.height, self.config.width),
@@ -26,7 +33,7 @@ class PredictClassificationTask:
         )
         return test_gen
 
-    def _do_classification_predict(
+    def _do_classification_predict_task(
         self,
         model,
         annotation_gen,

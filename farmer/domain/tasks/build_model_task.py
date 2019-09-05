@@ -83,6 +83,27 @@ class BuildModelTask:
 
         return model
 
+    def _do_load_model_task(
+        self,
+        model,
+        trained_model_path
+    ):
+        if trained_model_path:
+            model.load_weights(trained_model_path)
+        return model
+
+    def _do_multi_gpu_task(
+        self,
+        base_model,
+        multi_gpu,
+        nb_gpu
+    ):
+        if multi_gpu:
+            model = multi_gpu_model(base_model, gpus=nb_gpu)
+        else:
+            model = base_model
+        return model
+
     def _do_compile_model_task(
         self,
         model,
@@ -115,16 +136,4 @@ class BuildModelTask:
         else:
             raise NotImplementedError
 
-        return model
-
-    def _do_load_model_task(self, model, trained_model_path):
-        if trained_model_path:
-            model.load_weights(trained_model_path)
-        return model
-
-    def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
-        if multi_gpu:
-            model = multi_gpu_model(base_model, gpus=nb_gpu)
-        else:
-            model = base_model
         return model

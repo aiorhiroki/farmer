@@ -15,34 +15,38 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
 
     def command(self):
-        self.set_env()
-        train_set, validation_set = self.read_annotation()
+        self.set_env_flow()
+        train_set, validation_set = self.read_annotation_flow()
         self.eda()
-        model, base_model = self.build_model()
-        result = self.model_execution(
+        model, base_model = self.build_model_flow()
+        result = self.model_execution_flow(
             train_set, model, base_model, validation_set
         )
-        return self.output(result)
+        return self.output_flow(result)
 
-    def set_env(self):
+    def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
 
-    def read_annotation(self):
+    def read_annotation_flow(self):
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command('train')
         validation_set = read_annotation.command('validation')
 
         return train_set, validation_set
 
-    def eda(self):
+    def eda_flow(self):
         EdaTask(self._config).command()
 
-    def build_model(self):
+    def build_model_flow(self):
         model, base_model = BuildModelTask(self._config).command()
         return model, base_model
 
-    def model_execution(
-        self, annotation_set, model, base_model, validation_set
+    def model_execution_flow(
+        self,
+        annotation_set,
+        model,
+        base_model,
+        validation_set
     ):
         trained_model = TrainTask(self._config).command(
             model, base_model, annotation_set, validation_set
@@ -62,5 +66,8 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
         return eval_report
 
-    def output(self, result):
+    def output_flow(
+        self,
+        result
+    ):
         return result

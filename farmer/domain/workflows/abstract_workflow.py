@@ -11,27 +11,35 @@ class AbstractImageAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def set_env(self):
+    def set_env_flow(self):
         pass
 
     @abstractmethod
-    def read_annotation(self):
+    def read_annotation_flow(self):
         pass
 
     @abstractmethod
-    def eda(self):
+    def eda_flow(self):
         pass
 
     @abstractmethod
-    def build_model(self):
+    def build_model_flow(self):
         pass
 
     @abstractmethod
-    def model_execution(
-        self, annotation_set, model, base_model, validation_set=None
+    def model_execution_flow(
+        self,
+        annotation_set,
+        model,
+        base_model,
+        validation_set=None
     ):
         pass
 
     @abstractmethod
-    def output(self, result):
-        return result
+    def output_flow(
+        self,
+        result
+    ):
+        # 返り値のフォーマット
+        pass

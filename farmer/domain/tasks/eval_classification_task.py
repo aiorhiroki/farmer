@@ -9,9 +9,16 @@ class EvalClassificationTask:
         self.config = config
 
     def command(self, prediction, annotation_set):
-        return self._do_classification_evaluation(prediction, annotation_set)
+        eval_report = self._do_classification_evaluation_task(
+            prediction, annotation_set
+        )
+        return eval_report
 
-    def _do_classification_evaluation(self, prediction, annotation_set):
+    def _do_classification_evaluation_task(
+        self,
+        prediction,
+        annotation_set
+    ):
         prediction_cls = np.argmax(prediction, axis=1)
         true_cls = [class_id for _, class_id in annotation_set]
         true = np.eye(self.config.nb_classes, dtype=np.uint8)[true_cls]

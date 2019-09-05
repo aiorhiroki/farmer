@@ -11,11 +11,16 @@ class PredictSegmentationTask:
         self.config = config
 
     def command(self, model, test_set):
-        self._do_segmentation_predict_task(
-            model, test_set, self.config.return_result)
+        prediction = self._do_segmentation_predict_task(
+            model, test_set, self.config.return_result
+        )
+        return prediction
 
     def _do_segmentation_predict_task(
-        self, model, test_set, return_result=False
+        self,
+        model,
+        test_set,
+        return_result=False
     ):
         image_util = ncc.utils.ImageUtil(
             self.config.nb_classes,

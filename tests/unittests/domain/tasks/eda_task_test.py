@@ -26,6 +26,8 @@ class EdaTaskTest(unittest.TestCase):
             class_names="0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l",
         )
 
+        self.eda_task = EdaTask(self.config)
+
         os.makedirs(self.config.info_path)
 
     def tearDown(self):
@@ -33,10 +35,13 @@ class EdaTaskTest(unittest.TestCase):
 
     def test_do_save_params_task(self):
         # ファイルが作られるかのみ確認。中身は確認していない。
-        eda_task = EdaTask(self.config)
-        eda_task._do_save_params_task()
+        self.eda_task._do_save_params_task()
         self.assertTrue(
             os.path.exists(
                 os.path.join(self.config.info_path, "parameter.txt")
             )
         )
+
+    def test_do_post_config_task(self):
+        # milkを起動してテストするのは面倒だから何もしない。
+        self.eda_task._do_post_config_task()

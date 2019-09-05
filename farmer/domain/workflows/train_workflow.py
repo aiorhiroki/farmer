@@ -17,7 +17,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def command(self):
         self.set_env_flow()
         train_set, validation_set = self.read_annotation_flow()
-        self.eda()
+        self.eda_flow()
         model, base_model = self.build_model_flow()
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set
@@ -29,8 +29,8 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def read_annotation_flow(self):
         read_annotation = ReadAnnotationTask(self._config)
-        train_set = read_annotation.command('train')
-        validation_set = read_annotation.command('validation')
+        train_set = read_annotation.command("train")
+        validation_set = read_annotation.command("validation")
 
         return train_set, validation_set
 
@@ -42,11 +42,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return model, base_model
 
     def model_execution_flow(
-        self,
-        annotation_set,
-        model,
-        base_model,
-        validation_set
+        self, annotation_set, model, base_model, validation_set
     ):
         trained_model = TrainTask(self._config).command(
             model, base_model, annotation_set, validation_set
@@ -66,8 +62,5 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
         return eval_report
 
-    def output_flow(
-        self,
-        result
-    ):
+    def output_flow(self, result):
         return result

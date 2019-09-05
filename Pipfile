@@ -4,8 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+tensorflow = "==1.9.0"
 flake8 = "*"
 autopep8 = "*"
+mock = "*"
+pytest = "*"
+pytest-cov = "*"
+nox = "*"
+#black = "*"
 
 [packages]
 keras = "==2.2.4"
@@ -13,7 +19,8 @@ ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
 opencv-python = "*"
 requests = "*"
 pandas = "*"
-flask = "*"
+flask = "==1.1.1"
+flask-cors = "==3.0.8"
 tqdm = "*"
 segmentation-models = "==0.2.0"
 albumentations = "==0.2.0"

@@ -12,7 +12,6 @@ from ..model.task_model import Task
 
 
 class BuildModelTask:
-
     def __init__(self, config):
         self.config = config
 
@@ -24,7 +23,7 @@ class BuildModelTask:
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.backbone
+            backbone=self.config.backbone,
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -36,7 +35,7 @@ class BuildModelTask:
             model,
             self.config.optimizer,
             self.config.learning_rate,
-            self.config.task
+            self.config.task,
         )
 
         return compiled_model, base_model
@@ -48,21 +47,20 @@ class BuildModelTask:
         nb_classes,
         width=299,
         height=299,
-        backbone='resnet50'
+        backbone="resnet50",
     ):
         with tf.device("/cpu:0"):
             if task == Task.CLASSIFICATION:
                 xception_shape_conditoin = height >= 71 and width >= 71
                 mobilenet_shape_condition = height >= 32 and width >= 32
 
-                if model_name == 'xception' and xception_shape_conditoin:
+                if model_name == "xception" and xception_shape_conditoin:
                     model = xception(nb_classes, height, width)
-                elif model_name == 'mobilenet' and mobilenet_shape_condition:
+                elif model_name == "mobilenet" and mobilenet_shape_condition:
                     model = mobilenet(nb_classes, height, width)
                 else:
                     model = Model2D(
-                        input_shape=(height, width, 3),
-                        num_classes=nb_classes
+                        input_shape=(height, width, 3), num_classes=nb_classes
                     )
 
             elif task == Task.SEMANTIC_SEGMENTATION:
@@ -70,49 +68,34 @@ class BuildModelTask:
                     model = Unet(
                         backbone,
                         input_shape=(height, width, 3),
-                        classes=nb_classes
+                        classes=nb_classes,
                     )
                 elif model_name == "deeplab_v3":
                     model = Deeplabv3(
                         input_shape=(height, width, 3),
                         classes=nb_classes,
-                        backbone='xception'
+                        backbone="xception",
                     )
             else:
                 raise NotImplementedError
 
         return model
 
-    def _do_load_model_task(
-        self,
-        model,
-        trained_model_path
-    ):
+    def _do_load_model_task(self, model, trained_model_path):
         if trained_model_path:
             model.load_weights(trained_model_path)
         return model
 
-    def _do_multi_gpu_task(
-        self,
-        base_model,
-        multi_gpu,
-        nb_gpu
-    ):
+    def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
         if multi_gpu:
             model = multi_gpu_model(base_model, gpus=nb_gpu)
         else:
             model = base_model
         return model
 
-    def _do_compile_model_task(
-        self,
-        model,
-        optimizer,
-        learning_rate,
-        task_id
-    ):
+    def _do_compile_model_task(self, model, optimizer, learning_rate, task_id):
 
-        if optimizer == 'adam':
+        if optimizer == "adam":
             optimizer = optimizers.Adam(
                 lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
             )
@@ -125,13 +108,11 @@ class BuildModelTask:
             model.compile(
                 optimizer=optimizer,
                 loss=categorical_crossentropy,
-                metrics=['acc']
+                metrics=["acc"],
             )
         elif task_id == Task.SEMANTIC_SEGMENTATION:
             model.compile(
-                optimizer=optimizer,
-                loss=cce_dice_loss,
-                metrics=[iou_score]
+                optimizer=optimizer, loss=cce_dice_loss, metrics=[iou_score]
             )
         else:
             raise NotImplementedError

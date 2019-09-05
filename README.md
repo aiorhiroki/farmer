@@ -97,3 +97,7 @@ Result
           │      ├── model  # 最良モデル & 最終モデル
           │           
           ├── 日付時間(結果B)
+
+Test and Format
+------------
+`$  pipenv run nox`

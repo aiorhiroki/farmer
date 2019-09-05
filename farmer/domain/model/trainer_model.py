@@ -31,7 +31,7 @@ class Trainer(Config, ImageLoader):
         self.augmentation = self.getboolean(self.augmentation)
         self.task = self.getint(self.task)
 
-        self.nb_gpu = len(self.gpu.split(',')) if self.gpu else 0
+        self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         self.batch_size *= self.nb_gpu if self.multi_gpu else 1
 

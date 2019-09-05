@@ -28,18 +28,11 @@ class AbstractImageAnalyzer(ABC):
 
     @abstractmethod
     def model_execution_flow(
-        self,
-        annotation_set,
-        model,
-        base_model,
-        validation_set=None
+        self, annotation_set, model, base_model, validation_set=None
     ):
         pass
 
     @abstractmethod
-    def output_flow(
-        self,
-        result
-    ):
+    def output_flow(self, result):
         # 返り値のフォーマット
         pass

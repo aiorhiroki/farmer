@@ -4,7 +4,6 @@ import sklearn
 
 
 class EvalClassificationTask:
-
     def __init__(self, config):
         self.config = config
 
@@ -14,11 +13,7 @@ class EvalClassificationTask:
         )
         return eval_report
 
-    def _do_classification_evaluation_task(
-        self,
-        prediction,
-        annotation_set
-    ):
+    def _do_classification_evaluation_task(self, prediction, annotation_set):
         prediction_cls = np.argmax(prediction, axis=1)
         true_cls = [class_id for _, class_id in annotation_set]
         true = np.eye(self.config.nb_classes, dtype=np.uint8)[true_cls]
@@ -30,9 +25,9 @@ class EvalClassificationTask:
         )
         eval_report.update(
             dict(
-                fpr=list(fpr['macro']),
-                tpr=list(tpr['macro']),
-                auc=auc['macro']
+                fpr=list(fpr["macro"]),
+                tpr=list(tpr["macro"]),
+                auc=auc["macro"],
             )
         )
         return eval_report

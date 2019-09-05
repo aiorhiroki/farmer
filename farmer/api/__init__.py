@@ -1,2 +1,3 @@
 from .main import classification, segmentation
-from .view import *
+
+__all__ = ["classification", "segmentation"]

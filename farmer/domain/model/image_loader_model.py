@@ -22,9 +22,7 @@ class ImageLoader:
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
             class_names = [
-                os.path.basename(
-                    os.path.dirname(image_file)
-                )
+                os.path.basename(os.path.dirname(image_file))
                 for image_file in train_files
             ]
             return list(set(class_names))
@@ -41,12 +39,10 @@ class ImageLoader:
         return height, width
 
     def _get_train_files(self):
-        IMAGE_EXTENTINS = ['.jpg', '.png', '.JPG']
+        IMAGE_EXTENTINS = [".jpg", ".png", ".JPG"]
         train_files = list()
         for image_ex in IMAGE_EXTENTINS:
-            train_files += glob(
-                self.target_dir, 'train', '*', image_ex
-            )
+            train_files += glob(self.target_dir, "train", "*", image_ex)
         return train_files
 
     @classmethod
@@ -62,4 +58,4 @@ class ImageLoader:
     @classmethod
     def getboolean(cls, str_bool):
         if str_bool:
-            return str_bool == 'True' or str_bool == 'yes'
+            return str_bool == "True" or str_bool == "yes"

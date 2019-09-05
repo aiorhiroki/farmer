@@ -26,7 +26,7 @@ class TestWorkflow(AbstractImageAnalyzer):
 
     def read_annotation_flow(self):
         read_annotation = ReadAnnotationTask(self._config)
-        test_set = read_annotation.command('test')
+        test_set = read_annotation.command("test")
         return test_set
 
     def eda_flow(self):
@@ -37,11 +37,7 @@ class TestWorkflow(AbstractImageAnalyzer):
         return model, base_model
 
     def model_execution_flow(
-        self,
-        annotation_set,
-        model,
-        base_model,
-        validation_set
+        self, annotation_set, model, base_model, validation_set
     ):
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(
@@ -56,8 +52,5 @@ class TestWorkflow(AbstractImageAnalyzer):
             )
         return eval_report
 
-    def output_flow(
-        self,
-        result
-    ):
+    def output_flow(self, result):
         return result

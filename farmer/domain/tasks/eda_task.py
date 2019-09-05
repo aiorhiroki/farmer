@@ -5,7 +5,6 @@ import dataclasses
 
 
 class EdaTask:
-
     def __init__(self, config):
         self.config = config
 
@@ -17,8 +16,9 @@ class EdaTask:
         parser = configparser.ConfigParser()
         config_dict = dataclasses.asdict(self.config)
         config_dict = {k: v for (k, v) in config_dict.items() if v}
-        parser['project_settings'] = config_dict
-        with open('parameter.txt', mode='w') as configfile:
+        parser["project_settings"] = config_dict
+        param_path = os.path.join(self.config.info_path, "parameter.txt")
+        with open(param_path, mode="w") as configfile:
             parser.write(configfile)
 
     def _do_post_config_task(self):
@@ -35,8 +35,8 @@ class EdaTask:
                 height=self.config.height,
                 width=self.config.width,
                 result_path=os.path.abspath(self.config.result_path),
-                class_names=self.config.class_names
+                class_names=self.config.class_names,
             ),
-            route='first_config'
+            route="first_config",
         )
         milk_client.close_session()

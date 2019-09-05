@@ -6,7 +6,6 @@ import tqdm
 
 
 class PredictSegmentationTask:
-
     def __init__(self, config):
         self.config = config
 
@@ -17,14 +16,10 @@ class PredictSegmentationTask:
         return prediction
 
     def _do_segmentation_predict_task(
-        self,
-        model,
-        test_set,
-        return_result=False
+        self, model, test_set, return_result=False
     ):
         image_util = ncc.utils.ImageUtil(
-            self.config.nb_classes,
-            (self.config.height, self.config.width)
+            self.config.nb_classes, (self.config.height, self.config.width)
         )
         result = list()
         for input_file, _ in tqdm.tqdm(test_set):

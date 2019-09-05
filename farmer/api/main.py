@@ -17,12 +17,12 @@ def segmentation():
 
 def _read_config(task_id):
     parser = ConfigParser()
-    parser.read('config.ini')
+    parser.read("config.ini")
     config = parser.defaults()
-    config['task'] = task_id.value
+    config["task"] = task_id.value
 
     secret_parser = ConfigParser()
-    secret_parser.read('secret.ini')
+    secret_parser.read("secret.ini")
     if len(secret_parser.sections()) > 0:
         secret_config = secret_parser.defaults()
         config.update(secret_config)

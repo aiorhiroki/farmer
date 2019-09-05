@@ -47,37 +47,22 @@ segmentation
 
 ### Training
 `config.ini`ファイルを作成。学習条件を書き込む。 
-`train_data`と`test_data`は半角スペースを開けてdata_case_directoryを列挙する。  
-またはファイルパスとラベルがセットになったcsvファイルのパスを指定する。
 ```buildoutcfg
-[project_settings]
+[DEFAULT]
 target_dir = /mnt/hdd/data/Forceps/selected/data
-train_data = DataA DataB DataC
-validation_data = DataD
-test_data = DataE
 nb_classes = 6
-
-[default]
-epoch = 100
+epochs = 100
 batch_size = 4
 optimizer = adam
 augmentation = False
 gpu = 0,1
-model_path = /PATH_TO_MODEL/last_model.h5
-
-[classification_default]
-model = Xception
-width = 71
-height = 71
-backbone = xception
-
-[segmentation_default]
-model = WithOutOthers
+trained_model_path = /PATH_TO_MODEL/last_model.h5
+model_name = WithOutOthers
 width = 512
 height = 256
 backbone = resnet50
-image_dir = images
-label_dir = labels
+input_dir = images
+mask_dir = labels
 class_names = Cat Dog Bird 
 ```
 
@@ -93,7 +78,7 @@ $ ncc-seg  # segmentation
 
 `secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。
 ```buildoutcfg
-[default]
+[DEFAULT]
 slack_token = xoxb-hogehoge
 slack_channel = fugafuga
 ```

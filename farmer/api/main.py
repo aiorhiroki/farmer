@@ -17,7 +17,11 @@ def segmentation():
 
 def _read_config(task_id):
     parser = ConfigParser()
-    parser.read("config.ini")
+
+    if task_id == Task.CLASSIFICATION:
+        parser.read("classification-config.ini")
+    elif task_id == Task.SEMANTIC_SEGMENTATION:
+        parser.read("segmentation-config.ini")
     config = parser.defaults()
     config["task"] = task_id.value
 

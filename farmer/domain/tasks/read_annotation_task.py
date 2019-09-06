@@ -8,7 +8,7 @@ class ReadAnnotationTask:
         self.config = config
 
     def command(self, phase):
-        annotation_set = self._do_read_annotation_set_task(phase, self.config)
+        annotation_set = self._do_read_annotation_set_task(phase)
         self._do_write_annotations_task(
             phase,
             annotation_set,

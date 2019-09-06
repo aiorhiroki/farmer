@@ -46,32 +46,12 @@ segmentation
           ├── data_case_directory(dataB)
 
 ### Training
-`config.ini`ファイルを作成。学習条件を書き込む。 
-```buildoutcfg
-[DEFAULT]
-target_dir = /mnt/hdd/data/Forceps/selected/data
-nb_classes = 6
-epochs = 100
-batch_size = 4
-optimizer = adam
-augmentation = False
-gpu = 0,1
-trained_model_path = /PATH_TO_MODEL/last_model.h5
-model_name = WithOutOthers
-width = 512
-height = 256
-backbone = resnet50
-input_dir = images
-mask_dir = labels
-class_names = Cat Dog Bird 
-```
-
-`config.ini`ファイルがある場所でコマンドを実行 
-
+`classification-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-cls  # classification
 ```
 
+`segmentation-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-seg  # segmentation
 ```

@@ -29,9 +29,9 @@ class PredictClassificationTask:
         prediction = model.predict_generator(
             annotation_gen,
             steps=len(annotation_gen),
-            workers=16 if self.configmulti_gpu else 1,
-            max_queue_size=32 if self.configmulti_gpu else 10,
-            use_multiprocessing=self.configmulti_gpu,
+            workers=16 if self.config.multi_gpu else 1,
+            max_queue_size=32 if self.config.multi_gpu else 10,
+            use_multiprocessing=self.config.multi_gpu,
             verbose=1,
         )
         if save_npy:

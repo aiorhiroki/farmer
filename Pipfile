@@ -25,7 +25,7 @@ tqdm = "==4.35.0"
 segmentation-models = "==0.2.0"
 albumentations = "==0.2.0"
 python-dotenv = "==0.10.3"
-sklearn = "*"
+scikit-learn = "*"
 dataclasses = "*"
 
 [requires]

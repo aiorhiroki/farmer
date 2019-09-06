@@ -1,6 +1,6 @@
 import ncc
 import numpy as np
-import sklearn
+from sklearn.metrics import classification_report
 
 
 class EvalClassificationTask:
@@ -17,7 +17,7 @@ class EvalClassificationTask:
         prediction_cls = np.argmax(prediction, axis=1)
         true_cls = [class_id for _, class_id in annotation_set]
         true = np.eye(self.config.nb_classes, dtype=np.uint8)[true_cls]
-        eval_report = sklearn.metrics.classification_report(
+        eval_report = classification_report(
             true_cls, prediction_cls, output_dict=True
         )
         fpr, tpr, auc = ncc.metrics.roc(

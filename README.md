@@ -8,6 +8,8 @@ $ pip install git+https://github.com/aiorhiroki/ncc
 $ pip install git+https://github.com/aiorhiroki/farmer
 ```
 
+Docker <= 18.09.0 (Don't use v19.03 or newer)
+
 ### Prepare Data set folder
 classification
 

@@ -15,7 +15,7 @@ class PredictClassificationTask:
 
     def _do_generate_batch_task(self, annotation_set):
         test_gen = ncc.generators.ImageSequence(
-            annotations=self.config.test_files,
+            annotations=annotation_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,

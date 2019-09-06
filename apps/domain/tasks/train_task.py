@@ -18,7 +18,9 @@ class TrainTask:
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
         )
-        self._do_save_model_task(trained_model, base_model)
+        save_model = self._do_save_model_task(trained_model, base_model)
+
+        return save_model
 
     def _do_generate_batch_task(self, train_set, validation_set):
         sequence_args = dict(
@@ -110,8 +112,10 @@ class TrainTask:
         return model
 
     def _do_save_model_task(self, model, base_model):
-        model_path = os.path.join(self.config.model_dir, "last_model.h5")
+        model_path = os.path.join(self.config.model_path, "last_model.h5")
         if self.config.multi_gpu:
             base_model.save(model_path)
+            return base_model
         else:
             model.save(model_path)
+            return model

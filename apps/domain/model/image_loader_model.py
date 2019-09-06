@@ -25,7 +25,7 @@ class ImageLoader:
                 os.path.basename(os.path.dirname(image_file))
                 for image_file in train_files
             ]
-            return list(set(class_names))
+            return sorted(list(set(class_names)))
         else:
             return ncc.readers.search_image_colors(train_files)
 

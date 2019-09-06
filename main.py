@@ -13,10 +13,10 @@
 # limitations under the License.
 
 # coding: utf-8
-import farmer.api.view
+import apps.api.view
 import os
 from flask import Flask
-from farmer.domain.model.config_model import Config
+from apps.domain.model.config_model import Config
 
 
 def _get_env():  # type: () -> str
@@ -26,7 +26,7 @@ def _get_env():  # type: () -> str
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.register_blueprint(farmer.api.view.app)
+app.register_blueprint(apps.api.view.app)
 
 
 if __name__ == '__main__':

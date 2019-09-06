@@ -2,12 +2,12 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(
-    name='farmer',
+    name='apps',
     version='1.0.0',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
-    url='https://github.com/NCC-AI/farmer',
+    url='https://github.com/NCC-AI/apps',
     download_url='',
     license='Apache 2.0',
     install_requires=['numpy>=1.13.3',
@@ -35,8 +35,8 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'ncc-cls=farmer.api.main:classification',
-            'ncc-seg=farmer.api.main:segmentation',
+            'ncc-cls=apps.api.main:classification',
+            'ncc-seg=apps.api.main:segmentation',
         ],
     },
 )

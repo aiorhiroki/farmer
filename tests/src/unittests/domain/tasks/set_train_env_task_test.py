@@ -1,6 +1,6 @@
 import unittest
-from farmer.domain.model.trainer_model import Trainer
-from farmer.domain.tasks.set_train_env_task import SetTrainEnvTask
+from apps.domain.model.trainer_model import Trainer
+from apps.domain.tasks.set_train_env_task import SetTrainEnvTask
 
 
 class SetTrainEnvTaskTest(unittest.TestCase):

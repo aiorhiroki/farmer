@@ -56,7 +56,7 @@ def black(session):
     session.install("black")
     session.run(
         "black",
-        "farmer",
+        "apps",
         "tests",
         "--line-length=79"
     )
@@ -71,5 +71,5 @@ def lint(session):
     """
 
     session.install('flake8')
-    session.run('flake8', os.path.join('farmer'))
+    session.run('flake8', os.path.join('apps'))
     session.run('flake8', 'tests')

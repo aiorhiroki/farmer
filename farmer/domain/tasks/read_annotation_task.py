@@ -18,25 +18,17 @@ class ReadAnnotationTask:
 
         return annotation_set
 
-    def _do_read_annotation_set_task(self, phase: str, config):
+    def _do_read_annotation_set_task(self, phase: str):
+        target_path = os.path.join(self.config.target_dir, phase)
 
-        target_dir = config.target_dir
-        task = config.task
-        class_names = config.class_names
-        input_dir = config.input_dir
-        mask_dir = config.mask_dir
-
-        target_path = os.path.join(target_dir, phase)
-
-        if task == ncc.tasks.Task.CLASSIFICATION:
+        if self.config.task == ncc.tasks.Task.CLASSIFICATION:
             annotations = ncc.readers.classification_set(
-                target_path, class_names
+                target_path, self.config.class_names
             )
         else:
             annotations = ncc.readers.segmentation_set(
-                target_path, input_dir, mask_dir
+                target_path, self.config.input_dir, self.config.mask_dir
             )
-
         return annotations
 
     def _do_write_annotations_task(

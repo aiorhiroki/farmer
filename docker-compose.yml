@@ -2,8 +2,8 @@ version: '2.3'
 services:
   farmer:
     build: .
-    command: bash
-    runtime: nvidia
+    #runtime: nvidia
+    command: /bin/bash
     volumes:
       - .:/app
       - /mnt:/mnt
@@ -11,3 +11,4 @@ services:
       - ${HOME}:${HOME}
     ports:
       - "5000:5000"
+    image: farmer

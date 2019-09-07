@@ -51,11 +51,13 @@ segmentation
 `classification-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-cls  # classification
+$ docker run -rm -it farmer ncc-cls   # docker
 ```
 
 `segmentation-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-seg  # segmentation
+$ docker run -rm -it farmer ncc-seg  # docker
 ```
 
 `secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。

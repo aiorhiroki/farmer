@@ -49,10 +49,10 @@ class BuildModelTask:
         backbone="resnet50",
     ):
         if task == Task.CLASSIFICATION:
-            xception_shape_conditoin = height >= 71 and width >= 71
+            xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
 
-            if model_name == "xception" and xception_shape_conditoin:
+            if model_name == "xception" and xception_shape_condition:
                 model = xception(nb_classes, height, width)
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(nb_classes, height, width)

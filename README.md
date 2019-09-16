@@ -8,6 +8,8 @@ $ pip install git+https://github.com/aiorhiroki/ncc
 $ pip install git+https://github.com/aiorhiroki/farmer
 ```
 
+Docker <= 18.09.0 (Don't use v19.03 or newer)
+
 ### Prepare Data set folder
 classification
 
@@ -46,54 +48,21 @@ segmentation
           ├── data_case_directory(dataB)
 
 ### Training
-`config.ini`ファイルを作成。学習条件を書き込む。 
-`train_data`と`test_data`は半角スペースを開けてdata_case_directoryを列挙する。  
-またはファイルパスとラベルがセットになったcsvファイルのパスを指定する。
-```buildoutcfg
-[project_settings]
-target_dir = /mnt/hdd/data/Forceps/selected/data
-train_data = DataA DataB DataC
-validation_data = DataD
-test_data = DataE
-nb_classes = 6
-
-[default]
-epoch = 100
-batch_size = 4
-optimizer = adam
-augmentation = False
-gpu = 0,1
-model_path = /PATH_TO_MODEL/last_model.h5
-
-[classification_default]
-model = Xception
-width = 71
-height = 71
-backbone = xception
-
-[segmentation_default]
-model = WithOutOthers
-width = 512
-height = 256
-backbone = resnet50
-image_dir = images
-label_dir = labels
-class_names = Cat Dog Bird 
-```
-
-`config.ini`ファイルがある場所でコマンドを実行 
-
+`classification-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-cls  # classification
+$ docker run -rm -it farmer ncc-cls   # docker
 ```
 
+`segmentation-config.ini` ファイルがある場所でコマンドを実行
 ```bash
 $ ncc-seg  # segmentation
+$ docker run -rm -it farmer ncc-seg  # docker
 ```
 
 `secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。
 ```buildoutcfg
-[default]
+[DEFAULT]
 slack_token = xoxb-hogehoge
 slack_channel = fugafuga
 ```
@@ -112,3 +81,7 @@ Result
           │      ├── model  # 最良モデル & 最終モデル
           │           
           ├── 日付時間(結果B)
+
+Test and Format
+------------
+`$  pipenv run nox`

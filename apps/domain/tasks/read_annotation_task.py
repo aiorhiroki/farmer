@@ -9,12 +9,7 @@ class ReadAnnotationTask:
 
     def command(self, phase):
         annotation_set = self._do_read_annotation_set_task(phase)
-        self._do_write_annotations_task(
-            phase,
-            annotation_set,
-            self.config.result_path,
-            self.config.info_dir,
-        )
+        self._do_write_annotations_task(phase, annotation_set)
 
         return annotation_set
 
@@ -31,11 +26,9 @@ class ReadAnnotationTask:
             )
         return annotations
 
-    def _do_write_annotations_task(
-        self, phase: str, file_names: list, result_path: str, info_dir: str
-    ):
+    def _do_write_annotations_task(self, phase: str, file_names: list):
         file_name = "{}_files.csv".format(phase)
-        csv_file_path = os.path.join(result_path, info_dir, file_name)
+        csv_file_path = os.path.join(self.config.info_path, file_name)
 
         with open(csv_file_path, "w") as fw:
             writer = csv.writer(fw)

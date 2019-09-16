@@ -39,12 +39,20 @@ class ImageLoader:
         return height, width
 
     def _get_train_files(self):
-        IMAGE_EXTENTINS = [".jpg", ".png", ".JPG"]
+        IMAGE_EXTENTINS = [".jpg", ".png"]
         train_files = list()
         for image_ex in IMAGE_EXTENTINS:
-            train_files += glob(
-                os.path.join(self.target_dir, "train", "*", "*" + image_ex)
-            )
+            if self.task == ncc.tasks.Task.CLASSIFICATION:
+                train_files += glob(
+                    os.path.join(self.target_dir, "train", "*", "*" + image_ex)
+                )
+            else:
+                train_files += glob(
+                    f"{self.target_dir}/train/{self.mask_dir}/*" + image_ex
+                )
+                train_files += glob(
+                    f"{self.target_dir}/train/{self.mask_dir}/*/*" + image_ex
+                )
         return train_files
 
     @classmethod

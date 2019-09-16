@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-tensorflow = "==1.9.0"
+#tensorflow = "==2.0.0-rc1"
 flake8 = "*"
 autopep8 = "*"
 mock = "*"

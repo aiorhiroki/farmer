@@ -1,4 +1,3 @@
-import tensorflow as tf
 from keras.losses import categorical_crossentropy
 from keras import optimizers
 from keras.utils import multi_gpu_model
@@ -49,35 +48,34 @@ class BuildModelTask:
         height=299,
         backbone="resnet50",
     ):
-        with tf.device("/cpu:0"):
-            if task == Task.CLASSIFICATION:
-                xception_shape_conditoin = height >= 71 and width >= 71
-                mobilenet_shape_condition = height >= 32 and width >= 32
+        if task == Task.CLASSIFICATION:
+            xception_shape_conditoin = height >= 71 and width >= 71
+            mobilenet_shape_condition = height >= 32 and width >= 32
 
-                if model_name == "xception" and xception_shape_conditoin:
-                    model = xception(nb_classes, height, width)
-                elif model_name == "mobilenet" and mobilenet_shape_condition:
-                    model = mobilenet(nb_classes, height, width)
-                else:
-                    model = Model2D(
-                        input_shape=(height, width, 3), num_classes=nb_classes
-                    )
-
-            elif task == Task.SEMANTIC_SEGMENTATION:
-                if model_name == "unet":
-                    model = Unet(
-                        backbone,
-                        input_shape=(height, width, 3),
-                        classes=nb_classes,
-                    )
-                elif model_name == "deeplab_v3":
-                    model = Deeplabv3(
-                        input_shape=(height, width, 3),
-                        classes=nb_classes,
-                        backbone="xception",
-                    )
+            if model_name == "xception" and xception_shape_conditoin:
+                model = xception(nb_classes, height, width)
+            elif model_name == "mobilenet" and mobilenet_shape_condition:
+                model = mobilenet(nb_classes, height, width)
             else:
-                raise NotImplementedError
+                model = Model2D(
+                    input_shape=(height, width, 3), num_classes=nb_classes
+                )
+
+        elif task == Task.SEMANTIC_SEGMENTATION:
+            if model_name == "unet":
+                model = Unet(
+                    backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
+            elif model_name == "deeplab_v3":
+                model = Deeplabv3(
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                    backbone="xception",
+                )
+        else:
+            raise NotImplementedError
 
         return model
 

@@ -3,7 +3,6 @@ import random as rn
 import multiprocessing as mp
 import numpy as np
 import tensorflow as tf
-from keras import backend as K
 
 
 class SetTrainEnvTask:
@@ -20,7 +19,7 @@ class SetTrainEnvTask:
         os.environ["PYTHONHASHSEED"] = str(seed)
         np.random.seed(seed)
         rn.seed(seed)
-        tf.set_random_seed(seed)
+        tf.random.set_seed(seed)
 
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices
@@ -28,13 +27,10 @@ class SetTrainEnvTask:
             os.environ["CUDA_VISIBLE_DEVICES"] = gpu
         else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-        core_num = mp.cpu_count()
-        session_conf = tf.ConfigProto(
-            intra_op_parallelism_threads=core_num,
-            inter_op_parallelism_threads=core_num,
-        )
-        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        K.set_session(sess)
+
+        num_threads = mp.cpu_count()
+        tf.config.threading.set_inter_op_parallelism_threads(num_threads)
+        tf.config.threading.set_intra_op_parallelism_threads(num_threads)
 
     def _do_create_dirs_task(self, result_path: str):
         # 結果を保存するディレクトリを目的別に作ります。

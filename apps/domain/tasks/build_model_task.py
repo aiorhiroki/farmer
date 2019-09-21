@@ -51,21 +51,13 @@ class BuildModelTask:
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
-            classification_args = dict(
-                nb_classes=nb_classes,
-                height=height,
-                width=width,
-                framework=framework,
-            )
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(**classification_args)
+                model = xception(nb_classes, height, width, framework)
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(**classification_args)
+                model = mobilenet(nb_classes, height, width, framework)
             else:
-                model = Model2D(
-                    input_shape=(height, width, 3), num_classes=nb_classes
-                )
+                model = Model2D(nb_classes, height, width, framework)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             if model_name == "unet":

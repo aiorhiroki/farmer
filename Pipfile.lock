@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7b431eeea349582a0d697a3a847b7830d65212d3f9920822147e769c866b7cea"
+            "sha256": "119d87fe36147be255b669c1329eb6f48c781180181c5dd2359d6fc8c4fc746f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -266,6 +266,12 @@
             ],
             "version": "==3.1.1"
         },
+        "munch": {
+            "hashes": [
+                "sha256:6ae3d26b837feacf732fb8aa5b842130da1daf221f5af9f9d4b2a0a6414b0d51"
+            ],
+            "version": "==2.3.2"
+        },
         "ncc": {
             "editable": true,
             "git": "https://github.com/aiorhiroki/ncc",
@@ -382,6 +388,13 @@
                 "sha256:f8dc19d92896558f9c4317ee365729ead9d7bbcf2052a9a19a3ef17abbb8ac5b"
             ],
             "version": "==6.1.0"
+        },
+        "pretrainedmodels": {
+            "hashes": [
+                "sha256:7e77ead4619a3e11ab3c41982c8ad5b86edffe37c87fd2a37ec3c2cc6470b98a"
+            ],
+            "index": "pypi",
+            "version": "==0.7.4"
         },
         "pyparsing": {
             "hashes": [
@@ -547,6 +560,36 @@
                 "sha256:d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73"
             ],
             "version": "==1.12.0"
+        },
+        "torch": {
+            "hashes": [
+                "sha256:0698d0a48014b9b8f36d93e69901eca2e7ec712cd2033908f7a77e7d86a4f0d7",
+                "sha256:2ac8e58b069232f079bd289aa160366a9367ae1a4616a2c1007dceed19ff9bfa",
+                "sha256:43a0e28c448ddeea65fb9e956bc743389592afac824095bdbc08e8a87364c639",
+                "sha256:661ad06b4616663149bd504e8c0271196d0386712e21a92619d95ba88138794a",
+                "sha256:880a0c22692eaebbce808a5bf2255ab7d345ab43c40795be0a421c6250ba0fb4",
+                "sha256:a13bf6f78a49d844b85c142b8cd62d2e1833a11ed21ea0bc6b1ac73d24c76415",
+                "sha256:a8c21f82fd03b67927078ea917040478c3263753fe1906fc19d0f5f0c7d9aa10",
+                "sha256:b87fd224a7de3bc01ce87eb947698797b4514e27115b0aa60a56991515dd9dd6",
+                "sha256:f63d489c54b4f170ce8335727bbb196ceb9acd0e7805477bbef8fabc914bc0f9"
+            ],
+            "index": "pypi",
+            "version": "==1.2.0"
+        },
+        "torchvision": {
+            "hashes": [
+                "sha256:3a8e9403252fefdf6e8f9993ae111d28eb4ad1e73f696f03de485d7f77d88067",
+                "sha256:6fff5a31d50de3a59dcceda2a48de9df33a5f43357dc3e0da0ffbb97699aec52",
+                "sha256:740b3718470aa4ec0b389df876eb25117df1952dd2e8105b7828a02aa5bce73b",
+                "sha256:8114c33b736ee430496eef4fe03b25be8b939b2abd2a968558737bb9aed1928b",
+                "sha256:904ef213594672f2ed7fafa3ab010cbf2a4704a951a7bf221cf36b3d2e3acd62",
+                "sha256:afff8e987564192bc7f139d8b089541d4471ad6fc99e977e8bc8dbb4e0873041",
+                "sha256:d7939f2ca401de3067a30b6f4dcef63d13d24a4cd1ddc2d3a9af3413ce658d03",
+                "sha256:d8c2402704ce8ef8e87e4922160388c7ca010ef27700082014d6bd694cf1cc51",
+                "sha256:e00de7571d83f968f5aea7a59e84e3262669acef0a077ce4bd705eca2df68167"
+            ],
+            "index": "pypi",
+            "version": "==0.4.0"
         },
         "tqdm": {
             "hashes": [

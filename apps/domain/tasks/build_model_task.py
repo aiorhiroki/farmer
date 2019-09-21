@@ -20,6 +20,7 @@ class BuildModelTask:
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
+            framework=self.config.framework,
             backbone=self.config.backbone,
         )
         base_model = self._do_load_model_task(
@@ -42,18 +43,25 @@ class BuildModelTask:
         task,
         model_name,
         nb_classes,
-        width=299,
-        height=299,
+        width,
+        height,
+        framework,
         backbone="resnet50",
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
+            classification_args = dict(
+                nb_classes=nb_classes,
+                height=height,
+                width=width,
+                framework=framework,
+            )
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(nb_classes, height, width)
+                model = xception(**classification_args)
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(nb_classes, height, width)
+                model = mobilenet(**classification_args)
             else:
                 model = Model2D(
                     input_shape=(height, width, 3), num_classes=nb_classes

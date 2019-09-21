@@ -11,7 +11,6 @@ mock = "*"
 pytest = "*"
 pytest-cov = "*"
 nox = "*"
-black = "*"
 
 [packages]
 keras = "==2.2.4"
@@ -30,6 +29,7 @@ dataclasses = "*"
 h5py = "==2.9"
 torch = "==1.2.0"
 torchvision = "==0.4.0"
+pretrainedmodels = "*"
 
 [requires]
 python_version = "3.6"

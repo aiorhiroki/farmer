@@ -4,6 +4,7 @@ import multiprocessing as mp
 import numpy as np
 
 import tensorflow as tf
+import torch
 
 
 class SetTrainEnvTask:
@@ -22,6 +23,12 @@ class SetTrainEnvTask:
         rn.seed(seed)
         if self.config.framework == "tensorflow":
             tf.random.set_seed(seed)
+        elif self.config.framework == "pytorch":
+            torch.manual_seed(0)
+            # when running on CuDNN backend, two further options must be set:
+            # warning: processing speed can be lower
+            # torch.backends.cudnn.deterministic = True
+            # torch.backends.cudnn.benchmark = False
 
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices

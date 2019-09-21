@@ -11,11 +11,11 @@ mock = "*"
 pytest = "*"
 pytest-cov = "*"
 nox = "*"
-#black = "*"
+black = "*"
 
 [packages]
 keras = "==2.2.4"
-ncc = {editable = true, git = "https://github.com/aiorhiroki/ncc"}
+ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
 opencv-python = "*"
 requests = "==2.22.0"
 pandas = "==0.25.1"
@@ -28,6 +28,8 @@ python-dotenv = "==0.10.3"
 scikit-learn = "*"
 dataclasses = "*"
 h5py = "==2.9"
+torch = "==1.2.0"
+torchvision = "==0.4.0"
 
 [requires]
 python_version = "3.6"

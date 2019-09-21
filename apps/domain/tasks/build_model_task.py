@@ -1,13 +1,11 @@
-from keras.losses import categorical_crossentropy
-from keras import optimizers
-from keras.utils import multi_gpu_model
-
 from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
 
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
+
+import keras
 
 
 class BuildModelTask:
@@ -86,33 +84,37 @@ class BuildModelTask:
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
         if multi_gpu:
-            model = multi_gpu_model(base_model, gpus=nb_gpu)
+            if self.config.framework == "tensorflow":
+                model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
         else:
             model = base_model
         return model
 
     def _do_compile_model_task(self, model, optimizer, learning_rate, task_id):
 
-        if optimizer == "adam":
-            optimizer = optimizers.Adam(
-                lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
-            )
-        else:
-            optimizer = optimizers.SGD(
-                lr=learning_rate, momentum=0.9, decay=0.001
-            )
+        if self.config.framework == "tensorflow":
+            if optimizer == "adam":
+                optimizer = keras.optimizers.Adam(
+                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                )
+            else:
+                optimizer = keras.optimizers.SGD(
+                    lr=learning_rate, momentum=0.9, decay=0.001
+                )
 
-        if task_id == Task.CLASSIFICATION:
-            model.compile(
-                optimizer=optimizer,
-                loss=categorical_crossentropy,
-                metrics=["acc"],
-            )
-        elif task_id == Task.SEMANTIC_SEGMENTATION:
-            model.compile(
-                optimizer=optimizer, loss=cce_dice_loss, metrics=[iou_score]
-            )
-        else:
-            raise NotImplementedError
+            if task_id == Task.CLASSIFICATION:
+                model.compile(
+                    optimizer=optimizer,
+                    loss=keras.losses.categorical_crossentropy,
+                    metrics=["acc"],
+                )
+            elif task_id == Task.SEMANTIC_SEGMENTATION:
+                model.compile(
+                    optimizer=optimizer,
+                    loss=cce_dice_loss,
+                    metrics=[iou_score],
+                )
+            else:
+                raise NotImplementedError
 
         return model

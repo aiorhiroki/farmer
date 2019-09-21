@@ -18,3 +18,4 @@ class Config:
     learning_path: str = None
     image_path: str = None
     return_result: bool = False
+    framework: str = "tensorflow"

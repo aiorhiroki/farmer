@@ -14,7 +14,7 @@ nox = "*"
 
 [packages]
 keras = "==2.2.4"
-ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
+ncc = {editable = true, git = "https://github.com/aiorhiroki/ncc"}
 opencv-python = "*"
 requests = "==2.22.0"
 pandas = "==0.25.1"

@@ -6,6 +6,7 @@ from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
 
 import keras
+import torch
 
 
 class BuildModelTask:
@@ -79,7 +80,10 @@ class BuildModelTask:
 
     def _do_load_model_task(self, model, trained_model_path):
         if trained_model_path:
-            model.load_weights(trained_model_path)
+            if self.config.framework == "tensorflow":
+                model.load_weights(trained_model_path)
+            elif self.config.framework == "pytorch":
+                model.load_state_dict(torch.load(trained_model_path))
         return model
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):

@@ -2,13 +2,12 @@
 You can train Classification and Segmentation tasks as best practice
 
 
-### Installation
+### Set Up
+Docker >= 19.03
 ```bash
-$ pip install git+https://github.com/aiorhiroki/ncc
-$ pip install git+https://github.com/aiorhiroki/farmer
+docker build -t tensorflow:v2 .
+sh docker-start.sh
 ```
-
-Docker <= 18.09.0 (Don't use v19.03 or newer)
 
 ### Prepare Data set folder
 classification

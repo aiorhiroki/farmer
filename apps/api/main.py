@@ -27,7 +27,7 @@ def _read_config(task_id):
 
     secret_parser = ConfigParser()
     secret_parser.read("secret.ini")
-    if len(secret_parser.sections()) > 0:
+    if len(secret_parser.defaults()) > 0:
         secret_config = secret_parser.defaults()
         config.update(secret_config)
 

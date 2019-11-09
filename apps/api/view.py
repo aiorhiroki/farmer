@@ -1,5 +1,5 @@
 from flask import request, make_response, jsonify, Blueprint
-from keras.models import load_model
+from tensorflow.python import keras
 import cv2
 import os
 import numpy as np
@@ -31,7 +31,7 @@ def predict():
     model_path = os.path.join(
         result_dir.decode("utf-8"), "model", "best_model.h5"
     )
-    model = load_model(model_path)
+    model = keras.models.load_model(model_path)
     input_img = np.expand_dims(img, axis=0) / 255
     predictions = model.predict(input_img)[0]
     predictions = [float(prediction) for prediction in predictions]

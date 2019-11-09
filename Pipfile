@@ -4,21 +4,32 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+#tensorflow = "==2.0.0-rc1"
 flake8 = "*"
 autopep8 = "*"
+mock = "*"
+pytest = "*"
+pytest-cov = "*"
+nox = "*"
+#black = "*"
 
 [packages]
 keras = "==2.2.4"
-ncc = {editable = true,git = "https://github.com/aiorhiroki/ncc"}
+ncc = {editable = true, git = "https://github.com/aiorhiroki/ncc"}
+farmer = {editable = true, git = "https://github.com/aiorhiroki/farmer"}
 opencv-python = "*"
-requests = "*"
-pandas = "*"
-flask = "*"
-tqdm = "*"
-segmentation-models = "==0.2.0"
+requests = "==2.22.0"
+pandas = "==0.25.1"
+Flask = "==1.1.1"
+flask-cors = "==3.0.8"
+tqdm = "==4.35.0"
+segmentation-models = "==1.0.0"
+pretrainedmodels = "==0.7.4"
 albumentations = "==0.2.0"
-python-dotenv = "*"
-sklearn = "*"
+python-dotenv = "==0.10.3"
+scikit-learn = "*"
+dataclasses = "*"
+h5py = "==2.9"
 
 [requires]
 python_version = "3.6"

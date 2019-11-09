@@ -38,6 +38,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
@@ -115,3 +116,4 @@ venv.bak/
 
 # farmer_local
 result/
+develop/

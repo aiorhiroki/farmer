@@ -18,7 +18,7 @@ class ImageLoader:
 
     def get_class_names(self):
         if self.class_names:
-            return self.class_names
+            return self.class_names.split()
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
             class_names = [

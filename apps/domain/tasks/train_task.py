@@ -1,6 +1,6 @@
 import os
 import ncc
-import keras
+from tensorflow.python import keras
 
 
 class TrainTask:
@@ -52,7 +52,7 @@ class TrainTask:
                 filepath=model_save_file, save_best_only=True
             )
         reduce_lr = keras.callbacks.ReduceLROnPlateau(
-            factor=0.1, patience=3, verbose=1
+            factor=0.5, patience=10, verbose=1
         )
         plot_history = ncc.callbacks.PlotHistory(self.config.learning_path)
         callbacks = [checkpoint, reduce_lr, plot_history]
@@ -85,7 +85,7 @@ class TrainTask:
                 )
 
             slack_logging = ncc.callbacks.SlackLogger(
-                file_name=file_name,
+                logger_file=file_name,
                 token=self.config.slack_token,
                 channel=self.config.slack_channel,
                 title=self.config.model_name,

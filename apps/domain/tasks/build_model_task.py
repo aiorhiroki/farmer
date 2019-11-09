@@ -1,3 +1,4 @@
+import segmentation_models
 from segmentation_models import Unet
 from segmentation_models.losses import cce_dice_loss
 from segmentation_models.metrics import iou_score
@@ -5,7 +6,9 @@ from segmentation_models.metrics import iou_score
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
 
-import keras
+from tensorflow import keras
+
+segmentation_models.set_framework('tf.keras')
 
 
 class BuildModelTask:

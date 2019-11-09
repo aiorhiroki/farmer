@@ -1,5 +1,5 @@
 # farmer
-You can train Classification and Segmentation tasks as best practice
+You can train Classification and Segmentation tasks semi-automatically
 
 
 ### Set Up

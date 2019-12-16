@@ -19,6 +19,7 @@ RUN pipenv install --system
 RUN rm Pipfile.lock
 
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
+ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
 
 ADD . /app/
 WORKDIR /app

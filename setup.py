@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='apps',
-    version='1.0.0',
+    version='1.1.0',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
@@ -35,8 +35,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'ncc-cls=apps.api.main:classification',
-            'ncc-seg=apps.api.main:segmentation',
+            'Godfarmer=apps.api.main:fit'
         ],
     },
 )

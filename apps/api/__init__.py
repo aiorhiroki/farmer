@@ -1,3 +1,3 @@
-from .main import classification, segmentation
+from .main import fit
 
-__all__ = ["classification", "segmentation"]
+__all__ = ["fit"]

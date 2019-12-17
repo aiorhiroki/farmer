@@ -53,11 +53,11 @@ segmentation
 
 ## Training
 
-`classification-config.ini`または`segmentation-config.ini` ファイルがある場所でコマンドを実行
+`classification-config.ini`または`segmentation-config.ini` ファイルがある場所に
+`run.ini`も置いて以下のコマンドを実行
 
 ```bash
-ncc-cls  # classification
-ncc-seg  # segmentation
+Godfarmer
 ```
 
 `secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。

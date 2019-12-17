@@ -5,32 +5,32 @@ from apps.domain.workflows.train_workflow import TrainWorkflow
 from apps.domain.model.task_model import Task
 
 
-def classification():
-    trainer = _read_config(Task.CLASSIFICATION)
-    TrainWorkflow(trainer).command()
-
-
-def segmentation():
-    trainer = _read_config(Task.SEMANTIC_SEGMENTATION)
-    TrainWorkflow(trainer).command()
-
-
-def _read_config(task_id):
-    parser = ConfigParser()
-
-    if task_id == Task.CLASSIFICATION:
-        parser.read("classification-config.ini")
-    elif task_id == Task.SEMANTIC_SEGMENTATION:
-        parser.read("segmentation-config.ini")
-    config = parser.defaults()
-    config["task"] = task_id.value
+def fit():
+    run_file = ConfigParser()
+    run_file.read("run.ini")
+    run_config = run_file.defaults()
+    gpu = run_config.get("gpu")
+    config_paths = run_config.get("config_paths")
 
     secret_parser = ConfigParser()
     secret_parser.read("secret.ini")
+    secret_config = None
     if len(secret_parser.defaults()) > 0:
         secret_config = secret_parser.defaults()
-        config.update(secret_config)
 
-    trainer = Trainer(**config)
-
-    return trainer
+    parser = ConfigParser()
+    for config_path in config_paths.split(","):
+        print("config path running: ", config_path)
+        parser.read(config_path)
+        config = parser.defaults()
+        if config_path.startswith('segmentation'):
+            config["task"] = Task.SEMANTIC_SEGMENTATION.value
+        elif config_path.startswith('classification'):
+            config["task"] = Task.CLASSIFICATION.value
+        else:
+            continue
+        config["gpu"] = gpu
+        if secret_config:
+            config.update(secret_config)
+        trainer = Trainer(**config)
+        TrainWorkflow(trainer).command()

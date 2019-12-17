@@ -47,6 +47,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         trained_model = TrainTask(self._config).command(
             model, base_model, annotation_set, validation_set
         )
+        """
 
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(
@@ -59,8 +60,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
             eval_report = EvalSegmentationTask(self._config).command(
                 annotation_set, trained_model
             )
+        """
 
-        return eval_report
+        return 0
 
     def output_flow(self, result):
         return result

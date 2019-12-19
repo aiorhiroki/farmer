@@ -2,7 +2,7 @@ FROM tensorflow/tensorflow:2.0.0-gpu-py3
 
 RUN apt-get update \
     && apt-get install -y apt-utils \
-    && apt-get install -y git locales \
+    && apt-get install -y vim git locales \
     libglib2.0-0 libsm6 libxrender1 libxext6 
 
 RUN pip install --upgrade pip
@@ -21,7 +21,5 @@ RUN rm Pipfile.lock
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
 
-ADD . /app/
-WORKDIR /app
+WORKDIR /home
 
-RUN pip install .

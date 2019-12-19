@@ -2,7 +2,7 @@ FROM tensorflow/tensorflow:2.0.0-gpu-py3
 
 RUN apt-get update \
     && apt-get install -y apt-utils \
-    && apt-get install -y git locales \
+    && apt-get install -y vim git locales \
     libglib2.0-0 libsm6 libxrender1 libxext6 
 
 RUN pip install --upgrade pip

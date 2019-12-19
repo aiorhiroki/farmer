@@ -26,19 +26,22 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
+        print("set env flow done")
 
     def read_annotation_flow(self):
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command("train")
         validation_set = read_annotation.command("validation")
-
+        print("read annotation flow done")
         return train_set, validation_set
 
     def eda_flow(self):
+        print("eda flow done")
         EdaTask(self._config).command()
 
     def build_model_flow(self):
         model, base_model = BuildModelTask(self._config).command()
+        print("build model flow done")
         return model, base_model
 
     def model_execution_flow(
@@ -61,8 +64,10 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 annotation_set, trained_model
             )
         """
+        print("model execution flow done")
 
         return 0
 
     def output_flow(self, result):
+        print("output flow done")
         return result

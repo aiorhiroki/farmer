@@ -54,7 +54,10 @@ class TrainTask:
         reduce_lr = keras.callbacks.ReduceLROnPlateau(
             factor=0.5, patience=10, verbose=1
         )
-        plot_history = ncc.callbacks.PlotHistory(self.config.learning_path)
+        plot_history = ncc.callbacks.PlotHistory(
+                self.config.learning_path,
+                ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+        )
         callbacks = [checkpoint, reduce_lr, plot_history]
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(

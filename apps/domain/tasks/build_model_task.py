@@ -1,7 +1,7 @@
 import segmentation_models
 from segmentation_models import Unet
 from segmentation_models import losses
-from segmentation_models.metrics import iou_score
+from segmentation_models import metrics
 
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
@@ -120,7 +120,6 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
-                """
                 if loss_func == "cce_dice_loss":
                     loss = losses.cce_dice_loss
                 elif loss_func == "dice_loss":
@@ -129,11 +128,10 @@ class BuildModelTask:
                     loss = losses.categorical_focal_dice_loss
                 else:
                     raise NotImplementedError
-                """
                 model.compile(
                     optimizer=optimizer,
-                    loss=loss.cce_dice_loss,
-                    metrics=[losses.iou_score, losses.categorical_crossentropy],
+                    loss=loss,
+                    metrics=[metrics.iou_score, losses.categorical_crossentropy],
                 )
             else:
                 raise NotImplementedError

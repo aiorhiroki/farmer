@@ -2,7 +2,7 @@ docker run \
 	--gpus all \
 	-it \
 	--rm \
-	-p 5000:5000 \
+	-p 4000:4000 \
 	--mount type=bind,source="$PWD",target=/app \
 	--mount type=bind,source=/home,target=/home \
 	--mount type=bind,source=/media,target=/media \

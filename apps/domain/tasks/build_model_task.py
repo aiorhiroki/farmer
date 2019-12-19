@@ -1,7 +1,7 @@
 import segmentation_models
 from segmentation_models import Unet
-from segmentation_models.losses import cce_dice_loss
-from segmentation_models.metrics import iou_score
+from segmentation_models import losses
+from segmentation_models import metrics
 
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
@@ -36,6 +36,7 @@ class BuildModelTask:
             self.config.optimizer,
             self.config.learning_rate,
             self.config.task,
+            self.config.loss
         )
 
         return compiled_model, base_model
@@ -73,7 +74,7 @@ class BuildModelTask:
                 model = Deeplabv3(
                     input_shape=(height, width, 3),
                     classes=nb_classes,
-                    backbone="xception",
+                    backbone=backbone,
                 )
         else:
             raise NotImplementedError
@@ -93,7 +94,14 @@ class BuildModelTask:
             model = base_model
         return model
 
-    def _do_compile_model_task(self, model, optimizer, learning_rate, task_id):
+    def _do_compile_model_task(
+        self, 
+        model, 
+        optimizer, 
+        learning_rate, 
+        task_id,
+        loss_func
+    ):
 
         if self.config.framework == "tensorflow":
             if optimizer == "adam":
@@ -112,10 +120,18 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
+                if loss_func == "cce_dice_loss":
+                    loss = losses.cce_dice_loss
+                elif loss_func == "dice_loss":
+                    loss = losses.dice_loss
+                elif loss_func == "categorical_focal_dice_loss":
+                    loss = losses.categorical_focal_dice_loss
+                else:
+                    raise NotImplementedError
                 model.compile(
                     optimizer=optimizer,
-                    loss=cce_dice_loss,
-                    metrics=[iou_score],
+                    loss=loss,
+                    metrics=[metrics.iou_score, losses.categorical_crossentropy],
                 )
             else:
                 raise NotImplementedError

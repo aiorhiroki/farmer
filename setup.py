@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(
-    name='apps',
+    name='farmer',
     version='1.1.0',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
@@ -11,8 +11,8 @@ setup(
     download_url='',
     license='Apache 2.0',
     install_requires=['numpy>=1.13.3',
-                      'segmentation-models>=0.2.0',
-                      'albumentations>=0.2.0'
+                      'segmentation-models>=1.0.0',
+                      'albumentations>=0.4.3'
                       ],
     classifiers=[
         'Development Status :: 3 - Alpha',

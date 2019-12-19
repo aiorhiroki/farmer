@@ -26,6 +26,7 @@ class ReadAnnotationTask:
                 self.config.target_dir, data_list, self.config.class_names
             )
         else:
+            print(data_list)
             annotations = ncc.readers.segmentation_set(
                 self.config.target_dir,
                 data_list,

@@ -24,19 +24,7 @@ class ImageLoader:
     def get_data_list(self):
         with open(self.data_list, "r") as filereader:
             data_list = json.load(filereader)
-        train_dirs = [
-            os.path.join(self.config.target_dir, data_case)
-            for data_case in data_list["train"]
-        ]
-        val_dirs = [
-            os.path.join(self.config.target_dir, data_case)
-            for data_case in data_list["validation"]
-        ]
-        test_dirs = [
-            os.path.join(self.config.target_dir, data_case)
-            for data_case in data_list["test"]
-        ]
-        return train_dirs, val_dirs, test_dirs
+        return data_list["train"], data_list["validation"], data_list["test"]
 
     def get_class_names(self):
         if self.class_names:

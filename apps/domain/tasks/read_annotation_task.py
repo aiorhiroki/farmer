@@ -14,15 +14,23 @@ class ReadAnnotationTask:
         return annotation_set
 
     def _do_read_annotation_set_task(self, phase: str):
-        target_path = os.path.join(self.config.target_dir, phase)
+        if phase == "train":
+            data_list = self.config.train_dirs
+        elif phase == "validation":
+            data_list = self.config.val_dirs
+        elif phase == "test":
+            data_list = self.config.test_dirs
 
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
             annotations = ncc.readers.classification_set(
-                target_path, self.config.class_names
+                self.config.target_dir, data_list, self.config.class_names
             )
         else:
             annotations = ncc.readers.segmentation_set(
-                target_path, self.config.input_dir, self.config.mask_dir
+                self.config.target_dir,
+                data_list,
+                self.config.input_dir,
+                self.config.mask_dir
             )
         return annotations
 

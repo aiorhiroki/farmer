@@ -13,55 +13,37 @@ sh docker-start.sh
 
 ### Prepare Data set folder
 
-classification
+classification folder tree
 
-```tree
-    │
-    ├── target_directory
-          │
-          ├── data_case_directory(dataA) # caseごとだったり、train/testだったり
-          │      │
-          │      ├── category_directory(Orange)  # クラスのフォルダー
-          │      │       │
-          │      │       ├── image_file(jpg or png)
-          │      │
-          │      ├── category_directory(Apple)
-          │              │
-          │              ├── image_file(jpg or png)
-          │
-          ├── data_case_directory(dataB)
-```
+e.g.)
+- target_directory
+  - data_case_directory(dataA) 
+      - category_directory(Orange)
+      - category_directory(Apple)
+  - data_case_directory(dataB)
 
-segmentation
 
-```tree
-    │
-    ├── target_directory
-          │
-          ├── data_case_directory(dataA) # caseごとだったり、train/testだったり
-          │      │
-          │      ├── input_image_directory  # 入力画像フォルダ
-          │      │       │
-          │      │       ├── image_file(jpg or png)
-          │      │
-          │      ├── mask_image_directory  # マスク画像フォルダ
-          │              │
-          │              ├── image_file(jpg or png)
-          │
-          ├── data_case_directory(dataB)
-```
+segmentation folder tree
+
+e.g.)
+- target_directory
+  - data_case_directory(dataA)
+    - input_image_directory
+    - mask_image_directory
+  - data_case_directory(dataB)
+
 
 ## Training
 
-`classification-config.ini`または`segmentation-config.ini` ファイルがある場所に
-`run.ini`も置いて以下のコマンドを実行
+1. set param in `classification~~.ini` for classification
+1. set param in `segmentation~~.ini` for segmentation
+1. set param `run.ini`
+1. set train, test and validation data folders in `data.json`
+1. run `Godfarmer`
 
-```bash
-Godfarmer
-```
+### Slack logging
 
-`secret.ini`を作成し`config.ini`と同じ場所に配置すれば、Slackにログ画像を飛ばせる。
-
+set param in `secret.ini`
 ```buildoutcfg
 [DEFAULT]
 slack_token = xoxb-hogehoge
@@ -70,29 +52,23 @@ slack_channel = fugafuga
 
 ## Result
 
-実行した日付時間で自動にフォルダを作成。結果を以下のディレクトリ構造で保存されます。
+  - result_directory
+    - image (sample image)
+    - info (config param & image path)
+    - learning (learning history)
+    - model (best model and last model)
 
-```tree
-    │
-    ├── result
-          ├── 日付時間(結果A)
-          │      ├── image  # 推論サンプル
-          │      ├── info  # 設定ファイル/画像パス
-          │      ├── learning  # 学習履歴
-          │      ├── model  # 最良モデル & 最終モデル
-          │
-          ├── 日付時間(結果B)
-```
 
 ## Test and Format
 
-`$  pipenv run nox`
-
-## Trouble Shooting
-
-If you can't use docker.
-
-```bash
-export DOCKER_API_VERSION=1.40
-sudo systemctl start docker
+### Unit Testing
 ```
+pipenv run nox
+```
+
+### Integration Testing
+```
+cd exmaple
+Godfarmer 
+```
+

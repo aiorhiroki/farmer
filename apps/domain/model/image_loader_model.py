@@ -1,4 +1,5 @@
 import os
+import json
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
@@ -13,8 +14,17 @@ class ImageLoader:
     nb_classes: int = None
     input_dir: str = None
     mask_dir: str = None
+    data_list: str = None
+    train_dirs: List[str] = field(default_factory=list)
+    val_dirs: List[str] = field(default_factory=list)
+    test_dirs: List[str] = field(default_factory=list)
     height: int = None
     width: int = None
+
+    def get_data_list(self):
+        with open(self.data_list, "r") as filereader:
+            data_list = json.load(filereader)
+        return data_list["train"], data_list["validation"], data_list["test"]
 
     def get_class_names(self):
         if self.class_names:
@@ -42,17 +52,22 @@ class ImageLoader:
         IMAGE_EXTENTINS = [".jpg", ".png"]
         train_files = list()
         for image_ex in IMAGE_EXTENTINS:
-            if self.task == ncc.tasks.Task.CLASSIFICATION:
-                train_files += glob(
-                    os.path.join(self.target_dir, "train", "*", "*" + image_ex)
-                )
-            else:
-                train_files += glob(
-                    f"{self.target_dir}/train/{self.mask_dir}/*" + image_ex
-                )
-                train_files += glob(
-                    f"{self.target_dir}/train/{self.mask_dir}/*/*" + image_ex
-                )
+            for train_dir in self.train_dirs:
+                if self.task == ncc.tasks.Task.CLASSIFICATION:
+                    train_files += glob(
+                        os.path.join(
+                            self.target_dir, train_dir, "*", "*" + image_ex
+                        )
+                    )
+                else:
+                    train_files += glob(
+                        os.path.join(
+                            self.target_dir,
+                            train_dir,
+                            self.mask_dir,
+                            "*" + image_ex
+                        )
+                    )
         return train_files
 
     @classmethod

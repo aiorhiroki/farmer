@@ -46,3 +46,4 @@ class Trainer(Config, ImageLoader):
         self.class_names = self.get_class_names()
         self.nb_classes = self.getint(self.nb_classes)
         self.height, self.width = self.get_image_shape()
+        self.train_dirs, self.val_dirs, self.test_dirs = self.get_data_list()

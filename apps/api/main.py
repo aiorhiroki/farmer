@@ -21,7 +21,7 @@ def fit():
     parser = ConfigParser()
     for config_path in config_paths.split(","):
         print("config path running: ", config_path)
-        parser.read(config_path)
+        parser.read(config_path.strip())
         config = parser.defaults()
         if config_path.startswith('segmentation'):
             config["task"] = Task.SEMANTIC_SEGMENTATION.value

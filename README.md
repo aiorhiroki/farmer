@@ -8,7 +8,7 @@ Docker >= 19.03
 
 ```bash
 docker build -t tensorflow:v2 .
-sh docker-start.sh
+sh docker-start.sh container_name port
 ```
 
 ### Prepare Data set folder

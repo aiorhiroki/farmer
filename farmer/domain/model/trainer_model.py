@@ -8,6 +8,7 @@ from .image_loader_model import ImageLoader
 @dataclass
 class Trainer(Config, ImageLoader):
     train_id: int = None
+    training: bool = None
     epochs: int = None
     batch_size: int = None
     learning_rate: float = None
@@ -25,6 +26,7 @@ class Trainer(Config, ImageLoader):
 
     def __post_init__(self):
         self.train_id = self.getint(self.train_id)
+        self.training = self.getboolean(self.training)
         self.epochs = self.getint(self.epochs)
         self.batch_size = self.getint(self.batch_size)
         self.learning_rate = self.getfloat(self.learning_rate)

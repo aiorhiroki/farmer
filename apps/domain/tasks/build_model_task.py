@@ -1,5 +1,5 @@
 import segmentation_models
-from segmentation_models import Unet
+from segmentation_models import Unet, PSPNet
 from segmentation_models import losses
 from segmentation_models import metrics
 
@@ -64,9 +64,14 @@ class BuildModelTask:
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
+            print('------------------')
+            print('Model:', model_name)
+            print('Backbone:', backbone)
+            print('------------------')
+
             if model_name == "unet":
                 model = Unet(
-                    backbone,
+                    backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
@@ -75,6 +80,12 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
+                )
+            elif model_name == "pspnet":
+                model = PSPNet(
+                    backbone_name=backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
                 )
         else:
             raise NotImplementedError
@@ -95,10 +106,10 @@ class BuildModelTask:
         return model
 
     def _do_compile_model_task(
-        self, 
-        model, 
-        optimizer, 
-        learning_rate, 
+        self,
+        model,
+        optimizer,
+        learning_rate,
         task_id,
         loss_func
     ):
@@ -120,12 +131,23 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
+                print('------------------')
+                print('Loss:', loss_func)
+                print('------------------')
+
                 if loss_func == "cce_dice_loss":
                     loss = losses.cce_dice_loss
                 elif loss_func == "dice_loss":
                     loss = losses.dice_loss
                 elif loss_func == "categorical_focal_dice_loss":
                     loss = losses.categorical_focal_dice_loss
+
+                elif loss_func == "cce_jaccard_loss":
+                    loss = losses.cce_jaccard_loss
+                elif loss_func == "jaccard_loss":
+                    loss = losses.jaccard_loss
+                elif loss_func == "categorical_focal_jaccard_loss":
+                    loss = losses.categorical_focal_jaccard_loss
                 else:
                     raise NotImplementedError
                 model.compile(

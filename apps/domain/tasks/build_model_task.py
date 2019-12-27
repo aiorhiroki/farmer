@@ -1,7 +1,9 @@
 import segmentation_models
 from segmentation_models import Unet, PSPNet
-from segmentation_models import losses
 from segmentation_models import metrics
+from segmentation_models.losses import (
+    dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
+)
 
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
@@ -9,6 +11,12 @@ from ..model.task_model import Task
 from tensorflow import keras
 
 segmentation_models.set_framework('tf.keras')
+
+# loss functions
+cce_dice_loss = categorical_crossentropy + dice_loss
+cce_jaccard_loss = categorical_crossentropy + jaccard_loss
+categorical_focal_dice_loss = categorical_focal_loss + dice_loss
+categorical_focal_jaccard_loss = categorical_focal_loss + jaccard_loss
 
 
 class BuildModelTask:
@@ -134,26 +142,11 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-
-                if loss_func == "cce_dice_loss":
-                    loss = losses.cce_dice_loss
-                elif loss_func == "dice_loss":
-                    loss = losses.dice_loss
-                elif loss_func == "categorical_focal_dice_loss":
-                    loss = losses.categorical_focal_dice_loss
-
-                elif loss_func == "cce_jaccard_loss":
-                    loss = losses.cce_jaccard_loss
-                elif loss_func == "jaccard_loss":
-                    loss = losses.jaccard_loss
-                elif loss_func == "categorical_focal_jaccard_loss":
-                    loss = losses.categorical_focal_jaccard_loss
-                else:
-                    raise NotImplementedError
                 model.compile(
                     optimizer=optimizer,
-                    loss=loss,
-                    metrics=[metrics.iou_score, losses.categorical_crossentropy],
+                    loss=globals()[loss_func],
+                    metrics=[metrics.iou_score,
+                             categorical_crossentropy],
                 )
             else:
                 raise NotImplementedError

@@ -1,7 +1,9 @@
 import segmentation_models
-from segmentation_models import Unet
-from segmentation_models import losses
+from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
+from segmentation_models.losses import (
+    dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
+)
 
 from ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
@@ -9,6 +11,12 @@ from ..model.task_model import Task
 from tensorflow import keras
 
 segmentation_models.set_framework('tf.keras')
+
+# loss functions
+cce_dice_loss = categorical_crossentropy + dice_loss
+cce_jaccard_loss = categorical_crossentropy + jaccard_loss
+categorical_focal_dice_loss = categorical_focal_loss + dice_loss
+categorical_focal_jaccard_loss = categorical_focal_loss + jaccard_loss
 
 
 class BuildModelTask:
@@ -64,9 +72,14 @@ class BuildModelTask:
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
+            print('------------------')
+            print('Model:', model_name)
+            print('Backbone:', backbone)
+            print('------------------')
+
             if model_name == "unet":
                 model = Unet(
-                    backbone,
+                    backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
@@ -75,6 +88,12 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
+                )
+            elif model_name == "pspnet":
+                model = PSPNet(
+                    backbone_name=backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
                 )
         else:
             raise NotImplementedError
@@ -95,10 +114,10 @@ class BuildModelTask:
         return model
 
     def _do_compile_model_task(
-        self, 
-        model, 
-        optimizer, 
-        learning_rate, 
+        self,
+        model,
+        optimizer,
+        learning_rate,
         task_id,
         loss_func
     ):
@@ -120,18 +139,14 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
-                if loss_func == "cce_dice_loss":
-                    loss = losses.cce_dice_loss
-                elif loss_func == "dice_loss":
-                    loss = losses.dice_loss
-                elif loss_func == "categorical_focal_dice_loss":
-                    loss = losses.categorical_focal_dice_loss
-                else:
-                    raise NotImplementedError
+                print('------------------')
+                print('Loss:', loss_func)
+                print('------------------')
                 model.compile(
                     optimizer=optimizer,
-                    loss=loss,
-                    metrics=[metrics.iou_score, losses.categorical_crossentropy],
+                    loss=globals()[loss_func],
+                    metrics=[metrics.iou_score,
+                             categorical_crossentropy],
                 )
             else:
                 raise NotImplementedError

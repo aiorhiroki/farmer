@@ -66,7 +66,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
 
         print("model execution flow done")
-        print("eval: ", eval_report)
+        print(eval_report)
 
         return eval_report
 

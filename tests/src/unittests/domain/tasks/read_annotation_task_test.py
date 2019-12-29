@@ -1,9 +1,9 @@
 import os
 import shutil
 import unittest
-from apps.domain.model.task_model import Task
-from apps.domain.model.trainer_model import Trainer
-from apps.domain.tasks.read_annotation_task import ReadAnnotationTask
+from farmer.domain.model.task_model import Task
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.tasks.read_annotation_task import ReadAnnotationTask
 
 
 class ReadAnnotationTaskTest(unittest.TestCase):

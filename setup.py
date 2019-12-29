@@ -3,17 +3,13 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='1.1.4',
+    version='1.2.0',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
     url='https://github.com/NCC-AI/apps',
     download_url='',
     license='Apache 2.0',
-    install_requires=['numpy>=1.13.3',
-                      'segmentation-models>=1.0.0',
-                      'albumentations>=0.4.3'
-                      ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -35,7 +31,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'Godfarmer=apps.api.main:fit'
+            'Godfarmer=farmer.api.main:fit'
         ],
     },
 )

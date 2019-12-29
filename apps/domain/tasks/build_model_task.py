@@ -5,7 +5,7 @@ from segmentation_models.losses import (
     dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
 )
 
-from ncc.models import xception, mobilenet, Deeplabv3, Model2D
+from apps.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
 
 from tensorflow import keras

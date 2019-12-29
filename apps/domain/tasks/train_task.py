@@ -1,5 +1,5 @@
 import os
-import ncc
+from apps import ncc
 from tensorflow.python import keras
 
 
@@ -55,8 +55,8 @@ class TrainTask:
             factor=0.5, patience=10, verbose=1
         )
         plot_history = ncc.callbacks.PlotHistory(
-                self.config.learning_path,
-                ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+            self.config.learning_path,
+            ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
         callbacks = [checkpoint, reduce_lr, plot_history]
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:

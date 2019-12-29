@@ -1,6 +1,6 @@
 import os
 import csv
-import ncc
+from apps import ncc
 
 
 class ReadAnnotationTask:

@@ -1,4 +1,4 @@
-from apps import ncc
+from farmer import ncc
 import numpy as np
 from sklearn.metrics import classification_report
 

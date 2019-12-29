@@ -31,7 +31,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'Godfarmer=apps.api.main:fit'
+            'Godfarmer=farmer.api.main:fit'
         ],
     },
 )

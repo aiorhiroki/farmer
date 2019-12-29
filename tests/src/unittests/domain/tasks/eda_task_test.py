@@ -1,8 +1,8 @@
 import os
 import shutil
 import unittest
-from apps.domain.model.trainer_model import Trainer
-from apps.domain.tasks.eda_task import EdaTask
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.tasks.eda_task import EdaTask
 
 
 class EdaTaskTest(unittest.TestCase):

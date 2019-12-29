@@ -1,5 +1,5 @@
 import configparser
-from apps import ncc
+from farmer import ncc
 import os
 import dataclasses
 

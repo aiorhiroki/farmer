@@ -5,9 +5,9 @@ import os
 import numpy as np
 import shutil
 
-from apps.domain.model.trainer_model import Trainer
-from apps.domain.workflows.train_workflow import TrainWorkflow
-from apps.domain.workflows.test_workflow import TestWorkflow
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.workflows.train_workflow import TrainWorkflow
+from farmer.domain.workflows.test_workflow import TestWorkflow
 
 app = Blueprint("root", __name__, url_prefix="")
 

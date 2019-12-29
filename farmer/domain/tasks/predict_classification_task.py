@@ -1,5 +1,5 @@
 import numpy as np
-from apps import ncc
+from farmer import ncc
 
 
 class PredictClassificationTask:

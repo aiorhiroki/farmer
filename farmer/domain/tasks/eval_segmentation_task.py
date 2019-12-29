@@ -1,4 +1,4 @@
-from apps import ncc
+from farmer import ncc
 
 
 class EvalSegmentationTask:

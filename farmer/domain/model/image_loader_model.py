@@ -3,7 +3,7 @@ import json
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
-from apps import ncc
+from farmer import ncc
 
 
 @dataclass

@@ -1,8 +1,8 @@
 from configparser import ConfigParser
 
-from apps.domain.model.trainer_model import Trainer
-from apps.domain.workflows.train_workflow import TrainWorkflow
-from apps.domain.model.task_model import Task
+from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.workflows.train_workflow import TrainWorkflow
+from farmer.domain.model.task_model import Task
 
 
 def fit():

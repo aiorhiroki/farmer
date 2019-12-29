@@ -1,4 +1,4 @@
-from apps import ncc
+from farmer import ncc
 import os
 import cv2
 import numpy as np

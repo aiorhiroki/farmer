@@ -1,5 +1,5 @@
 import os
-from apps import ncc
+from farmer import ncc
 from tensorflow.python import keras
 
 

@@ -24,6 +24,7 @@ class BuildModelTask:
         self.config = config
 
     def command(self):
+        # return: base_model is saved when training on multi gpu
 
         base_model = self._do_make_model_task(
             task=self.config.task,

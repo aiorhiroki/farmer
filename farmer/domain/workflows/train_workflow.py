@@ -49,9 +49,12 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def model_execution_flow(
         self, annotation_set, model, base_model, validation_set, test_set
     ):
-        trained_model = TrainTask(self._config).command(
-            model, base_model, annotation_set, validation_set
-        )
+        if self._config.training:
+            trained_model = TrainTask(self._config).command(
+                model, base_model, annotation_set, validation_set
+            )
+        else:
+            trained_model = model
 
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(

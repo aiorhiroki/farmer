@@ -1,9 +1,9 @@
 import os
-import json
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
 from farmer import ncc
+from farmer.domain.model.task_model import Task
 
 
 @dataclass
@@ -11,7 +11,6 @@ class ImageLoader:
     task: int = None
     target_dir: str = None
     class_names: List[str] = field(default_factory=list)
-    nb_classes: int = None
     input_dir: str = None
     mask_dir: str = None
     data_list: str = None
@@ -21,14 +20,17 @@ class ImageLoader:
     height: int = None
     width: int = None
 
-    def get_data_list(self):
-        with open(self.data_list, "r") as filereader:
-            data_list = json.load(filereader)
-        return data_list["train"], data_list["validation"], data_list["test"]
+    def get_task(self):
+        if self.task == "segmentation":
+            return Task.SEMANTIC_SEGMENTATION
+        elif self.task == "classification":
+            return Task.CLASSIFICATION
+        else:
+            raise NotImplementedError
 
     def get_class_names(self):
         if self.class_names:
-            return self.class_names.split()
+            return self.class_names
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
             class_names = [
@@ -41,8 +43,7 @@ class ImageLoader:
 
     def get_image_shape(self):
         if self.height and self.width:
-            height = self.getint(self.height)
-            width = self.getint(self.width)
+            return self.height, self.width
         else:
             train_files = self._get_train_files()
             height, width, _ = ncc.readers.search_image_profile(train_files)
@@ -69,18 +70,3 @@ class ImageLoader:
                         )
                     )
         return train_files
-
-    @classmethod
-    def getint(cls, str_number):
-        if str_number:
-            return int(str_number)
-
-    @classmethod
-    def getfloat(cls, str_number):
-        if str_number:
-            return float(str_number)
-
-    @classmethod
-    def getboolean(cls, str_bool):
-        if str_bool:
-            return str_bool == "True" or str_bool == "yes"

@@ -25,14 +25,7 @@ class Trainer(Config, ImageLoader):
     nb_validation_data: int = 0
 
     def __post_init__(self):
-        self.train_id = self.getint(self.train_id)
-        self.training = self.getboolean(self.training)
-        self.epochs = self.getint(self.epochs)
-        self.batch_size = self.getint(self.batch_size)
-        self.learning_rate = self.getfloat(self.learning_rate)
-        self.augmentation = self.getboolean(self.augmentation)
-        self.task = self.getint(self.task)
-
+        self.task = self.get_task()
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         self.batch_size *= self.nb_gpu if self.multi_gpu else 1
@@ -46,6 +39,5 @@ class Trainer(Config, ImageLoader):
         self.image_path = os.path.join(self.result_path, self.image_dir)
 
         self.class_names = self.get_class_names()
-        self.nb_classes = self.getint(self.nb_classes)
+        self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-        self.train_dirs, self.val_dirs, self.test_dirs = self.get_data_list()

@@ -41,16 +41,8 @@ e.g.)
 1. start docker  
   `$ sh docker-start.sh container_name port`
 1. set param in `~.yaml` and `run.yaml`
+1. set param in `secret.yaml` (optional for slack logger)
 1. run `$ Godfarmer`
-
-### Slack logging
-
-set param in `secret.yaml`
-
-```yaml
-slack_token: xoxb-hogehoge
-slack_channel: fugafuga
-```
 
 ## Result
 

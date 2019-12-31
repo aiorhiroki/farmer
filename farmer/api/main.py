@@ -1,34 +1,24 @@
-from configparser import ConfigParser
+import yaml
+import os
 
 from farmer.domain.model.trainer_model import Trainer
 from farmer.domain.workflows.train_workflow import TrainWorkflow
-from farmer.domain.model.task_model import Task
 
 
 def fit():
-    run_file = ConfigParser()
-    run_file.read("run.ini")
-    run_config = run_file.defaults()
+    with open("run.yaml") as yamlfile:
+        run_config = yaml.safe_load(yamlfile)
     gpu = run_config.get("gpu")
     config_paths = run_config.get("config_paths")
-
-    secret_parser = ConfigParser()
-    secret_parser.read("secret.ini")
-    secret_config = None
-    if len(secret_parser.defaults()) > 0:
-        secret_config = secret_parser.defaults()
-
-    parser = ConfigParser()
-    for config_path in config_paths.split(","):
+    if os.path.exists("secret.yaml"):
+        with open("secret.yaml") as yamlfile:
+            secret_config = yaml.safe_load(yamlfile)
+    else:
+        secret_config = None
+    for config_path in config_paths:
         print("config path running: ", config_path)
-        parser.read(config_path.strip())
-        config = parser.defaults()
-        if config_path.startswith('segmentation'):
-            config["task"] = Task.SEMANTIC_SEGMENTATION.value
-        elif config_path.startswith('classification'):
-            config["task"] = Task.CLASSIFICATION.value
-        else:
-            continue
+        with open(config_path) as yamlfile:
+            config = yaml.safe_load(yamlfile)
         config["gpu"] = gpu
         if secret_config:
             config.update(secret_config)

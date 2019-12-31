@@ -1,0 +1,4 @@
+gpu: 0
+config_paths: 
+    - segmentation-config.yaml
+    - segmentation-config-eval.yaml

@@ -35,17 +35,11 @@ class ImageSequence(Sequence):
                 input_file, anti_alias=True
             )
             if self.task == Task.SEMANTIC_SEGMENTATION:
-                if self.train_colors:
-                    label_gray = self.image_util.read_image(
-                        label, normalization=False
-                    )
-                    label = np.zeros(label_gray.shape)
-                    for train_id, train_color in enumerate(self.train_colors):
-                        label[label_gray == train_color] = train_id + 1
-                else:
-                    label = self.image_util.read_image(
-                        label, normalization=False
-                    )
+                label = self.image_util.read_image(
+                    label,
+                    normalization=False,
+                    train_colors=self.train_colors
+                )
                 if self.augmentation:
                     input_image, label = self.image_util.augmentation(
                         input_image, label

@@ -13,13 +13,8 @@ def iou_dice_val(
     for image_file, seg_file in tqdm(data_set):
         # Get a training sample and make a prediction using current model
         sample = image_util.read_image(image_file, anti_alias=True)
-        if train_colors:
-            target_gray = image_util.read_image(seg_file, normalization=False)
-            target = np.zeros(target_gray.shape)
-            for train_id, train_color in enumerate(train_colors):
-                target[target_gray == train_color] = train_id + 1
-        else:
-            target = image_util.read_image(seg_file, normalization=False)
+        target = image_util.read_image(
+            seg_file, normalization=False, train_colors=train_colors)
         predicted = np.asarray(model.predict_on_batch(
             np.expand_dims(sample, axis=0)))[0]
 

@@ -18,5 +18,6 @@ class EvalSegmentationTask:
             self.config.width,
             annotation_set,
             model,
+            self.config.train_colors
         )
         return iou_dice

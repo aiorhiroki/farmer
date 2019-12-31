@@ -30,6 +30,7 @@ class TrainTask:
             task=self.config.task,
             batch_size=self.config.batch_size,
             augmentation=self.config.augmentation,
+            train_colors=self.config.train_colors
         )
         train_gen = ncc.generators.ImageSequence(**sequence_args)
 
@@ -66,6 +67,7 @@ class TrainTask:
                 class_names=self.config.class_names,
                 height=self.config.height,
                 width=self.config.width,
+                train_colors=self.config.train_colors
             )
             train_save_dir = os.path.join(self.config.image_path, "train")
             val_save_dir = os.path.join(self.config.image_path, "validation")
@@ -77,6 +79,7 @@ class TrainTask:
                 nb_classes=self.config.nb_classes,
                 height=self.config.height,
                 width=self.config.width,
+                train_colors=self.config.train_colors
             )
             callbacks.extend([iou_history, generate_sample_result])
         if self.config.slack_channel and self.config.slack_token:

@@ -126,7 +126,8 @@ def generate_sample_result(
     annotations,
     nb_classes,
     height,
-    width
+    width,
+    train_colors=None
 ):
     image_util = ImageUtil(nb_classes, (height, width))
     file_length = len(annotations)
@@ -136,12 +137,16 @@ def generate_sample_result(
         sample_image_path[0],
         anti_alias=True
     )
-    segmented = image_util.read_image(
-        sample_image_path[1],
-        normalization=False
-    )
     sample_image = np.asarray(sample_image, dtype=np.float32)
-    segmented = np.asarray(segmented, dtype=np.uint8)
+    if train_colors:
+        segmented_gray = image_util.read_image(
+            sample_image_path[1], normalization=False)
+        segmented = np.zeros(segmented_gray.shape, dtype=np.uint8)
+        for train_id, train_color in enumerate(train_colors):
+            segmented[segmented_gray == train_color] = train_id + 1
+    else:
+        segmented = image_util.read_image(
+            sample_image_path[1], normalization=False)
     segmented = image_util.cast_to_onehot(segmented)
     output = model.predict(np.expand_dims(sample_image, axis=0))
 

@@ -126,7 +126,8 @@ def generate_sample_result(
     annotations,
     nb_classes,
     height,
-    width
+    width,
+    train_colors=None
 ):
     image_util = ImageUtil(nb_classes, (height, width))
     file_length = len(annotations)
@@ -136,12 +137,12 @@ def generate_sample_result(
         sample_image_path[0],
         anti_alias=True
     )
+    sample_image = np.asarray(sample_image, dtype=np.float32)
     segmented = image_util.read_image(
         sample_image_path[1],
-        normalization=False
+        normalization=False,
+        train_colors=train_colors
     )
-    sample_image = np.asarray(sample_image, dtype=np.float32)
-    segmented = np.asarray(segmented, dtype=np.uint8)
     segmented = image_util.cast_to_onehot(segmented)
     output = model.predict(np.expand_dims(sample_image, axis=0))
 
@@ -164,7 +165,8 @@ class ImageUtil:
         self,
         file_path: str,
         normalization=True,
-        anti_alias=False
+        anti_alias=False,
+        train_colors=None
     ):
         image = Image.open(file_path)
         self.current_raw_frame = image
@@ -178,6 +180,8 @@ class ImageUtil:
         image = np.asarray(image)
         if normalization:
             image = image / 255.0
+        if train_colors:
+            image = self._convert_colors(image, train_colors)
 
         return image
 
@@ -221,6 +225,12 @@ class ImageUtil:
             gamma=2.2
         )
         return cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
+
+    def _convert_colors(self, label_gray, train_colors):
+        label = np.zeros(label_gray.shape)
+        for train_id, train_color in enumerate(train_colors):
+            label[label_gray == train_color] = train_id + 1
+        return label
 
     def augmentation(self, image, mask):
         width, height = self.size

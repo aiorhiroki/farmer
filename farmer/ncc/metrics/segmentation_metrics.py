@@ -5,14 +5,16 @@ from ..utils import ImageUtil
 import matplotlib.pyplot as plt
 
 
-def iou_dice_val(nb_classes, height, width, data_set, model):
+def iou_dice_val(
+        nb_classes, height, width, data_set, model, train_colors=None):
     image_util = ImageUtil(nb_classes, (height, width))
     conf = np.zeros((nb_classes, nb_classes), dtype=np.int32)
     print('validation...')
     for image_file, seg_file in tqdm(data_set):
         # Get a training sample and make a prediction using current model
         sample = image_util.read_image(image_file, anti_alias=True)
-        target = image_util.read_image(seg_file, normalization=False)
+        target = image_util.read_image(
+            seg_file, normalization=False, train_colors=train_colors)
         predicted = np.asarray(model.predict_on_batch(
             np.expand_dims(sample, axis=0)))[0]
 

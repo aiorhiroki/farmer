@@ -18,7 +18,8 @@ class GenerateSampleResult(keras.callbacks.Callback):
         validation_files,
         nb_classes,
         height,
-        width
+        width,
+        train_colors=None
     ):
         self.train_save_dir = train_save_dir
         self.val_save_dir = val_save_dir
@@ -27,6 +28,7 @@ class GenerateSampleResult(keras.callbacks.Callback):
         self.nb_classes = nb_classes
         self.height = height
         self.width = width
+        self.train_colors = train_colors
 
     def on_epoch_end(self, epoch, logs={}):
         # display sample predict
@@ -38,14 +40,16 @@ class GenerateSampleResult(keras.callbacks.Callback):
             self.train_files,
             self.nb_classes,
             self.height,
-            self.width
+            self.width,
+            self.train_colors
         )
         validation_set = generate_sample_result(
             self.model,
             self.validation_files,
             self.nb_classes,
             self.height,
-            self.width
+            self.width,
+            self.train_colors
         )
 
         train_image = get_imageset(
@@ -143,13 +147,15 @@ class IouHistory(keras.callbacks.Callback):
         validation_files,
         class_names,
         height,
-        width
+        width,
+        train_colors=None
     ):
         self.save_dir = save_dir
         self.validation_files = validation_files
         self.class_names = class_names
         self.height = height
         self.width = width
+        self.train_colors = train_colors
 
     def on_train_begin(self, logs={}):
         self.plot_manager = MatPlotManager(self.save_dir)
@@ -174,7 +180,8 @@ class IouHistory(keras.callbacks.Callback):
             self.height,
             self.width,
             self.validation_files,
-            self.model
+            self.model,
+            self.train_colors
         )
         iou_figure.add(
             iou_dice['iou'],

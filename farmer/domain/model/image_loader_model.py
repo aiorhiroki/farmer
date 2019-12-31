@@ -11,6 +11,7 @@ class ImageLoader:
     task: int = None
     target_dir: str = None
     class_names: List[str] = field(default_factory=list)
+    train_colors: List[int] = field(default_factory=list)
     input_dir: str = None
     mask_dir: str = None
     data_list: str = None

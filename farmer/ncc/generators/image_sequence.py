@@ -14,13 +14,15 @@ class ImageSequence(Sequence):
         nb_classes: int,
         task: str,
         batch_size: int,
-        augmentation=False
+        augmentation=False,
+        train_colors=list()
     ):
         self.annotations = annotations
         self.batch_size = batch_size
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
         self.augmentation = augmentation
+        self.train_colors = train_colors
 
     def __getitem__(self, idx):
         data = self.annotations[
@@ -34,7 +36,9 @@ class ImageSequence(Sequence):
             )
             if self.task == Task.SEMANTIC_SEGMENTATION:
                 label = self.image_util.read_image(
-                    label, normalization=False
+                    label,
+                    normalization=False,
+                    train_colors=self.train_colors
                 )
                 if self.augmentation:
                     input_image, label = self.image_util.augmentation(

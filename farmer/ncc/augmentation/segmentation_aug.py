@@ -20,7 +20,7 @@ from albumentations import (
 
 
 def segmentation_aug(image, mask, size, augmentation_list):
-    width, height = size
+    height, width = size
     transforms = list()
     for augmentation in augmentation_list:
         if augmentation == "HorizontalFlip":
@@ -28,7 +28,7 @@ def segmentation_aug(image, mask, size, augmentation_list):
         elif augmentation == "RandomSizedCrop":
             transforms.append(
                 RandomSizedCrop(
-                    min_max_height=(height*3//4, height),
+                    min_max_height=(0, height//4),
                     height=height,
                     width=width,
                     p=0.5

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import os
 from datetime import datetime
+from dataclasses import field
+from typing import List
 from .config_model import Config
 from .image_loader_model import ImageLoader
 
@@ -13,7 +15,7 @@ class Trainer(Config, ImageLoader):
     batch_size: int = None
     learning_rate: float = None
     optimizer: str = None
-    augmentation: bool = None
+    augmentation: List[str] = field(default_factory=list)
     gpu: str = None
     nb_gpu: int = None
     multi_gpu: bool = None

@@ -19,7 +19,7 @@ from albumentations import (
 )
 
 
-def segmentation_aug(self, image, mask, size, augmentation_list):
+def segmentation_aug(image, mask, size, augmentation_list):
     width, height = size
     transforms = list()
     for augmentation in augmentation_list:

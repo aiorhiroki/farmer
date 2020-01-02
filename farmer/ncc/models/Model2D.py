@@ -1,7 +1,7 @@
 import tensorflow as tf
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D
-from keras.layers import BatchNormalization, Input
-from keras.models import Model
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D
+from tensorflow.keras.layers import BatchNormalization, Input, MaxPooling2D
+from tensorflow.keras.models import Model
 
 from .util import inst_layers
 

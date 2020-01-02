@@ -14,7 +14,9 @@ loss: dice_loss
 epochs: 2
 batch_size: 2
 optimizer: adam
-augmentation: no
+augmentation:
+    - HorizontalFlip
+    - RandomSizedCrop
 learning_rate: 0.01
 width: 512
 height: 256

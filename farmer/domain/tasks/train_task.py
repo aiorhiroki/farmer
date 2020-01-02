@@ -34,7 +34,7 @@ class TrainTask:
         )
         train_gen = ncc.generators.ImageSequence(**sequence_args)
 
-        sequence_args.update(annotations=validation_set, augmentation=False)
+        sequence_args.update(annotations=validation_set, augmentation=[])
         validation_gen = ncc.generators.ImageSequence(**sequence_args)
 
         return train_gen, validation_gen

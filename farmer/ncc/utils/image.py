@@ -4,25 +4,6 @@ import numpy as np
 import random
 from PIL import Image
 import cv2
-from albumentations import (
-    PadIfNeeded,
-    HorizontalFlip,
-    VerticalFlip,
-    CenterCrop,
-    Crop,
-    Compose,
-    Transpose,
-    RandomRotate90,
-    ElasticTransform,
-    GridDistortion,
-    OpticalDistortion,
-    RandomSizedCrop,
-    OneOf,
-    CLAHE,
-    RandomBrightnessContrast,
-    RandomGamma,
-    Normalize
-)
 
 
 def random_colors(N, bright=True, scale=True, shuffle=False):
@@ -231,21 +212,3 @@ class ImageUtil:
         for train_id, train_color in enumerate(train_colors):
             label[label_gray == train_color] = train_id + 1
         return label
-
-    def augmentation(self, image, mask):
-        width, height = self.size
-        aug_list = [
-            RandomSizedCrop(
-                min_max_height=(height*3//4, height),
-                height=height,
-                width=width,
-                p=0.5
-            ),
-            HorizontalFlip(
-                p=0.5
-            )
-        ]
-
-        aug = Compose(aug_list, p=1)
-        augmented = aug(image=image, mask=mask)
-        return augmented['image'], augmented['mask']

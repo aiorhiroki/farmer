@@ -2,6 +2,7 @@ import math
 
 from tensorflow.python.keras.utils.data_utils import Sequence
 import numpy as np
+from ..augmentation import segmentation_aug
 from ..tasks import Task
 from ..utils import ImageUtil
 
@@ -14,11 +15,12 @@ class ImageSequence(Sequence):
         nb_classes: int,
         task: str,
         batch_size: int,
-        augmentation=False,
+        augmentation: list,
         train_colors=list()
     ):
         self.annotations = annotations
         self.batch_size = batch_size
+        self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
         self.augmentation = augmentation
@@ -40,9 +42,9 @@ class ImageSequence(Sequence):
                     normalization=False,
                     train_colors=self.train_colors
                 )
-                if self.augmentation:
-                    input_image, label = self.image_util.augmentation(
-                        input_image, label
+                if len(self.augmentation) > 0:
+                    input_image, label = segmentation_aug(
+                        input_image, label, self.input_shape, self.augmentation
                     )
             batch_x.append(input_image)
             batch_y.append(label)

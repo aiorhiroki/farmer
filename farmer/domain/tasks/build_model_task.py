@@ -68,9 +68,7 @@ class BuildModelTask:
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(nb_classes, height, width)
             else:
-                model = Model2D(
-                    input_shape=(height, width, 3), num_classes=nb_classes
-                )
+                model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')

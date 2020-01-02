@@ -21,12 +21,12 @@ class ReadAnnotationTask:
         elif phase == "test":
             data_list = self.config.test_dirs
 
+        print(f"{phase}: {data_list}")
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
             annotations = ncc.readers.classification_set(
                 self.config.target_dir, data_list, self.config.class_names
             )
         else:
-            print(data_list)
             annotations = ncc.readers.segmentation_set(
                 self.config.target_dir,
                 data_list,

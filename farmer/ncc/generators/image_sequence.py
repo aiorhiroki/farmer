@@ -15,7 +15,7 @@ class ImageSequence(Sequence):
         nb_classes: int,
         task: str,
         batch_size: int,
-        augmentation: list,
+        augmentation=list(),
         train_colors=list()
     ):
         self.annotations = annotations

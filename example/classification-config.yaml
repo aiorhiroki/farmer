@@ -1,0 +1,20 @@
+target_dir: ../tests/data/classification
+train_dirs:
+    - train
+val_dirs:
+    - validation
+test_dirs:
+    - test
+training: yes
+task: classification # classification or segmentation is supported
+model_name: xception
+loss:
+epochs: 2
+batch_size: 2
+optimizer: adam
+augmentation:
+learning_rate: 0.01
+width: 80
+height: 80
+trained_model_path:
+result_dir: classification_result

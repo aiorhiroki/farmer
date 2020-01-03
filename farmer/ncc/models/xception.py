@@ -1,7 +1,7 @@
 import tensorflow as tf
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications.xception import Xception
-from keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications.xception import Xception
+from tensorflow.keras.models import Model
 
 import pretrainedmodels
 

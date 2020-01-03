@@ -1,4 +1,6 @@
 gpu: 0
-config_paths: 
+config_paths:
+    - classification-config.yaml
+    - classification-config-eval.yaml
     - segmentation-config.yaml
     - segmentation-config-eval.yaml

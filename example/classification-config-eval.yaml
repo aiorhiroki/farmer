@@ -1,0 +1,18 @@
+target_dir: ../tests/data/classification
+train_dirs: # you must set train dirs to test classification
+    - train
+test_dirs:
+    - test
+training: no
+task: classification # classification or segmentation is supported
+model_name: xception
+loss:
+epochs: 2
+batch_size: 2
+optimizer: adam
+augmentation:
+learning_rate: 0.01
+width: 80
+height: 80
+trained_model_path: result/classification_result/model/last_model.h5
+result_dir: test_classification_result

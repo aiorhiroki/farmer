@@ -46,7 +46,7 @@ class ReadAnnotationTask:
             with open(f"{self.config.info_path}/classes.csv", "w") as fw:
                 for class_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{class_id}\n")
-            annotations = [f"annotations saved in {phase}.csv"]
+            annotations = [[f"annotations saved in {phase}.csv"]]
         return annotations
 
     def _do_write_annotations_task(self, phase: str, annotations: list):

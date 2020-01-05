@@ -5,8 +5,7 @@ from ..tasks.read_annotation_task import ReadAnnotationTask
 from ..tasks.eda_task import EdaTask
 from ..tasks.train_task import TrainTask
 from ..tasks.predict_classification_task import PredictClassificationTask
-from ..tasks.eval_classification_task import EvalClassificationTask
-from ..tasks.eval_segmentation_task import EvalSegmentationTask
+from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
@@ -68,6 +67,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
                         "--val-annotations", val_annotations
                     ]
                 )
+                trained_model = "{}/resnet50_csv_{:02d}.h5".format(
+                    self._config.model_path, self._config.epochs
+                )
             else:
                 trained_model = TrainTask(self._config).command(
                     model, base_model, annotation_set, validation_set
@@ -79,16 +81,17 @@ class TrainWorkflow(AbstractImageAnalyzer):
             prediction = PredictClassificationTask(self._config).command(
                 test_set, trained_model
             )
-            eval_report = EvalClassificationTask(self._config).command(
-                prediction, test_set
+            eval_report = EvaluationTask(self._config).command(
+                test_set, prediction=prediction
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            eval_report = EvalSegmentationTask(self._config).command(
-                test_set, trained_model
+            eval_report = EvaluationTask(self._config).command(
+                test_set, model=trained_model
             )
         elif self._config.task == Task.OBJECT_DETECTION:
-            result = "result is saved in snapshot"
-            return result
+            eval_report = EvaluationTask(self._config).command(
+                test_set, model=self._config.trained_model_path
+            )
 
         print("model execution flow done")
         print(eval_report)

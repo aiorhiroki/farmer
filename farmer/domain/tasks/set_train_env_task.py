@@ -1,4 +1,5 @@
 import os
+import shutil
 import random as rn
 import multiprocessing as mp
 import numpy as np
@@ -40,9 +41,13 @@ class SetTrainEnvTask:
         log_dirs = ["image", "info", "learning", "model"]
         for log_dir in log_dirs:
             dir_path = os.path.join(result_path, log_dir)
-            os.makedirs(dir_path, exist_ok=True)
+            if os.path.exists(dir_path):
+                shutil.rmtree(dir_path)
+            os.makedirs(dir_path)
 
         image_dirs = ["train", "validation", "test"]
         for image_dir in image_dirs:
             dir_path = os.path.join(result_path, "image", image_dir)
-            os.makedirs(dir_path, exist_ok=True)
+            if os.path.exists(dir_path):
+                shutil.rmtree(dir_path)
+            os.makedirs(dir_path)

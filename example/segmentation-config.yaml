@@ -21,7 +21,7 @@ learning_rate: 0.01
 width: 512
 height: 256
 input_dir: image
-mask_dir: label
+label_dir: label
 trained_model_path:
 result_dir: segmentation_result
 class_names:

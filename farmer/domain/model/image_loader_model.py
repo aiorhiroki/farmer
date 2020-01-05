@@ -13,7 +13,7 @@ class ImageLoader:
     class_names: List[str] = field(default_factory=list)
     train_colors: List[int] = field(default_factory=list)
     input_dir: str = None
-    mask_dir: str = None
+    label_dir: str = None
     data_list: str = None
     train_dirs: List[str] = field(default_factory=list)
     val_dirs: List[str] = field(default_factory=list)
@@ -26,6 +26,8 @@ class ImageLoader:
             return Task.SEMANTIC_SEGMENTATION
         elif self.task == "classification":
             return Task.CLASSIFICATION
+        elif self.task == "detection":
+            return Task.OBJECT_DETECTION
         else:
             raise NotImplementedError
 
@@ -66,7 +68,7 @@ class ImageLoader:
                         os.path.join(
                             self.target_dir,
                             train_dir,
-                            self.mask_dir,
+                            self.label_dir,
                             "*" + image_ex
                         )
                     )

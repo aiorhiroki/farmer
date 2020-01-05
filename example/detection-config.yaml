@@ -1,0 +1,21 @@
+target_dir: ../tests/data/detection
+train_dirs:
+    - train
+val_dirs:
+    - validation
+test_dirs:
+    - test
+training: yes
+task: detection # classification or segmentation or detection
+loss:
+epochs: 2
+steps: 3
+width: 320
+height: 320
+input_dir: image
+label_dir: xml
+result_dir: detection_result
+class_names:
+    - bird
+    - car
+    - train

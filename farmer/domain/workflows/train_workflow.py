@@ -5,8 +5,7 @@ from ..tasks.read_annotation_task import ReadAnnotationTask
 from ..tasks.eda_task import EdaTask
 from ..tasks.train_task import TrainTask
 from ..tasks.predict_classification_task import PredictClassificationTask
-from ..tasks.eval_classification_task import EvalClassificationTask
-from ..tasks.eval_segmentation_task import EvalSegmentationTask
+from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
@@ -42,6 +41,10 @@ class TrainWorkflow(AbstractImageAnalyzer):
         EdaTask(self._config).command()
 
     def build_model_flow(self):
+        if self._config.task == Task.OBJECT_DETECTION:
+            # this flow is skipped for object detection at this moment
+            # keras-retina command build model in model execution flow
+            return None, None
         model, base_model = BuildModelTask(self._config).command()
         print("build model flow done")
         return model, base_model
@@ -50,22 +53,47 @@ class TrainWorkflow(AbstractImageAnalyzer):
         self, annotation_set, model, base_model, validation_set, test_set
     ):
         if self._config.training:
-            trained_model = TrainTask(self._config).command(
-                model, base_model, annotation_set, validation_set
-            )
+            if self._config.task == Task.OBJECT_DETECTION:
+                from keras_retinanet.bin import train
+                annotations = f"{self._config.info_path}/train.csv"
+                classes = f"{self._config.info_path}/classes.csv"
+                val_annotations = f"{self._config.info_path}/validation.csv"
+                train.main(
+                    [
+                        "--epochs", str(self._config.epochs),
+                        "--steps", str(self._config.steps),
+                        "--snapshot-path", self._config.model_path,
+                        "csv", annotations, classes,
+                        "--val-annotations", val_annotations
+                    ]
+                )
+                trained_model = "{}/resnet50_csv_{:02d}.h5".format(
+                    self._config.model_path, self._config.epochs
+                )
+            else:
+                trained_model = TrainTask(self._config).command(
+                    model, base_model, annotation_set, validation_set
+                )
         else:
-            trained_model = model
+            if self._config.task == Task.OBJECT_DETECTION:
+                trained_model = self._config.trained_model_path
+            else:
+                trained_model = model
 
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(
                 test_set, trained_model
             )
-            eval_report = EvalClassificationTask(self._config).command(
-                prediction, test_set
+            eval_report = EvaluationTask(self._config).command(
+                test_set, prediction=prediction
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            eval_report = EvalSegmentationTask(self._config).command(
-                test_set, trained_model
+            eval_report = EvaluationTask(self._config).command(
+                test_set, model=trained_model
+            )
+        elif self._config.task == Task.OBJECT_DETECTION:
+            eval_report = EvaluationTask(self._config).command(
+                test_set, model=trained_model
             )
 
         print("model execution flow done")

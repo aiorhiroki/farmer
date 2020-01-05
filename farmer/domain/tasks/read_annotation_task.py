@@ -26,19 +26,33 @@ class ReadAnnotationTask:
             annotations = ncc.readers.classification_set(
                 self.config.target_dir, data_list, self.config.class_names
             )
-        else:
+        elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             annotations = ncc.readers.segmentation_set(
                 self.config.target_dir,
                 data_list,
                 self.config.input_dir,
-                self.config.mask_dir
+                self.config.label_dir
             )
+        elif self.config.task == ncc.tasks.Task.OBJECT_DETECTION:
+            ncc.readers.detection_set(
+                self.config.target_dir,
+                data_list,
+                self.config.input_dir,
+                self.config.label_dir,
+                csv_file=f"{self.config.info_path}/{phase}.csv",
+                class_names=self.config.class_names
+            )
+            # save class name id list to train keras-retina
+            with open(f"{self.config.info_path}/classes.csv", "w") as fw:
+                for class_id, class_name in enumerate(self.config.class_names):
+                    fw.write(f"{class_name},{class_id}\n")
+            annotations = [f"annotations saved in {phase}.csv"]
         return annotations
 
-    def _do_write_annotations_task(self, phase: str, file_names: list):
+    def _do_write_annotations_task(self, phase: str, annotations: list):
         file_name = "{}_files.csv".format(phase)
         csv_file_path = os.path.join(self.config.info_path, file_name)
 
         with open(csv_file_path, "w") as fw:
             writer = csv.writer(fw)
-            writer.writerows(file_names)
+            writer.writerows(annotations)

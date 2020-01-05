@@ -12,6 +12,7 @@ class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
     epochs: int = None
+    steps: int = None
     batch_size: int = None
     learning_rate: float = None
     optimizer: str = None
@@ -30,8 +31,8 @@ class Trainer(Config, ImageLoader):
         self.task = self.get_task()
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
-        self.batch_size *= self.nb_gpu if self.multi_gpu else 1
-
+        if self.batch_size:
+            self.batch_size *= self.nb_gpu if self.multi_gpu else 1
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
         self.result_path = os.path.join(self.root_dir, self.result_dir)

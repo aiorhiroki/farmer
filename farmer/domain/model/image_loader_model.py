@@ -31,6 +31,11 @@ class ImageLoader:
 
     def get_class_names(self):
         if self.class_names:
+            if self.task == ncc.tasks.Task.OBJECT_DETECTION:
+                # save class name id list to train keras-retina
+                with open(f"{self.info_path}/classes.csv", "w") as fw:
+                    for class_id, class_name in enumerate(self.class_names):
+                        fw.write(f"{class_name},{class_id}\n")
             return self.class_names
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:

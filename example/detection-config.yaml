@@ -1,4 +1,4 @@
-target_dir: /Users/engineers/NCC/library/farmer/tests/data/detection # absolute path
+target_dir: ../tests/data/detection
 train_dirs:
     - train
 val_dirs:

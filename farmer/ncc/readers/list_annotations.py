@@ -67,6 +67,7 @@ def detection_set(
     csv_file,
     class_names=None
 ):
+    target_dir = os.path.abspath(target_dir)
     for data_case in data_list:
         xml_dir_path = os.path.join(target_dir, data_case, xml_dir)
         image_dir_path = os.path.join(target_dir, data_case, image_dir)

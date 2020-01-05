@@ -1,4 +1,4 @@
-target_dir: /Users/engineers/NCC/library/farmer/tests/data/detection
+target_dir: ../tests/data/detection
 train_dirs: # you must set train dirs to test classification
     - train
 test_dirs:

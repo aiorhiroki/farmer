@@ -1,0 +1,20 @@
+target_dir: /Users/engineers/NCC/library/farmer/tests/data/detection
+train_dirs: # you must set train dirs to test classification
+    - train
+test_dirs:
+    - test
+training: no
+task: detection # classification or segmentation or detection
+model_name: xception
+epochs: 2
+steps: 3
+width: 320
+height: 320
+input_dir: image
+label_dir: xml
+trained_model_path: result/detection_result/model/last_model.h5
+result_dir: test_detection_result
+class_names:
+    - bird
+    - car
+    - train

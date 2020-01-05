@@ -75,7 +75,10 @@ class TrainWorkflow(AbstractImageAnalyzer):
                     model, base_model, annotation_set, validation_set
                 )
         else:
-            trained_model = model
+            if self._config.task == Task.OBJECT_DETECTION:
+                trained_model = self._config.trained_model_path
+            else:
+                trained_model = model
 
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(
@@ -90,7 +93,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
         elif self._config.task == Task.OBJECT_DETECTION:
             eval_report = EvaluationTask(self._config).command(
-                test_set, model=self._config.trained_model_path
+                test_set, model=trained_model
             )
 
         print("model execution flow done")

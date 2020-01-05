@@ -1,5 +1,7 @@
 gpu: 0
 config_paths:
+    - detection-config.yaml
+    # detection-config-eval.yaml is not supported now
     - classification-config.yaml
     - classification-config-eval.yaml
     - segmentation-config.yaml

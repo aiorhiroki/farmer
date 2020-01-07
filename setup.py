@@ -10,6 +10,9 @@ setup(
     url='https://github.com/NCC-AI/apps',
     download_url='',
     license='Apache 2.0',
+    install_requires=[
+        'segmentation-models>=1.0.0'
+        'albumentations>=0.4.3'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

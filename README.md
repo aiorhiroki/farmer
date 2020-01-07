@@ -8,6 +8,7 @@ Docker >= 19.03
 
 ```bash
 docker build -t tensorflow:v2 .
+sh docker-start.sh farmer 5000
 ```
 
 ## Prepare Data set folder
@@ -38,8 +39,7 @@ e.g.)
 
 ## Training
 
-1. start docker  
-  `$ sh docker-start.sh container_name port`
+1. start docker `$ docker exec -it farmer bash`
 1. set param in `~.yaml` and `run.yaml`
 1. set param in `secret.yaml` (optional for slack logger)
 1. run `$ Godfarmer`

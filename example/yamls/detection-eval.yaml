@@ -1,4 +1,4 @@
-target_dir: data/detection
+target_dir: ../data/detection
 train_dirs: # you must set train dirs to test classification
     - train
 test_dirs:

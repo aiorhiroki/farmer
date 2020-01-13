@@ -1,7 +1,12 @@
-target_dir: data/segmentation
+target_dir: ../data/segmentation
+train_dirs:
+    - train_1
+    - train_2
+val_dirs:
+    - validation
 test_dirs:
     - test
-training: no
+training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
 backbone: mobilenetv2
@@ -9,14 +14,16 @@ loss: dice_loss
 epochs: 2
 batch_size: 2
 optimizer: adam
-augmentation: no
+augmentation:
+    - HorizontalFlip
+    - RandomSizedCrop
 learning_rate: 0.01
 width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_model_path: result/segmentation_result/model/last_model.h5
-result_dir: test_segmentation_result
+trained_model_path:
+result_dir: segmentation_result
 class_names:
     - background
     - hoge

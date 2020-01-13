@@ -1,4 +1,4 @@
-target_dir: data/classification/images
+target_dir: ../data/classification/images
 train_dirs:
     - train
 val_dirs:

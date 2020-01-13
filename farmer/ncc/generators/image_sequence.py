@@ -44,10 +44,12 @@ class ImageSequence(Sequence):
                 video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
                 _, input_image = video.read()
                 input_image = input_image/255.0
-                if input_image.shape[:2] != self.input_shape:
+                # (with,height) for cv2.resize
+                resize_shape = self.input_shape[::-1]
+                if input_image.shape[:2] != resize_shape:
                     input_image = cv2.resize(
                         input_image,
-                        self.input_shape,
+                        resize_shape,
                         interpolation=cv2.INTER_LANCZOS4
                     )
             else:

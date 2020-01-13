@@ -1,4 +1,4 @@
-target_dir: ../tests/data/segmentation
+target_dir: data/segmentation
 test_dirs:
     - test
 training: no

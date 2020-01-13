@@ -20,6 +20,7 @@ class PredictClassificationTask:
             nb_classes=self.config.nb_classes,
             task=self.config.task,
             batch_size=self.config.batch_size,
+            input_data_type=self.config.input_data_type
         )
         return test_gen
 

@@ -20,6 +20,9 @@ class EdaTask:
         param_path = os.path.join(self.config.info_path, "parameter.txt")
         with open(param_path, mode="w") as configfile:
             parser.write(configfile)
+        with open(f"{self.config.info_path}/classes.csv", "w") as fw:
+            for class_id, class_name in enumerate(self.config.class_names):
+                fw.write(f"{class_name},{class_id}\n")
 
     def _do_post_config_task(self):
         # milk側にconfigを送る

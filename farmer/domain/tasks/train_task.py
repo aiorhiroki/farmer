@@ -30,7 +30,8 @@ class TrainTask:
             task=self.config.task,
             batch_size=self.config.batch_size,
             augmentation=self.config.augmentation,
-            train_colors=self.config.train_colors
+            train_colors=self.config.train_colors,
+            input_data_type=self.config.input_data_type
         )
         train_gen = ncc.generators.ImageSequence(**sequence_args)
 

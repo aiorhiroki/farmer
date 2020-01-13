@@ -40,7 +40,6 @@ class Trainer(Config, ImageLoader):
         self.model_path = os.path.join(self.result_path, self.model_dir)
         self.learning_path = os.path.join(self.result_path, self.learning_dir)
         self.image_path = os.path.join(self.result_path, self.image_dir)
-
         self.class_names = self.get_class_names()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()

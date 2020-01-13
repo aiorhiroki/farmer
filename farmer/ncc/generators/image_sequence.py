@@ -1,4 +1,5 @@
 import math
+import cv2
 
 from tensorflow.python.keras.utils.data_utils import Sequence
 import numpy as np
@@ -16,7 +17,8 @@ class ImageSequence(Sequence):
         task: str,
         batch_size: int,
         augmentation=list(),
-        train_colors=list()
+        train_colors=list(),
+        input_data_type="image"
     ):
         self.annotations = annotations
         self.batch_size = batch_size
@@ -25,6 +27,7 @@ class ImageSequence(Sequence):
         self.task = task
         self.augmentation = augmentation
         self.train_colors = train_colors
+        self.input_data_type = input_data_type
 
     def __getitem__(self, idx):
         data = self.annotations[
@@ -32,10 +35,25 @@ class ImageSequence(Sequence):
         ]
         batch_x = list()
         batch_y = list()
-        for input_file, label in data:
-            input_image = self.image_util.read_image(
-                input_file, anti_alias=True
-            )
+        for *input_file, label in data:
+            # input_file is [image_path] or [video_path, frame_id]
+            # label is mask_image_path or class_id
+            if self.input_data_type == "video":
+                video_path, frame_id = input_file
+                video = cv2.VideoCapture(video_path)
+                video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+                _, input_image = video.read()
+                input_image = input_image/255.0
+                if input_image.shape[:2] != self.input_shape:
+                    input_image = cv2.resize(
+                        input_image,
+                        self.input_shape,
+                        interpolation=cv2.INTER_LANCZOS4
+                    )
+            else:
+                input_image = self.image_util.read_image(
+                    input_file[0], anti_alias=True
+                )
             if self.task == Task.SEMANTIC_SEGMENTATION:
                 label = self.image_util.read_image(
                     label,
@@ -44,7 +62,10 @@ class ImageSequence(Sequence):
                 )
                 if len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
-                        input_image, label, self.input_shape, self.augmentation
+                        input_image,
+                        label,
+                        self.input_shape,
+                        self.augmentation
                     )
             batch_x.append(input_image)
             batch_y.append(label)

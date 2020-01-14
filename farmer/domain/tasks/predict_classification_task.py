@@ -36,5 +36,5 @@ class PredictClassificationTask:
             verbose=1,
         )
         if save_npy:
-            np.save("{}.npy".format(self.config.model_name), prediction)
+            np.save(f"{self.config.info_path}/pred.npy", prediction)
         return prediction

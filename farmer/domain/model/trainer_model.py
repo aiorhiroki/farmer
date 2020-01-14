@@ -26,9 +26,11 @@ class Trainer(Config, ImageLoader):
     backbone: str = None
     nb_train_data: int = 0
     nb_validation_data: int = 0
+    save_pred: bool = True
 
     def __post_init__(self):
         self.task = self.get_task()
+        self.gpu = str(self.gpu)
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         if self.batch_size:

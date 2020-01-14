@@ -6,10 +6,10 @@ class PredictClassificationTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, test_set, model):
+    def command(self, test_set, model, save_npy=True):
         prediction_gen = self._do_generate_batch_task(test_set)
         prediction = self._do_classification_predict_task(
-            model, prediction_gen
+            model, prediction_gen, save_npy
         )
         return prediction
 
@@ -25,7 +25,7 @@ class PredictClassificationTask:
         return test_gen
 
     def _do_classification_predict_task(
-        self, model, annotation_gen, save_npy=False
+        self, model, annotation_gen, save_npy
     ):
         prediction = model.predict_generator(
             annotation_gen,

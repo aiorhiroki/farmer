@@ -5,6 +5,7 @@ from ..tasks.read_annotation_task import ReadAnnotationTask
 from ..tasks.eda_task import EdaTask
 from ..tasks.train_task import TrainTask
 from ..tasks.predict_classification_task import PredictClassificationTask
+from ..tasks.predict_segmentation_task import PredictSegmentationTask
 from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
@@ -89,6 +90,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 test_set, prediction=prediction
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
+            PredictSegmentationTask(self._config).command(
+                test_set, model=trained_model
+            )
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model
             )

@@ -1,6 +1,7 @@
 import colorsys
 from .palette import palettes
 import numpy as np
+import os
 import random
 from PIL import Image
 import cv2
@@ -75,12 +76,39 @@ def cast_to_pil(ndarray, palette, index_void=None):
     image.putpalette(palette)
     return image
 
+def generate_segmentation_result(
+    nb_classes,
+    height,
+    width,
+    annotations,
+    model,
+    save_dir,
+    train_colors=None,
+):
+    image_util = ImageUtil(nb_classes, (height, width))
+    for sample_image_path in annotations:
+        sample_image = image_util.read_image(
+            sample_image_path[0],
+            anti_alias=True
+        )
+        sample_image = np.asarray(sample_image, dtype=np.float32)
+        segmented = image_util.read_image(
+            sample_image_path[1],
+            normalization=False,
+            train_colors=train_colors
+        )
+        segmented = image_util.cast_to_onehot(segmented)
+        output = model.predict(np.expand_dims(sample_image, axis=0))
+
+        result_image = get_imageset(sample_image, output[0], segmented)
+        save_image_name = os.path.basename(sample_image_path[0])
+        result_image.save(f"{save_dir}/{save_image_name}")
 
 def get_imageset(
     image_in_np,
     image_out_np,
     image_gt_np,
-    palette,
+    palette=palettes,
     index_void=None
 ):
     # 3つの画像(in, out, gt)をくっつけます。
@@ -100,34 +128,6 @@ def get_imageset(
         image_in_pil, image_merged, None, "RGB"
     )
     return image_result
-
-
-def generate_sample_result(
-    model,
-    annotations,
-    nb_classes,
-    height,
-    width,
-    train_colors=None
-):
-    image_util = ImageUtil(nb_classes, (height, width))
-    file_length = len(annotations)
-    random_index = np.random.randint(file_length)
-    sample_image_path = annotations[random_index]
-    sample_image = image_util.read_image(
-        sample_image_path[0],
-        anti_alias=True
-    )
-    sample_image = np.asarray(sample_image, dtype=np.float32)
-    segmented = image_util.read_image(
-        sample_image_path[1],
-        normalization=False,
-        train_colors=train_colors
-    )
-    segmented = image_util.cast_to_onehot(segmented)
-    output = model.predict(np.expand_dims(sample_image, axis=0))
-
-    return [sample_image, output[0], segmented]
 
 
 class ImageUtil:

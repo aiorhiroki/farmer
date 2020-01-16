@@ -1,4 +1,4 @@
-target_dir: ../tests/data/detection
+target_dir: ../data/detection
 train_dirs:
     - train
 val_dirs:

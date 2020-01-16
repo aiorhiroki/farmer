@@ -23,9 +23,19 @@ class ReadAnnotationTask:
 
         print(f"{phase}: {data_list}")
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
-            annotations = ncc.readers.classification_set(
-                self.config.target_dir, data_list, self.config.class_names
-            )
+            if self.config.input_data_type == "video":
+                annotations = ncc.readers.classification_video_set(
+                    self.config.target_dir,
+                    data_list,
+                    csv_file=f"{self.config.info_path}/{phase}.csv",
+                    class_names=self.config.class_names,
+                    skip_frame=self.config.skip_frame,
+                    time_format=self.config.time_format
+                )
+            else:
+                annotations = ncc.readers.classification_set(
+                    self.config.target_dir, data_list, self.config.class_names
+                )
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             annotations = ncc.readers.segmentation_set(
                 self.config.target_dir,
@@ -42,10 +52,6 @@ class ReadAnnotationTask:
                 csv_file=f"{self.config.info_path}/{phase}.csv",
                 class_names=self.config.class_names
             )
-            # save class name id list to train keras-retina
-            with open(f"{self.config.info_path}/classes.csv", "w") as fw:
-                for class_id, class_name in enumerate(self.config.class_names):
-                    fw.write(f"{class_name},{class_id}\n")
             annotations = [[f"annotations saved in {phase}.csv"]]
         return annotations
 

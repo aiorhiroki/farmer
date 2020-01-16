@@ -26,9 +26,11 @@ class Trainer(Config, ImageLoader):
     backbone: str = None
     nb_train_data: int = 0
     nb_validation_data: int = 0
+    save_pred: bool = True
 
     def __post_init__(self):
         self.task = self.get_task()
+        self.gpu = str(self.gpu)
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         if self.batch_size:
@@ -40,7 +42,9 @@ class Trainer(Config, ImageLoader):
         self.model_path = os.path.join(self.result_path, self.model_dir)
         self.learning_path = os.path.join(self.result_path, self.learning_dir)
         self.image_path = os.path.join(self.result_path, self.image_dir)
-
         self.class_names = self.get_class_names()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
+        self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
+        self.val_dirs = [str(val_dir) for val_dir in self.val_dirs]
+        self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]

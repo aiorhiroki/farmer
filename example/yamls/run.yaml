@@ -1,0 +1,9 @@
+gpu: 0
+config_paths:
+    - classification-video.yaml
+    - classification.yaml
+    - classification-eval.yaml
+    - detection.yaml
+    - detection-eval.yaml
+    - segmentation.yaml
+    - segmentation-eval.yaml

@@ -79,10 +79,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 trained_model = self._config.trained_model_path
             else:
                 trained_model = model
-
+        if len(test_set) == 0:
+            return 0
         if self._config.task == Task.CLASSIFICATION:
             prediction = PredictClassificationTask(self._config).command(
-                test_set, trained_model
+                test_set, trained_model, self._config.save_pred
             )
             eval_report = EvaluationTask(self._config).command(
                 test_set, prediction=prediction

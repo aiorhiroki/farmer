@@ -1,4 +1,4 @@
-target_dir: ../tests/data/segmentation
+target_dir: ../data/segmentation
 train_dirs:
     - train_1
     - train_2

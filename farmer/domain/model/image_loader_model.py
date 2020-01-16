@@ -20,6 +20,9 @@ class ImageLoader:
     test_dirs: List[str] = field(default_factory=list)
     height: int = None
     width: int = None
+    input_data_type: str = "image"
+    skip_frame: int = 30
+    time_format: str = "datetime"
 
     def get_task(self):
         if self.task == "segmentation":
@@ -33,7 +36,7 @@ class ImageLoader:
 
     def get_class_names(self):
         if self.class_names:
-            return self.class_names
+            return [str(class_name) for class_name in self.class_names]
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
             class_names = [

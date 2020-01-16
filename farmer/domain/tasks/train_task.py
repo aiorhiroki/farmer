@@ -75,9 +75,7 @@ class TrainTask:
             train_save_dir = os.path.join(self.config.image_path, "train")
             val_save_dir = os.path.join(self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
-                train_save_dir=train_save_dir,
                 val_save_dir=val_save_dir,
-                train_files=train_set,
                 validation_files=validation_set,
                 nb_classes=self.config.nb_classes,
                 height=self.config.height,

@@ -2,8 +2,8 @@ import requests
 import numpy as np
 import os
 import warnings
-from ..utils import palette, get_imageset, PostClient
-from ..utils import MatPlotManager, generate_sample_result
+from ..utils import get_imageset, PostClient
+from ..utils import MatPlotManager, generate_segmentation_result
 from ..metrics import iou_dice_val
 
 from tensorflow.python import keras
@@ -12,18 +12,14 @@ from tensorflow.python import keras
 class GenerateSampleResult(keras.callbacks.Callback):
     def __init__(
         self,
-        train_save_dir,
         val_save_dir,
-        train_files,
         validation_files,
         nb_classes,
         height,
         width,
         train_colors=None
     ):
-        self.train_save_dir = train_save_dir
         self.val_save_dir = val_save_dir
-        self.train_files = train_files
         self.validation_files = validation_files
         self.nb_classes = nb_classes
         self.height = height
@@ -35,46 +31,17 @@ class GenerateSampleResult(keras.callbacks.Callback):
         if epoch % 3 != 0:
             return
 
-        train_set = generate_sample_result(
-            self.model,
-            self.train_files,
-            self.nb_classes,
-            self.height,
-            self.width,
-            self.train_colors
+        save_dir = f"{self.val_save_dir}/epoch_{epoch}"
+        os.mkdir(save_dir)
+        generate_segmentation_result(
+            nb_classes=self.nb_classes,
+            height=self.height,
+            width=self.width,
+            annotations=self.validation_files,
+            model=self.model,
+            save_dir=save_dir,
+            train_colors=self.train_colors
         )
-        validation_set = generate_sample_result(
-            self.model,
-            self.validation_files,
-            self.nb_classes,
-            self.height,
-            self.width,
-            self.train_colors
-        )
-
-        train_image = get_imageset(
-            image_in_np=train_set[0],
-            image_out_np=train_set[1],
-            image_gt_np=train_set[2],
-            palette=palette.palettes,
-            index_void=None
-        )
-        validation_image = get_imageset(
-            image_in_np=validation_set[0],
-            image_out_np=validation_set[1],
-            image_gt_np=validation_set[2],
-            palette=palette.palettes,
-            index_void=None
-        )
-        file_name = 'epoch_{}.png'.format(epoch)
-        train_filename = os.path.join(
-            self.train_save_dir, file_name
-        )
-        validation_filename = os.path.join(
-            self.val_save_dir, file_name
-        )
-        train_image.save(train_filename)
-        validation_image.save(validation_filename)
 
 
 class SlackLogger(keras.callbacks.Callback):

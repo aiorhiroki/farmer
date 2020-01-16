@@ -80,7 +80,8 @@ class TrainTask:
                 nb_classes=self.config.nb_classes,
                 height=self.config.height,
                 width=self.config.width,
-                train_colors=self.config.train_colors
+                train_colors=self.config.train_colors,
+                segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
         if self.config.slack_channel and self.config.slack_token:

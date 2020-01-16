@@ -17,7 +17,8 @@ class GenerateSampleResult(keras.callbacks.Callback):
         nb_classes,
         height,
         width,
-        train_colors=None
+        train_colors=None,
+        segmentation_val_step=3
     ):
         self.val_save_dir = val_save_dir
         self.validation_files = validation_files
@@ -25,13 +26,14 @@ class GenerateSampleResult(keras.callbacks.Callback):
         self.height = height
         self.width = width
         self.train_colors = train_colors
+        self.segmentation_val_step = segmentation_val_step
 
     def on_epoch_end(self, epoch, logs={}):
         # display sample predict
-        if epoch % 3 != 0:
+        if (epoch + 1) % self.segmentation_val_step != 0:
             return
 
-        save_dir = f"{self.val_save_dir}/epoch_{epoch}"
+        save_dir = f"{self.val_save_dir}/epoch_{epoch + 1}"
         os.mkdir(save_dir)
         generate_segmentation_result(
             nb_classes=self.nb_classes,

@@ -117,5 +117,4 @@ venv.bak/
 # farmer_local
 result/
 develop/
-example/yamls/result/
 example/yamls/logs/

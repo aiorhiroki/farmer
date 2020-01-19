@@ -13,7 +13,8 @@ setup(
     install_requires=[
         'segmentation-models>=1.0.0',
         'albumentations>=0.4.3',
-        'optuna>=1.0.0'],
+        'optuna>=1.0.0',
+        'keras>=2.3.0'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

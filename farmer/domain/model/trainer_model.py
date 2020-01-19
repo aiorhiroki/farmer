@@ -43,7 +43,10 @@ class Trainer(Config, ImageLoader, Optuna):
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
-        self.trained_model_path = os.path.join(self.root_dir, self.trained_model_path)
+        if self.trained_model_path is not None:
+            self.trained_model_path = os.path.join(
+                    self.root_dir, self.trained_model_path
+            )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
         self.info_path = os.path.join(self.result_path, self.info_dir)

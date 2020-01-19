@@ -7,6 +7,7 @@ from .config_model import Config
 from .image_loader_model import ImageLoader
 from .optuna_model import Optuna
 
+
 @dataclass
 class Trainer(Config, ImageLoader, Optuna):
     train_id: int = None
@@ -30,6 +31,7 @@ class Trainer(Config, ImageLoader, Optuna):
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    optuna: bool = False
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -54,3 +56,4 @@ class Trainer(Config, ImageLoader, Optuna):
 
         self.op_batch_size = type(self.batch_size) == list
         self.op_learning_rate = type(self.learning_rate) == list
+        self.optuna = self.op_batch_size or self.op_learning_rate

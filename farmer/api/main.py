@@ -67,6 +67,14 @@ def fit():
                 trainer.learning_path = f"{k_result}/{trainer.learning_dir}"
                 trainer.image_path = f"{k_result}/{trainer.image_dir}"
 
-                TrainWorkflow(trainer).optuna_command()
+                train_workflow = TrainWorkflow(trainer)
+                if trainer.optuna:
+                    train_workflow.optuna_command()
+                else:
+                    train_workflow.command()
         else:
-            TrainWorkflow(trainer).optuna_command()
+            train_workflow = TrainWorkflow(trainer)
+            if trainer.optuna:
+                train_workflow.optuna_command()
+            else:
+                train_workflow.command()

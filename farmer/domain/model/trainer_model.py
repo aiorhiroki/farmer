@@ -26,8 +26,10 @@ class Trainer(Config, ImageLoader):
     backbone: str = None
     nb_train_data: int = 0
     nb_validation_data: int = 0
+    nb_test_data: int = 0
     save_pred: bool = True
     segmentation_val_step: int = 3
+    n_splits: int = 5
 
     def __post_init__(self):
         self.task = self.get_task()

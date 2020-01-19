@@ -14,7 +14,6 @@ class ImageLoader:
     train_colors: List[int] = field(default_factory=list)
     input_dir: str = None
     label_dir: str = None
-    data_list: str = None
     train_dirs: List[str] = field(default_factory=list)
     val_dirs: List[str] = field(default_factory=list)
     test_dirs: List[str] = field(default_factory=list)

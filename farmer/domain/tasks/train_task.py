@@ -72,7 +72,6 @@ class TrainTask:
                 width=self.config.width,
                 train_colors=self.config.train_colors
             )
-            train_save_dir = os.path.join(self.config.image_path, "train")
             val_save_dir = os.path.join(self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,

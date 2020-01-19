@@ -14,5 +14,5 @@ augmentation:
 learning_rate: 0.01
 width: 80
 height: 80
-trained_model_path: result/classification_result/model/last_model.h5
+trained_model_path: ../result/classification_result/model/last_model.h5
 result_dir: test_classification_result

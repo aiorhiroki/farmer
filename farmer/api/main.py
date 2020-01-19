@@ -28,7 +28,7 @@ def fit():
             config.update(secret_config)
         trainer = Trainer(**config)
         val_dirs = trainer.val_dirs
-        if trainer.training and val_dirs is None or len(val_dirs) == 0:
+        if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation
             if trainer.task == Task.SEMANTIC_SEGMENTATION:
                 image_dir = trainer.label_dir
@@ -67,6 +67,6 @@ def fit():
                 trainer.learning_path = f"{k_result}/{trainer.learning_dir}"
                 trainer.image_path = f"{k_result}/{trainer.image_dir}"
 
-                TrainWorkflow(trainer).command()
+                TrainWorkflow(trainer).optuna_command()
         else:
-            TrainWorkflow(trainer).command()
+            TrainWorkflow(trainer).optuna_command()

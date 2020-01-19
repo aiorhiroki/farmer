@@ -4,6 +4,7 @@ train_dirs:
     - train_2
     - train_3
     - train_4
+val_dirs:
     - train_5
     - train_6
     - train_7
@@ -12,10 +13,16 @@ task: classification # classification or segmentation is supported
 model_name: xception
 loss:
 epochs: 2
-batch_size: 2
+batch_size:
+    - 4 # min
+    - 16 # max
+    - 4 # step
 optimizer: adam
 augmentation:
-learning_rate: 0.01
+learning_rate: 
+    - 0.001 # min
+    - 0.01 # max
+    - 0.001 # step
 width: 80
 height: 80
 trained_model_path:

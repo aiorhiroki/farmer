@@ -19,7 +19,7 @@ class PredictClassificationTask:
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,
-            batch_size=self.config.batch_size,
+            batch_size=4,
             input_data_type=self.config.input_data_type
         )
         return test_gen

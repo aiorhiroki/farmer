@@ -11,8 +11,9 @@ setup(
     download_url='',
     license='Apache 2.0',
     install_requires=[
-        'segmentation-models>=1.0.0'
-        'albumentations>=0.4.3'],
+        'segmentation-models>=1.0.0',
+        'albumentations>=0.4.3',
+        'optuna>=1.0.0'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

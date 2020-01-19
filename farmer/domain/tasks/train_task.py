@@ -8,10 +8,11 @@ class TrainTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, model, base_model, train_set, validation_set):
+    def command(
+        self, model, base_model, train_set, validation_set, trial):
 
         train_gen, validation_gen = self._do_generate_batch_task(
-            train_set, validation_set
+            train_set, validation_set, trial
         )
         callbacks = self._do_set_callbacks_task(
             base_model, train_set, validation_set
@@ -23,14 +24,20 @@ class TrainTask:
 
         return save_model
 
-    def _do_generate_batch_task(self, train_set, validation_set):
+    def _do_generate_batch_task(self, train_set, validation_set, trial):
         np.random.shuffle(train_set)
+        if self.config.op_batch_size:
+            batch_size = int(trial.suggest_discrete_uniform(
+                'batch_size', *self.config.batch_size))
+        else:
+            batch_size = self.config.batch_size
+
         sequence_args = dict(
             annotations=train_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,
-            batch_size=self.config.batch_size,
+            batch_size=batch_size,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type

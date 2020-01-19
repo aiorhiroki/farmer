@@ -1,10 +1,10 @@
 gpu: 0
 root_dir: ../result
 config_paths:
-    - classification-video.yaml
+    # - classification-video.yaml
     - classification.yaml
-    - classification-eval.yaml
-    - detection.yaml
-    - detection-eval.yaml
-    - segmentation.yaml
-    - segmentation-eval.yaml
+    # - classification-eval.yaml
+    # - detection.yaml
+    # - detection-eval.yaml
+    # - segmentation.yaml
+    # - segmentation-eval.yaml

@@ -10,18 +10,20 @@ from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
+import optuna
+from keras.backend import clear_session
 
 class TrainWorkflow(AbstractImageAnalyzer):
     def __init__(self, config):
         super().__init__(config)
 
-    def command(self):
+    def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow()
-        model, base_model = self.build_model_flow()
+        model, base_model = self.build_model_flow(trial)
         result = self.model_execution_flow(
-            train_set, model, base_model, validation_set, test_set
+            train_set, model, base_model, validation_set, test_set, trial
         )
         return self.output_flow(result)
 
@@ -41,17 +43,18 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("eda flow done")
         EdaTask(self._config).command()
 
-    def build_model_flow(self):
+    def build_model_flow(self, trial=None):
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model, base_model = BuildModelTask(self._config).command()
+        model, base_model = BuildModelTask(self._config).command(trial)
         print("build model flow done")
         return model, base_model
 
     def model_execution_flow(
-        self, annotation_set, model, base_model, validation_set, test_set
+        self, 
+        annotation_set, model, base_model, validation_set, test_set, trial
     ):
         if self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
@@ -73,13 +76,17 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 )
             else:
                 trained_model = TrainTask(self._config).command(
-                    model, base_model, annotation_set, validation_set
+                    model, base_model, 
+                    annotation_set, validation_set,
+                    trial
                 )
         else:
             if self._config.task == Task.OBJECT_DETECTION:
                 trained_model = self._config.trained_model_path
             else:
                 trained_model = model
+        if self._config.training and len(test_set) == 0:
+            test_set = validation_set
         if len(test_set) == 0:
             return 0
         if self._config.task == Task.CLASSIFICATION:
@@ -109,3 +116,29 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def output_flow(self, result):
         OutputResultTask(self._config).command(result)
         print("output flow done")
+        return result
+
+    def optuna_command(self):
+        study = optuna.create_study(direction='maximize')
+        study.optimize(self.objective, n_trials=10, timeout=100)
+        print('Number of finished trials: {}'.format(len(study.trials)))
+
+        print('Best trial:')
+        trial = study.best_trial
+
+        print('  Value: {}'.format(trial.value))
+
+        print('  Params: ')
+        for key, value in trial.params.items():
+            print('    {}: {}'.format(key, value))
+        return study
+
+    def objective(self, trial):
+        clear_session()
+        result = self.command(trial)
+        if self._config.task == Task.CLASSIFICATION:
+            return result["accuracy"]
+        elif self._config.task == Task.SEMANTIC_SEGMENTATION:
+            return np.mean(result["dice"][1:])
+        else:
+            raise NotImplementedError

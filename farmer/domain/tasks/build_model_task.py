@@ -23,7 +23,7 @@ class BuildModelTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self):
+    def command(self, trial=None):
         # return: base_model is saved when training on multi gpu
 
         base_model = self._do_make_model_task(
@@ -45,7 +45,8 @@ class BuildModelTask:
             self.config.optimizer,
             self.config.learning_rate,
             self.config.task,
-            self.config.loss
+            self.config.loss,
+            trial
         )
 
         return compiled_model, base_model
@@ -118,8 +119,14 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func
+        loss_func,
+        trial
     ):
+        if self.config.learning_rate:
+            learning_rate = int(trial.suggest_discrete_uniform(
+                'learning_rate', *self.config.learning_rate))
+        else:
+            learning_rate = self.config.learning_rate
 
         if self.config.framework == "tensorflow":
             if optimizer == "adam":

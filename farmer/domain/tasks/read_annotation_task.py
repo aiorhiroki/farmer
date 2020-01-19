@@ -53,6 +53,14 @@ class ReadAnnotationTask:
                 class_names=self.config.class_names
             )
             annotations = [[f"annotations saved in {phase}.csv"]]
+
+        if phase == "train":
+            self.config.nb_train_data = len(annotations)
+        elif phase == "validation":
+            self.config.nb_validation_data = len(annotations)
+        elif phase == "test":
+            self.config.nb_test_data = len(annotations)
+
         return annotations
 
     def _do_write_annotations_task(self, phase: str, annotations: list):

@@ -54,15 +54,7 @@ e.g.)
   - model (best model and last model)
 ```
 
-## Test and Format
-
-### Unit Testing
-
-```bash
-pipenv run nox
-```
-
-### Integration Testing
+### Integration Test
 
 ```bash
 cd exmaple

@@ -1,4 +1,5 @@
-target_dir: ../data/segmentation
+target_dir: data/segmentation/data
+root_dir: data/segmentation/result
 test_dirs:
     - test
 training: no
@@ -15,7 +16,7 @@ width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_model_path: ../result/segmentation_result/model/last_model.h5
+trained_model_path: data/segmentation/result/segmentation_result/model/last_model.h5
 result_dir: test_segmentation_result
 class_names:
     - background

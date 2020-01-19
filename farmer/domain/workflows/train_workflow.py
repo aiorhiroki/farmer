@@ -11,7 +11,9 @@ from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
 import optuna
+import numpy as np
 from keras.backend import clear_session
+
 
 class TrainWorkflow(AbstractImageAnalyzer):
     def __init__(self, config):
@@ -53,7 +55,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return model, base_model
 
     def model_execution_flow(
-        self, 
+        self,
         annotation_set, model, base_model, validation_set, test_set, trial
     ):
         if self._config.training:
@@ -76,7 +78,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 )
             else:
                 trained_model = TrainTask(self._config).command(
-                    model, base_model, 
+                    model, base_model,
                     annotation_set, validation_set,
                     trial
                 )
@@ -120,7 +122,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def optuna_command(self):
         study = optuna.create_study(direction='maximize')
-        study.optimize(self.objective, n_trials=10, timeout=100)
+        study.optimize(
+            self.objective,
+            n_trials=self._config.n_trials,
+            timeout=self._config.timeout
+        )
         print('Number of finished trials: {}'.format(len(study.trials)))
 
         print('Best trial:')

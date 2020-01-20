@@ -27,11 +27,6 @@ def fit():
         if secret_config:
             config.update(secret_config)
         trainer = Trainer(**config)
-        train_dirs = trainer.train_dirs
-        if trainer.training and (train_dirs is None or len(train_dirs) == 0):
-            trainer.train_dirs = [
-                d for d in os.listdir(trainer.target_dir) if os.path.isdir(d)
-            ]
         val_dirs = trainer.val_dirs
         if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation

@@ -54,6 +54,13 @@ class ImageLoader:
             height, width, _ = ncc.readers.search_image_profile(train_files)
         return height, width
 
+    def get_train_dirs(self):
+        if self.training and (self.train_dirs is None or len(self.train_dirs) == 0):
+            self.train_dirs = [
+                d for d in os.listdir(self.target_dir)
+                if os.path.isdir(f"{self.target_dir}/{d}")
+            ]
+
     def _get_train_files(self):
         IMAGE_EXTENTINS = [".jpg", ".png"]
         train_files = list()

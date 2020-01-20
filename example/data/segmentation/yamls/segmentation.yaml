@@ -1,5 +1,5 @@
-target_dir: data/segmentation/data
-root_dir: data/segmentation/result
+target_dir: segmentation/data
+result_root_dir: segmentation/result
 train_dirs:
     - train_1
     - train_2

@@ -1,5 +1,5 @@
-target_dir: data/detection/data
-root_dir: data/detection/result
+target_dir: detection/data
+result_root_dir: detection/result
 train_dirs:
     - train
 val_dirs:

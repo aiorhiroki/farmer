@@ -53,6 +53,7 @@ class Trainer(Config, ImageLoader, Optuna):
         self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
         self.val_dirs = [str(val_dir) for val_dir in self.val_dirs]
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
+        self.get_train_dirs()
 
         self.op_batch_size = type(self.batch_size) == list
         self.op_learning_rate = type(self.learning_rate) == list

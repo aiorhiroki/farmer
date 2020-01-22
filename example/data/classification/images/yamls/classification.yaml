@@ -1,5 +1,5 @@
-target_dir: data/classification/images/data
-root_dir: data/classification/images/result
+target_dir: classification/images/data
+result_root_dir: classification/images/result
 training: yes
 task: classification # classification or segmentation is supported
 model_name: xception

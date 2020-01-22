@@ -1,5 +1,5 @@
-target_dir: data/classification/videos/data
-root_dir: data/classification/videos/result
+target_dir: classification/videos/data
+result_root_dir: classification/videos/result
 train_dirs:
     - train
 val_dirs:

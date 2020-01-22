@@ -122,7 +122,7 @@ class BuildModelTask:
         loss_func,
         trial
     ):
-        if self.config.learning_rate:
+        if self.config.op_learning_rate:
             learning_rate = int(trial.suggest_discrete_uniform(
                 'learning_rate', *self.config.learning_rate))
         else:

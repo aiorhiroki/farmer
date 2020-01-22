@@ -6,7 +6,8 @@ class Config:
     slack_token: str = None
     slack_channel: str = None
     milk_api_url: str = "http://127.0.0.1:5000/"
-    root_dir: str = "result"
+    result_root_dir: str = "result"
+    root_dir: str = ""
     result_dir: str = None
     result_path: str = None
     info_dir: str = "info"

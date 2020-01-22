@@ -42,7 +42,13 @@ class Trainer(Config, ImageLoader, Optuna):
             self.batch_size *= self.nb_gpu if self.multi_gpu else 1
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
-        self.result_path = os.path.join(self.root_dir, self.result_dir)
+        self.target_dir = os.path.join(self.root_dir, self.target_dir)
+        if self.trained_model_path is not None:
+            self.trained_model_path = os.path.join(
+                    self.root_dir, self.trained_model_path
+            )
+        self.result_path = os.path.join(
+            self.root_dir, self.result_root_dir, self.result_dir)
         self.info_path = os.path.join(self.result_path, self.info_dir)
         self.model_path = os.path.join(self.result_path, self.model_dir)
         self.learning_path = os.path.join(self.result_path, self.learning_dir)

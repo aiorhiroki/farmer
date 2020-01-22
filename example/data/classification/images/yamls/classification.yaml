@@ -1,6 +1,14 @@
 target_dir: classification/images/data
 result_root_dir: classification/images/result
 training: yes
+train_dirs:
+    - train_1
+    - train_2
+    - train_3
+    - train_4
+    - train_5
+    - train_6
+    - train_7
 task: classification # classification or segmentation is supported
 model_name: xception
 loss:

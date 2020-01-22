@@ -1,7 +1,7 @@
 target_dir: classification/images/data
 result_root_dir: classification/images/result
 train_dirs: # you must set train dirs to test classification
-    - train
+    - train_1
 test_dirs:
     - test
 training: no
@@ -15,5 +15,5 @@ augmentation:
 learning_rate: 0.01
 width: 80
 height: 80
-trained_model_path: classification/images/result/classification_result/model/last_model.h5
+trained_model_path: classification/images/result/classification_result/cv_0/model/last_model.h5
 result_dir: test_classification_result

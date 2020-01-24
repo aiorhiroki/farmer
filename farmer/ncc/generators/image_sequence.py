@@ -62,7 +62,7 @@ class ImageSequence(Sequence):
                     normalization=False,
                     train_colors=self.train_colors
                 )
-                if len(self.augmentation) > 0:
+                if self.augmentation and len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
                         input_image,
                         label,

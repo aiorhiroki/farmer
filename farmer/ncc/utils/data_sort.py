@@ -35,8 +35,8 @@ def cross_val_split(dirs, counts, k=5, n_iter=15, mix_step=5):
                         no_change_swap = int((step + 1) % mix_step == 0)
                         l_s_diff = v_l["count"] - v_s["count"]
                         if 0 < l_s_diff < diff + no_change_swap:
-                            cross[i][i_l] = v_s
-                            cross[-j-1][i_s] = v_l
+                            large[i_l] = v_s
+                            small[i_s] = v_l
                             swapping = True
                             break
                     if swapping:

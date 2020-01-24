@@ -17,19 +17,8 @@ class EvaluationTask:
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
             prediction_cls = np.argmax(prediction, axis=1)
             true_cls = [class_id for *_, class_id in annotation_set]
-            true = np.eye(self.config.nb_classes, dtype=np.uint8)[true_cls]
             eval_report = classification_report(
                 true_cls, prediction_cls, output_dict=True
-            )
-            fpr, tpr, auc = ncc.metrics.roc(
-                true, prediction, self.config.nb_classes, show_plot=False
-            )
-            eval_report.update(
-                dict(
-                    fpr=list(fpr["macro"]),
-                    tpr=list(tpr["macro"]),
-                    auc=auc["macro"],
-                )
             )
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             eval_report = ncc.metrics.iou_dice_val(

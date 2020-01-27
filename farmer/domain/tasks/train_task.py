@@ -2,7 +2,7 @@ import os
 import numpy as np
 from farmer import ncc
 from tensorflow.python import keras
-
+from optuna.integration import KerasPruningCallback
 
 class TrainTask:
     def __init__(self, config):
@@ -15,7 +15,7 @@ class TrainTask:
             train_set, validation_set, trial
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_set, validation_set
+            base_model, train_set, validation_set, trial
         )
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
@@ -49,7 +49,7 @@ class TrainTask:
 
         return train_gen, validation_gen
 
-    def _do_set_callbacks_task(self, base_model, train_set, validation_set):
+    def _do_set_callbacks_task(self, base_model, train_set, validation_set, trial):
         best_model_name = "best_model.h5"
         model_save_file = os.path.join(self.config.model_path, best_model_name)
         if self.config.multi_gpu:
@@ -69,7 +69,14 @@ class TrainTask:
             self.config.learning_path,
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
+
         callbacks = [checkpoint, reduce_lr, plot_history]
+
+        if self.config.optuna:
+            print('---------------')
+            print('Use Optuna')
+            print('---------------')
+            callbacks.extend([KerasPruningCallback(trial, "val_acc")])
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(
                 save_dir=self.config.learning_path,

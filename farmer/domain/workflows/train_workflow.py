@@ -121,7 +121,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return result
 
     def optuna_command(self):
-        study = optuna.create_study(direction='maximize')
+        study = optuna.create_study(
+                        direction='maximize',
+                        pruner=optuna.pruners.MedianPruner())
         study.optimize(
             self.objective,
             n_trials=self._config.n_trials,

@@ -31,6 +31,9 @@ class Trainer(Config, ImageLoader, Optuna):
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    cosine_decay: bool = False
+    cosine_lr_max: int = 0.01
+    cosine_lr_min: int = 0.001
     optuna: bool = False
 
     def __post_init__(self):

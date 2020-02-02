@@ -62,14 +62,23 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
-        reduce_lr = keras.callbacks.ReduceLROnPlateau(
-            factor=0.5, patience=10, verbose=1
-        )
+        if self.config.cosine_decay:
+            ncc_scheduler = ncc.schedulers.Scheduler(
+                self.config.cosine_lr_max,
+                self.config.cosine_lr_min,
+                self.config.epochs
+            )
+            scheduler = keras.callbacks.LearningRateScheduler(
+                ncc_scheduler.cosine_decay)
+        else:
+            scheduler = keras.callbacks.ReduceLROnPlateau(
+            factor=0.5, patience=10, verbose=1)
+
         plot_history = ncc.callbacks.PlotHistory(
             self.config.learning_path,
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
-        callbacks = [checkpoint, reduce_lr, plot_history]
+        callbacks = [checkpoint, scheduler, plot_history]
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(
                 save_dir=self.config.learning_path,

@@ -76,6 +76,7 @@ def cast_to_pil(ndarray, palette, index_void=None):
     image.putpalette(palette)
     return image
 
+
 def generate_segmentation_result(
     nb_classes,
     height,
@@ -103,6 +104,7 @@ def generate_segmentation_result(
         result_image = get_imageset(sample_image, output[0], segmented)
         save_image_name = os.path.basename(sample_image_path[0])
         result_image.save(f"{save_dir}/{save_image_name}")
+
 
 def get_imageset(
     image_in_np,
@@ -210,5 +212,9 @@ class ImageUtil:
     def _convert_colors(self, label_gray, train_colors):
         label = np.zeros(label_gray.shape)
         for train_id, train_color in enumerate(train_colors):
-            label[label_gray == train_color] = train_id + 1
+            if type(train_color) == int:
+                label[label_gray == train_color] = train_id + 1
+            elif type(train_color) == dict:
+                before_color, after_color = list(train_color.items())[0]
+                label[label_gray == before_color] = after_color
         return label

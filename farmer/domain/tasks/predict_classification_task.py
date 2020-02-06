@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 from farmer import ncc
 
 
@@ -9,8 +10,9 @@ class PredictClassificationTask:
     def command(self, test_set, model, save_npy=True):
         prediction_gen = self._do_generate_batch_task(test_set)
         prediction = self._do_classification_predict_task(
-            model, prediction_gen, save_npy
+            model, prediction_gen
         )
+        self._do_save_result_task(test_set, prediction, save_npy)
         return prediction
 
     def _do_generate_batch_task(self, annotation_set):
@@ -25,7 +27,7 @@ class PredictClassificationTask:
         return test_gen
 
     def _do_classification_predict_task(
-        self, model, annotation_gen, save_npy
+        self, model, annotation_gen
     ):
         prediction = model.predict_generator(
             annotation_gen,
@@ -35,6 +37,21 @@ class PredictClassificationTask:
             use_multiprocessing=self.config.multi_gpu,
             verbose=1,
         )
+        return prediction
+
+    def _do_save_result_task(self, annotation_set, prediction, save_npy):
         if save_npy:
             np.save(f"{self.config.info_path}/pred.npy", prediction)
-        return prediction
+        prediction_classes = np.argmax(prediction[0])
+        pred_result = list()
+        for files, prediction_cls in zip(annotation_set, prediction_classes):
+            image_file, label_file = files
+            pred_result.append(
+                [
+                    image_file,
+                    self.config.class_names(int(prediction_cls))
+                ]
+            )
+        with open(f"{self.config.info_path}/pred.csv", "w") as fw:
+            writer = csv.writer()
+            writer.writerows(pred_result)

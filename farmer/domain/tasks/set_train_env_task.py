@@ -23,6 +23,7 @@ class SetTrainEnvTask:
         rn.seed(seed)
         if self.config.framework == "tensorflow":
             tf.random.set_seed(seed)
+            # tf.set_random_seed(seed)
 
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices

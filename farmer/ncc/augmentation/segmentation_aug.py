@@ -34,7 +34,7 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         mask_datagen.fit(label, augment=True, seed=seed)
 
         image_gen = image_datagen.flow(input_image[np.newaxis], batch_size=1, seed=seed)
-        mask_gen = mask_datagen.flow(label, batch_size=1, seed=seed) 
+        mask_gen = mask_datagen.flow(label, batch_size=1, seed=seed)
 
         gen = zip(image_gen, mask_gen)
         img_batches, mask_batches = next(gen)
@@ -43,9 +43,9 @@ def segmentation_aug(input_image, label, size, augmentation_list):
 
     height, width = size
     transforms = list()
-    if "vertical_flip":
+    if "vertical_flip" in augmentation_list:
         transforms.append(VerticalFlip(p=0.5))
-    if "horizontal_flip":
+    if "horizontal_flip" in augmentation_list:
         transforms.append(HorizontalFlip(p=0.5))
     if len(transforms) > 0:
         aug = Compose(transforms, p=1)

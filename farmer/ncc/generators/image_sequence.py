@@ -42,7 +42,9 @@ class ImageSequence(Sequence):
                 video_path, frame_id = input_file
                 video = cv2.VideoCapture(video_path)
                 video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
-                _, input_image = video.read()
+                ret, input_image = video.read()
+                if not ret:
+                    continue
                 input_image = input_image/255.0
                 # (with,height) for cv2.resize
                 resize_shape = self.input_shape[::-1]

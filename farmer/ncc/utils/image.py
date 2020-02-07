@@ -218,3 +218,4 @@ class ImageUtil:
                 before_color, after_color = list(train_color.items())[0]
                 label[label_gray == before_color] = after_color
         return label
+

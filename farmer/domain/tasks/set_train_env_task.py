@@ -6,6 +6,8 @@ import numpy as np
 
 import tensorflow as tf
 
+import torch
+
 
 class SetTrainEnvTask:
     def __init__(self, config):
@@ -25,6 +27,10 @@ class SetTrainEnvTask:
             tf.random.set_seed(seed)
             # tf.set_random_seed(seed)
 
+        elif self.config.framework == 'pytorch':
+            torch.manual_seed(seed)
+            # It is needed to set seed to worker_init_fn in data.DataLoader function
+
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices
         if gpu:
@@ -36,6 +42,9 @@ class SetTrainEnvTask:
         if self.config.framework == "tensorflow":
             tf.config.threading.set_inter_op_parallelism_threads(num_threads)
             tf.config.threading.set_intra_op_parallelism_threads(num_threads)
+
+        # elif self.config.framework == 'pytorch':
+        #     model = nn.DataParallel(model)
 
     def _do_create_dirs_task(self, result_path: str):
         # 結果を保存するディレクトリを目的別に作ります。

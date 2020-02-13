@@ -1,4 +1,11 @@
 import segmentation_models
+
+# import pytorch
+# import pytorch.nn as nn
+# import torch.optim as optim
+# The following line is needed to install segmentation-models-pytorch as a Python library
+# import segmentation_models_pytorch as smp
+
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 from segmentation_models.losses import (
@@ -69,6 +76,7 @@ class BuildModelTask:
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(nb_classes, height, width)
             else:
+                # It couldn't find PyTorch branch
                 model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
@@ -77,38 +85,74 @@ class BuildModelTask:
             print('Backbone:', backbone)
             print('------------------')
 
-            if model_name == "unet":
-                model = Unet(
-                    backbone_name=backbone,
-                    input_shape=(height, width, 3),
-                    classes=nb_classes,
-                )
-            elif model_name == "deeplab_v3":
-                model = Deeplabv3(
-                    input_shape=(height, width, 3),
-                    classes=nb_classes,
-                    backbone=backbone,
-                )
-            elif model_name == "pspnet":
-                model = PSPNet(
-                    backbone_name=backbone,
-                    input_shape=(height, width, 3),
-                    classes=nb_classes,
-                )
+            if self.config.framework == "tensorflow":
+                if model_name == "unet":
+                    model = Unet(
+                        backbone_name=backbone,
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                    )
+                elif model_name == "deeplab_v3":
+                    model = Deeplabv3(
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                        backbone=backbone,
+                    )
+                elif model_name == "pspnet":
+                    model = PSPNet(
+                        backbone_name=backbone,
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                    )
+
+            # elif self.config.framework == "pytorch":
+            #     if model_name == "unet":
+            #         model = smp.Unet(
+            #             backbone_name=backbone,
+            #             input_shape=(height, width, 3),
+            #             classes=nb_classes,
+            #         )
+            #     elif model_name == "deeplab_v3":
+            #         model = smp.Deeplabv3(
+            #             input_shape=(height, width, 3),
+            #             classes=nb_classes,
+            #             backbone=backbone,
+            #         )
+            #     elif model_name == "pspnet":
+            #         model = smp.PSPNet(
+            #             backbone_name=backbone,
+            #             input_shape=(height, width, 3),
+            #             classes=nb_classes,
+            #         )
         else:
             raise NotImplementedError
 
         return model
 
     def _do_load_model_task(self, model, trained_model_path):
-        if trained_model_path:
-            model.load_weights(trained_model_path)
+        if self.config.framework == "tensorflow":
+            if trained_model_path:
+                model.load_weights(trained_model_path)
+
+        # if trained_model_path:
+        #     if self.config.framework == "tensorflow":
+        #         model.load_weights(trained_model_path)
+
+        #     elif self.config.framework == 'pytorch':
+        #         model.load_state_dict(
+        #             torch.load(trained_model_path)
+        #         )
+
         return model
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
         if multi_gpu:
             if self.config.framework == "tensorflow":
                 model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
+
+            # elif self.config.framework == 'pytorch':
+            #     model = nn.DataParallel(net, device_ids=nb_gpu)
+            #     model = nn.DataParallel(net)
         else:
             model = base_model
         return model
@@ -154,6 +198,45 @@ class BuildModelTask:
                     metrics=[metrics.iou_score,
                              categorical_crossentropy],
                 )
+            else:
+                raise NotImplementedError
+
+        elif self.config.framework == "pytorch":
+            if optimizer == "adam":
+                optimizer = optim.Adam(
+                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                )
+            else:
+                optimizer = optim.SGD(
+                    lr=learning_rate, momentum=0.9, decay=0.001
+                )
+
+            if task_id == Task.CLASSIFICATION:
+                model.compile(
+                    optimizer=optimizer,
+                    loss=keras.losses.categorical_crossentropy,
+                    metrics=["acc"],
+                )
+
+                # optimizer,
+                # loss = nn.CrossEntropyLoss()
+                # metrics...?
+
+            elif task_id == Task.SEMANTIC_SEGMENTATION:
+                print('------------------')
+                print('Loss:', loss_func)
+                print('------------------')
+                model.compile(
+                    optimizer=optimizer,
+                    loss=globals()[loss_func],
+                    metrics=[metrics.iou_score,
+                             categorical_crossentropy],
+                )
+
+                # optimizer,
+                # loss = nn.CrossEntropyLoss()
+                # metrics...?
+
             else:
                 raise NotImplementedError
 

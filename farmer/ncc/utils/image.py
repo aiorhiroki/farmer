@@ -213,7 +213,9 @@ class ImageUtil:
         label = np.zeros(label_gray.shape)
         for train_id, train_color in enumerate(train_colors):
             if type(train_color) == int:
-                label[label_gray == train_color] = train_id + 1
+                if train_color == 0 and train_id == 0:
+                    continue
+                label[label_gray == train_color] = train_id
             elif type(train_color) == dict:
                 before_color, after_color = list(train_color.items())[0]
                 label[label_gray == before_color] = after_color

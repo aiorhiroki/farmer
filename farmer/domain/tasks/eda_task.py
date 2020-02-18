@@ -22,6 +22,12 @@ class EdaTask:
             parser.write(configfile)
         with open(f"{self.config.info_path}/classes.csv", "w") as fw:
             for class_id, class_name in enumerate(self.config.class_names):
+                if self.config.train_colors:
+                    class_data = self.config.train_colors[class_id]
+                    if type(class_data) == int:
+                        class_id = class_data
+                    elif type(class_data) == dict:
+                        class_id, _ = list(class_data.items())[0]
                 fw.write(f"{class_name},{class_id}\n")
 
     def _do_post_config_task(self):

@@ -32,6 +32,7 @@ class_names:
     - fuga
     - piyo
 train_colors:
+    - 0
     - 5
     - 10
     - 15

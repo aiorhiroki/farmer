@@ -1,4 +1,5 @@
 import os
+import csv
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
@@ -36,6 +37,18 @@ class ImageLoader:
     def get_class_names(self):
         if self.class_names:
             return [str(class_name) for class_name in self.class_names]
+        if not self.training and self.trained_path:
+            class_name_files = f"{self.trained_path}/info/classes.csv"
+            class_names = list()
+            class_ids = list()
+            with open(class_name_files, "r") as fr:
+                reader = csv.reader(fr)
+                for class_name, class_id in reader:
+                    class_names.append(class_name)
+                    class_ids.append(class_id)
+            if self.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+                self.train_colors = class_ids
+            return class_names
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
             class_names = [
@@ -44,7 +57,8 @@ class ImageLoader:
             ]
             return sorted(list(set(class_names)))
         else:
-            return ncc.readers.search_image_colors(train_files)
+            self.train_colors = ncc.readers.search_image_colors(train_files)
+            return self.train_colors
 
     def get_image_shape(self):
         if self.height and self.width:

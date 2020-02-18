@@ -50,10 +50,10 @@ class TrainTask:
             validation_gen = ncc.generators.ImageSequence(**sequence_args)
 
         elif self.config.framework == 'pytoch':
-            # train_gen = ncc.generators.ImageSequence(**sequence_args)
+            train_gen = ncc.generators.ImageDataset(**sequence_args)
 
-            # sequence_args.update(annotations=validation_set, augmentation=[])
-            # validation_gen = ncc.generators.ImageSequence(**sequence_args)
+            sequence_args.update(annotations=validation_set, augmentation=[])
+            validation_gen = ncc.generators.ImageDataset(**sequence_args)
 
         return train_gen, validation_gen
 
@@ -127,18 +127,23 @@ class TrainTask:
     def _do_model_optimization_task(
         self, model, train_gen, validation_gen, callbacks
     ):
+        if self.config.framework == 'tensorflow':
+            model.fit_generator(
+                train_gen,
+                steps_per_epoch=len(train_gen),
+                callbacks=callbacks,
+                epochs=self.config.epochs,
+                validation_data=validation_gen,
+                validation_steps=len(validation_gen),
+                workers=16 if self.config.multi_gpu else 1,
+                max_queue_size=32 if self.config.multi_gpu else 10,
+                use_multiprocessing=self.config.multi_gpu,
+            )
 
-        model.fit_generator(
-            train_gen,
-            steps_per_epoch=len(train_gen),
-            callbacks=callbacks,
-            epochs=self.config.epochs,
-            validation_data=validation_gen,
-            validation_steps=len(validation_gen),
-            workers=16 if self.config.multi_gpu else 1,
-            max_queue_size=32 if self.config.multi_gpu else 10,
-            use_multiprocessing=self.config.multi_gpu,
-        )
+        elif self.config.framework == 'pytorch':
+            print(
+                '[train_task.py, _do_model_optimization_task, pytorch] under construction'
+            )
 
         return model
 

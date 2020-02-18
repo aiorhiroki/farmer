@@ -20,6 +20,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
 
     def command(self, trial=None):
+        assert self.config.framework in [
+            'tensorflow',
+            'pytorch',
+        ], 'You need to specify either tensorflow or pytorch as framework'
+
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow()
@@ -127,28 +132,39 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 trained_model = self._config.trained_model_path
             else:
                 trained_model = model
+
         if self._config.training and len(test_set) == 0:
             test_set = validation_set
+
         if len(test_set) == 0:
             return 0
-        if self._config.task == Task.CLASSIFICATION:
-            prediction = PredictClassificationTask(self._config).command(
-                test_set, trained_model, self._config.save_pred
-            )
-            eval_report = EvaluationTask(self._config).command(
-                test_set, prediction=prediction
-            )
-        elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model
-            )
-            eval_report = EvaluationTask(self._config).command(
-                test_set, model=trained_model
-            )
-        elif self._config.task == Task.OBJECT_DETECTION:
-            eval_report = EvaluationTask(self._config).command(
-                test_set, model=trained_model
-            )
+
+        if self.config.framework == 'tensorflow':
+            if self._config.task == Task.CLASSIFICATION:
+                prediction = PredictClassificationTask(self._config).command(
+                    test_set, trained_model, self._config.save_pred
+                )
+
+                eval_report = EvaluationTask(self._config).command(
+                    test_set, prediction=prediction
+                )
+
+            elif self._config.task == Task.SEMANTIC_SEGMENTATION:
+                PredictSegmentationTask(self._config).command(
+                    test_set, model=trained_model
+                )
+
+                eval_report = EvaluationTask(self._config).command(
+                    test_set, model=trained_model
+                )
+
+            elif self._config.task == Task.OBJECT_DETECTION:
+                eval_report = EvaluationTask(self._config).command(
+                    test_set, model=trained_model
+                )
+
+        elif self.config.framework == 'pytorch':
+            print('[TrainWorkflow, model_execution_flow, pytorch] under construction')
 
         print("model execution flow done")
         print(eval_report)

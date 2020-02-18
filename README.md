@@ -57,6 +57,12 @@ e.g.)
 ### Integration Test
 
 ```bash
-cd exmaple
+cd example
 Godfarmer
+```
+
+## For Developer
+If you change files, run following command before *Godfarmer*
+```bash
+pip install .
 ```

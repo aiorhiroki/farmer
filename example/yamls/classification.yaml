@@ -1,5 +1,5 @@
-target_dir: classification/images/data
-result_root_dir: classification/images/result
+target_dir: data/classification/images
+result_root_dir: result/classification/images
 training: yes
 train_dirs:
     - train_1
@@ -9,7 +9,7 @@ train_dirs:
     - train_5
     - train_6
     - train_7
-task: classification # classification or segmentation is supported
+task: classification # classification or segmentation or detection
 model_name: xception
 loss:
 epochs: 2

@@ -1,5 +1,5 @@
-target_dir: detection/data
-result_root_dir: detection/result
+target_dir: data/detection
+result_root_dir: result/detection
 train_dirs: # you must set train dirs to test classification
     - train
 test_dirs:
@@ -13,7 +13,7 @@ width: 320
 height: 320
 input_dir: image
 label_dir: xml
-trained_model_path: detection/result/detection_result/model/resnet50_csv_02.h5
+trained_path: result/detection/detection_result/model/resnet50_csv_02.h5
 result_dir: test_detection_result
 class_names:
     - bird

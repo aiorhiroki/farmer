@@ -1,9 +1,9 @@
-target_dir: segmentation/data
-result_root_dir: segmentation/result
+target_dir: data/segmentation
+result_root_dir: result/segmentation
 test_dirs:
     - test
 training: no
-task: segmentation # classification or segmentation is supported
+task: segmentation
 model_name: deeplab_v3
 backbone: mobilenetv2
 loss: dice_loss
@@ -16,7 +16,7 @@ width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_model_path: segmentation/result/segmentation_result/model/last_model.h5
+trained_path: result/segmentation/segmentation_result
 result_dir: test_segmentation_result
 class_names:
     - background
@@ -24,6 +24,7 @@ class_names:
     - fuga
     - piyo
 train_colors:
+    - 0
     - 5
     - 10
     - 15

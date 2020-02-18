@@ -20,10 +20,10 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
 
     def command(self, trial=None):
-        assert self.config.framework in [
-            'tensorflow',
-            'pytorch',
-        ], 'You need to specify either tensorflow or pytorch as framework'
+        # assert self.config.framework in [
+        #     'tensorflow',
+        #     'pytorch',
+        # ], 'You need to specify either tensorflow or pytorch as framework'
 
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
@@ -36,6 +36,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
+        print(f'config: {self._config}')
         print("set env flow done")
 
     def read_annotation_flow(self):

@@ -1,7 +1,7 @@
 import segmentation_models
 
-import pytorch
-import pytorch.nn as nn
+import torch
+import torch.nn as nn
 import torch.optim as optim
 
 # The following line is needed to install segmentation-models-pytorch as a Python library

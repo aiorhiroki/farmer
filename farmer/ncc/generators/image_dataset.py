@@ -9,8 +9,13 @@ from ..utils import ImageUtil
 
 import torch.utils.data as data
 
+# PyTorch版では、モデルの方に設定するパラメータが含まれている。　
+# Kerasと混同してしまう？ので不要パラメータ削除予定
+# -> LSTM対応やる際、1つのミニバッチで複数読み込む必要がでてくるa
+# -> batch_sizeを削除する予定だったが、撤回して残す。
 
-class ImageSequence(data.Dataset):
+
+class ImageDataset(data.Dataset):
     def __init__(
         self,
         annotations: list,
@@ -21,7 +26,8 @@ class ImageSequence(data.Dataset):
         augmentation=list(),
         train_colors=list(),
         input_data_type="image"
-    ):
+    ) -> None:
+
         self.annotations = annotations
         self.batch_size = batch_size
         self.input_shape = input_shape
@@ -31,7 +37,7 @@ class ImageSequence(data.Dataset):
         self.train_colors = train_colors
         self.input_data_type = input_data_type
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> (list, list):
         data = self.annotations[
             idx * self.batch_size:(idx + 1) * self.batch_size
         ]
@@ -81,5 +87,5 @@ class ImageSequence(data.Dataset):
 
         return batch_x, batch_y
 
-    def __len__(self):
+    def __len__(self) -> int:
         return math.ceil(len(self.annotations) / self.batch_size)

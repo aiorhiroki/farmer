@@ -22,6 +22,7 @@ class Trainer(Config, ImageLoader, Optuna):
     nb_gpu: int = None
     multi_gpu: bool = None
     loss: str = None
+    trained_path: str = None
     trained_model_path: str = None
     model_name: str = None
     backbone: str = None
@@ -46,10 +47,14 @@ class Trainer(Config, ImageLoader, Optuna):
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
-        if self.trained_model_path is not None:
-            self.trained_model_path = os.path.join(
-                    self.root_dir, self.trained_model_path
-            )
+        if self.trained_path is not None:
+            self.trained_path = os.path.join(self.root_dir, self.trained_path)
+            if self.trained_path.endswith('.h5'):
+                self.trained_model_path = self.trained_path
+            else:
+                self.trained_model_path = os.path.join(
+                        self.trained_path, "model/last_model.h5"
+                )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
         self.info_path = os.path.join(self.result_path, self.info_dir)
@@ -58,7 +63,7 @@ class Trainer(Config, ImageLoader, Optuna):
         self.image_path = os.path.join(self.result_path, self.image_dir)
         self.get_train_dirs()
         self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
-        self.val_dirs = [str(val_dir) for val_dir in self.val_dirs]
+        self.val_dirs = [str(val_dir) for val_dir in self.val_dirs if val_dir]
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
         self.class_names = self.get_class_names()
         self.nb_classes = len(self.class_names)

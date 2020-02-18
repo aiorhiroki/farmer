@@ -1,14 +1,13 @@
 gpu: 0
-root_dir: data
 config_paths:
-    # classification images
-    - data/classification/images/yamls/classification.yaml
-    - data/classification/images/yamls/classification-eval.yaml
+    #  classification images
+    - yamls/classification.yaml
+    - yamls/classification-eval.yaml
     # classification video frames
-    - data/classification/videos/yamls/classification-video.yaml
-    # detection
-    - data/detection/yamls/detection.yaml
-    - data/detection/yamls/detection-eval.yaml
+    - yamls/classification-video.yaml
     # segmentation
-    - data/segmentation/yamls/segmentation.yaml
-    - data/segmentation/yamls/segmentation-eval.yaml
+    - yamls/segmentation.yaml
+    - yamls/segmentation-eval.yaml
+    # detection #bug 
+    # - yamls/detection.yaml
+    # - yamls/detection-eval.yaml

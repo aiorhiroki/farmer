@@ -1,5 +1,5 @@
-target_dir: segmentation/data
-result_root_dir: segmentation/result
+target_dir: data/segmentation
+result_root_dir: result/segmentation
 train_dirs:
     - train_1
     - train_2
@@ -17,14 +17,14 @@ segmentation_val_step: 2
 batch_size: 2
 optimizer: adam
 augmentation:
-    - HorizontalFlip
-    - RandomSizedCrop
+    - horizontal_flip
+    - zoom
 learning_rate: 0.01
 width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_model_path:
+trained_path:
 result_dir: segmentation_result
 class_names:
     - background
@@ -32,6 +32,7 @@ class_names:
     - fuga
     - piyo
 train_colors:
+    - 0
     - 5
     - 10
     - 15

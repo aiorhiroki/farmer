@@ -1,11 +1,11 @@
-target_dir: classification/images/data
-result_root_dir: classification/images/result
+target_dir: data/classification/images
+result_root_dir: result/classification/images
 train_dirs: # you must set train dirs to test classification
     - train_1
 test_dirs:
     - test
 training: no
-task: classification # classification or segmentation is supported
+task: classification
 model_name: xception
 loss:
 epochs: 2
@@ -15,5 +15,5 @@ augmentation:
 learning_rate: 0.01
 width: 80
 height: 80
-trained_model_path: classification/images/result/classification_result/cv_0/model/last_model.h5
+trained_path: result/classification/images/classification_result/cv_4
 result_dir: test_classification_result

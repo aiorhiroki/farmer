@@ -9,7 +9,7 @@ class TrainTask:
         self.config = config
 
     def command(
-        self, model, base_model, train_set, validation_set, trial):
+            self, model, base_model, train_set, validation_set, trial):
 
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set, trial
@@ -42,10 +42,18 @@ class TrainTask:
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        train_gen = ncc.generators.ImageSequence(**sequence_args)
 
-        sequence_args.update(annotations=validation_set, augmentation=[])
-        validation_gen = ncc.generators.ImageSequence(**sequence_args)
+        if self.config.framework == 'tensorflow':
+            train_gen = ncc.generators.ImageSequence(**sequence_args)
+
+            sequence_args.update(annotations=validation_set, augmentation=[])
+            validation_gen = ncc.generators.ImageSequence(**sequence_args)
+
+        elif self.config.framework == 'pytoch':
+            # train_gen = ncc.generators.ImageSequence(**sequence_args)
+
+            # sequence_args.update(annotations=validation_set, augmentation=[])
+            # validation_gen = ncc.generators.ImageSequence(**sequence_args)
 
         return train_gen, validation_gen
 
@@ -72,7 +80,7 @@ class TrainTask:
                 ncc_scheduler.cosine_decay)
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
-            factor=0.5, patience=10, verbose=1)
+                factor=0.5, patience=10, verbose=1)
 
         plot_history = ncc.callbacks.PlotHistory(
             self.config.learning_path,

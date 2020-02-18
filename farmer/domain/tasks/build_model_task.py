@@ -1,10 +1,11 @@
 import segmentation_models
 
-# import pytorch
-# import pytorch.nn as nn
-# import torch.optim as optim
+import pytorch
+import pytorch.nn as nn
+import torch.optim as optim
+
 # The following line is needed to install segmentation-models-pytorch as a Python library
-# import segmentation_models_pytorch as smp
+import segmentation_models_pytorch as smp
 
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
@@ -68,16 +69,22 @@ class BuildModelTask:
         backbone="resnet50",
     ):
         if task == Task.CLASSIFICATION:
-            xception_shape_condition = height >= 71 and width >= 71
-            mobilenet_shape_condition = height >= 32 and width >= 32
+            if self.config.framework == 'tensorflow':
+                xception_shape_condition = height >= 71 and width >= 71
+                mobilenet_shape_condition = height >= 32 and width >= 32
 
-            if model_name == "xception" and xception_shape_condition:
-                model = xception(nb_classes, height, width)
-            elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(nb_classes, height, width)
-            else:
-                # It couldn't find PyTorch branch
-                model = Model2D(nb_classes, height, width)
+                if model_name == "xception" and xception_shape_condition:
+                    model = xception(nb_classes, height, width)
+                elif model_name == "mobilenet" and mobilenet_shape_condition:
+                    model = mobilenet(nb_classes, height, width)
+                else:
+                    # It couldn't find PyTorch branch
+                    model = Model2D(nb_classes, height, width)
+
+            elif self.config.framework == 'pytorch':
+                print(
+                    '[_do_make_model_task, Task.CLASSIFICATION][pytorch] under construction.'
+                )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')
@@ -105,25 +112,25 @@ class BuildModelTask:
                         classes=nb_classes,
                     )
 
-            # elif self.config.framework == "pytorch":
-            #     if model_name == "unet":
-            #         model = smp.Unet(
-            #             backbone_name=backbone,
-            #             input_shape=(height, width, 3),
-            #             classes=nb_classes,
-            #         )
-            #     elif model_name == "deeplab_v3":
-            #         model = smp.Deeplabv3(
-            #             input_shape=(height, width, 3),
-            #             classes=nb_classes,
-            #             backbone=backbone,
-            #         )
-            #     elif model_name == "pspnet":
-            #         model = smp.PSPNet(
-            #             backbone_name=backbone,
-            #             input_shape=(height, width, 3),
-            #             classes=nb_classes,
-            #         )
+            elif self.config.framework == "pytorch":
+                if model_name == "unet":
+                    model = smp.Unet(
+                        backbone_name=backbone,
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                    )
+                elif model_name == "deeplab_v3":
+                    model = smp.Deeplabv3(
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                        backbone=backbone,
+                    )
+                elif model_name == "pspnet":
+                    model = smp.PSPNet(
+                        backbone_name=backbone,
+                        input_shape=(height, width, 3),
+                        classes=nb_classes,
+                    )
         else:
             raise NotImplementedError
 
@@ -150,9 +157,9 @@ class BuildModelTask:
             if self.config.framework == "tensorflow":
                 model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
 
-            # elif self.config.framework == 'pytorch':
-            #     model = nn.DataParallel(net, device_ids=nb_gpu)
-            #     model = nn.DataParallel(net)
+            elif self.config.framework == 'pytorch':
+                model = nn.DataParallel(base_model, device_ids=nb_gpu)
+
         else:
             model = base_model
         return model

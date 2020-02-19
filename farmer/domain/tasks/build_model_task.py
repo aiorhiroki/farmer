@@ -1,12 +1,5 @@
 import segmentation_models
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-
-# The following line is needed to install segmentation-models-pytorch as a Python library
 import segmentation_models_pytorch as smp
-
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 from segmentation_models.losses import (
@@ -42,12 +35,15 @@ class BuildModelTask:
             width=self.config.width,
             backbone=self.config.backbone,
         )
+
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
         )
+
         model = self._do_multi_gpu_task(
             base_model, self.config.multi_gpu, self.config.nb_gpu
         )
+
         compiled_model = self._do_compile_model_task(
             model,
             self.config.optimizer,
@@ -58,50 +54,6 @@ class BuildModelTask:
         )
 
         return compiled_model, base_model
-
-    def _do_fetch_base_model(self):
-        if self.config.framework == 'tensorflow':
-            base_model = self._do_make_model_task(
-                task=self.config.task,
-                model_name=self.config.model_name,
-                nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                backbone=self.config.backbone,
-            )
-
-            return self._do_load_model_task(
-                base_model, self.config.trained_model_path
-            )
-
-        elif self.config.framework == 'pytorch':
-            return None
-
-    def _do_compile_model(self, model, trial):
-        if self.config.framework == 'tensorflow':
-            return self._do_compile_model_task(
-                model,
-                self.config.optimizer,
-                self.config.learning_rate,
-                self.config.task,
-                self.config.loss,
-                trial
-            )
-
-        elif self.config.framework == 'pytorch':
-            return None
-
-    def _do_set_up_multiple_gpu_to_model(self, base_model, multi_gpu, nb_gpu):
-        if not multi_gpu:
-            return base_model
-
-        if self.config.framework == "tensorflow":
-            model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
-
-        elif self.config.framework == 'pytorch':
-            model = nn.DataParallel(base_model, device_ids=nb_gpu)
-
-        return model
 
     def _do_make_model_task(
         self,
@@ -122,13 +74,9 @@ class BuildModelTask:
                 elif model_name == "mobilenet" and mobilenet_shape_condition:
                     model = mobilenet(nb_classes, height, width)
                 else:
-                    # It couldn't find PyTorch branch
                     model = Model2D(nb_classes, height, width)
 
             elif self.config.framework == 'pytorch':
-                print(
-                    '[_do_make_model_task, Task.CLASSIFICATION][pytorch] under construction.'
-                )
                 model = None
 
         elif task == Task.SEMANTIC_SEGMENTATION:
@@ -176,24 +124,19 @@ class BuildModelTask:
                         input_shape=(height, width, 3),
                         classes=nb_classes,
                     )
+
         else:
             raise NotImplementedError
 
         return model
 
     def _do_load_model_task(self, model, trained_model_path):
-        if self.config.framework == "tensorflow":
-            if trained_model_path:
+        if trained_model_path:
+            if self.config.framework == "tensorflow":
                 model.load_weights(trained_model_path)
 
-        # if trained_model_path:
-        #     if self.config.framework == "tensorflow":
-        #         model.load_weights(trained_model_path)
-
-        #     elif self.config.framework == 'pytorch':
-        #         model.load_state_dict(
-        #             torch.load(trained_model_path)
-        #         )
+            if self.config.framework == "pytorch":
+                print('_do_load_model_task, pytorch, it is under construction.')
 
         return model
 
@@ -202,11 +145,12 @@ class BuildModelTask:
             if self.config.framework == "tensorflow":
                 model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
 
-            elif self.config.framework == 'pytorch':
-                model = nn.DataParallel(base_model, device_ids=nb_gpu)
+            elif self.config.framework == "pytorch":
+                print("_do_multi_gpu_task, pytorch, it is under construction.")
 
         else:
             model = base_model
+
         return model
 
     def _do_compile_model_task(
@@ -254,42 +198,33 @@ class BuildModelTask:
                 raise NotImplementedError
 
         elif self.config.framework == "pytorch":
-            if optimizer == "adam":
-                optimizer = optim.Adam(
-                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
-                )
-            else:
-                optimizer = optim.SGD(
-                    lr=learning_rate, momentum=0.9, decay=0.001
-                )
+            print('_do_compile_model_task, pytorch, it is under construction.')
+            # if optimizer == "adam":
+            #     optimizer = keras.optimizers.Adam(
+            #         lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+            #     )
+            # else:
+            #     optimizer = keras.optimizers.SGD(
+            #         lr=learning_rate, momentum=0.9, decay=0.001
+            #     )
 
-            if task_id == Task.CLASSIFICATION:
-                model.compile(
-                    optimizer=optimizer,
-                    loss=keras.losses.categorical_crossentropy,
-                    metrics=["acc"],
-                )
-
-                # optimizer,
-                # loss = nn.CrossEntropyLoss()
-                # metrics...?
-
-            elif task_id == Task.SEMANTIC_SEGMENTATION:
-                print('------------------')
-                print('Loss:', loss_func)
-                print('------------------')
-                model.compile(
-                    optimizer=optimizer,
-                    loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                             categorical_crossentropy],
-                )
-
-                # optimizer,
-                # loss = nn.CrossEntropyLoss()
-                # metrics...?
-
-            else:
-                raise NotImplementedError
+            # if task_id == Task.CLASSIFICATION:
+            #     model.compile(
+            #         optimizer=optimizer,
+            #         loss=keras.losses.categorical_crossentropy,
+            #         metrics=["acc"],
+            #     )
+            # elif task_id == Task.SEMANTIC_SEGMENTATION:
+            #     print('------------------')
+            #     print('Loss:', loss_func)
+            #     print('------------------')
+            #     model.compile(
+            #         optimizer=optimizer,
+            #         loss=globals()[loss_func],
+            #         metrics=[metrics.iou_score,
+            #                  categorical_crossentropy],
+            #     )
+            # else:
+            #     raise NotImplementedError
 
         return model

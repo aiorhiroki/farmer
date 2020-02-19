@@ -21,14 +21,21 @@ class EdaTask:
         with open(param_path, mode="w") as configfile:
             parser.write(configfile)
         with open(f"{self.config.info_path}/classes.csv", "w") as fw:
-            for class_id, class_name in enumerate(self.config.class_names):
-                if self.config.train_colors:
-                    class_data = self.config.train_colors[class_id]
+            if self.config.train_colors:
+                fw.write("class_name,class_id,color_id\n")
+                for class_data in self.config.train_colors:
                     if type(class_data) == int:
-                        class_id = class_data
+                        class_name = self.config.class_names[class_data]
+                        color_id = class_data
+                        class_id = color_id
                     elif type(class_data) == dict:
-                        class_id, _ = list(class_data.items())[0]
-                fw.write(f"{class_name},{class_id}\n")
+                        color_id, class_id = list(class_data.items())[0]
+                        class_name = self.config.class_names[class_id]
+                    fw.write(f"{class_name},{class_id},{color_id}\n")
+            else:
+                fw.write("class_name,class_id\n")
+                for class_id, class_name in enumerate(self.config.class_names):
+                    fw.write(f"{class_name},{class_id}\n")
 
     def _do_post_config_task(self):
         # milk側にconfigを送る

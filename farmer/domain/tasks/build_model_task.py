@@ -59,6 +59,50 @@ class BuildModelTask:
 
         return compiled_model, base_model
 
+    def _do_fetch_base_model(self):
+        if self.config.framework == 'tensorflow':
+            base_model = self._do_make_model_task(
+                task=self.config.task,
+                model_name=self.config.model_name,
+                nb_classes=self.config.nb_classes,
+                height=self.config.height,
+                width=self.config.width,
+                backbone=self.config.backbone,
+            )
+
+            return self._do_load_model_task(
+                base_model, self.config.trained_model_path
+            )
+
+        elif self.config.framework == 'pytorch':
+            return None
+
+    def _do_compile_model(self, model, trial):
+        if self.config.framework == 'tensorflow':
+            return self._do_compile_model_task(
+                model,
+                self.config.optimizer,
+                self.config.learning_rate,
+                self.config.task,
+                self.config.loss,
+                trial
+            )
+
+        elif self.config.framework == 'pytorch':
+            return None
+
+    def _do_set_up_multiple_gpu_to_model(self, base_model, multi_gpu, nb_gpu):
+        if not multi_gpu:
+            return base_model
+
+        if self.config.framework == "tensorflow":
+            model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
+
+        elif self.config.framework == 'pytorch':
+            model = nn.DataParallel(base_model, device_ids=nb_gpu)
+
+        return model
+
     def _do_make_model_task(
         self,
         task,
@@ -85,6 +129,7 @@ class BuildModelTask:
                 print(
                     '[_do_make_model_task, Task.CLASSIFICATION][pytorch] under construction.'
                 )
+                model = None
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')

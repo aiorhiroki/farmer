@@ -20,23 +20,20 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
 
     def command(self, trial=None):
-        # assert self.config.framework in [
-        #     'tensorflow',
-        #     'pytorch',
-        # ], 'You need to specify either tensorflow or pytorch as framework'
-
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow()
+
         model, base_model = self.build_model_flow(trial)
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
         )
+
         return self.output_flow(result)
 
     def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
-        print(f'config: {self._config}')
+        print(f'[train_workflow.py][set_env_flow] config: {self._config}')
         print("set env flow done")
 
     def read_annotation_flow(self):
@@ -64,6 +61,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
         self,
         annotation_set, model, base_model, validation_set, test_set, trial
     ):
+        # print(
+        #     f'[train_workflow.py][model_execution_flow] config: {self._config}/n')
+        # print(f'Used framework: {self._config.Trainer.framework}')
+        # tmp = self._config.framework
+
         if not self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
                 trained_model = self._config.trained_model_path
@@ -71,7 +73,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 trained_model = model
 
         else:
-            if self.config.framework == 'tensorflow':
+            if self._config.framework == 'tensorflow':
                 if self._config.task == Task.OBJECT_DETECTION:
                     from keras_retinanet.bin import train
                     annotations = f"{self._config.info_path}/train.csv"
@@ -96,7 +98,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                         trial
                     )
 
-            elif self.config.framework == 'pytorch':
+            elif self._config.framework == 'pytorch':
                 if self._config.task == Task.OBJECT_DETECTION:
                     """
                     Remarks
@@ -142,7 +144,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         if len(test_set) == 0:
             return 0
 
-        if self.config.framework == 'tensorflow':
+        if self._config.framework == 'tensorflow':
             if self._config.task == Task.CLASSIFICATION:
                 prediction = PredictClassificationTask(self._config).command(
                     test_set, trained_model, self._config.save_pred
@@ -166,7 +168,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                     test_set, model=trained_model
                 )
 
-        elif self.config.framework == 'pytorch':
+        elif self._config.framework == 'pytorch':
             print('[TrainWorkflow, model_execution_flow, pytorch] under construction')
 
             if self._config.task == Task.CLASSIFICATION:
@@ -193,7 +195,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 )
 
         print("model execution flow done")
-        print(eval_report)
 
         return eval_report
 

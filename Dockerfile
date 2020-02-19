@@ -24,5 +24,11 @@ RUN pip install git+https://github.com/fizyr/keras-retinanet.git@0.5.2.beta0
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
 
+# fish shell
+RUN apt-add-repository ppa:fish-shell/release-3 -y
+RUN apt-get update
+RUN apt-get install fish
+RUN exec fish
+
 WORKDIR /home
 

@@ -18,7 +18,7 @@ RUN pip install pipenv
 RUN pipenv install --system
 RUN rm Pipfile.lock
 
-RUN pip install git+https://github.com/aiorhiroki/farmer.git@v1.3.2
+RUN pip install git+https://github.com/aiorhiroki/farmer.git@v1.3.3
 RUN pip install git+https://github.com/fizyr/keras-retinanet.git@0.5.2.beta0
 
 ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/

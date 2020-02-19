@@ -27,7 +27,7 @@ ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deep
 # fish shell
 RUN apt-add-repository ppa:fish-shell/release-3 -y
 RUN apt-get update
-RUN apt-get install fish
+RUN apt-get install fish -y
 RUN exec fish
 
 WORKDIR /home

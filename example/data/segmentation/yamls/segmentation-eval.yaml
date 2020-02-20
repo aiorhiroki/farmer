@@ -4,8 +4,15 @@ test_dirs:
     - test
 training: no
 task: segmentation # classification or segmentation is supported
-model_name: deeplab_v3
-backbone: mobilenetv2
+
+# tensorflow, semantic segmentation
+# model_name: deeplab_v3
+# backbone: mobilenetv2
+
+# pytorch, semantic segmentation
+model_name: unet
+backbone: resnet34
+
 loss: dice_loss
 epochs: 2
 batch_size: 2
@@ -16,7 +23,13 @@ width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_model_path: segmentation/result/segmentation_result/model/last_model.h5
+
+# For Tensorflow
+# trained_model_path: segmentation/result/segmentation_result/model/last_model.h5
+
+# For PyTorch
+trained_model_path: segmentation/result/segmentation_result/model/last_model.pth
+
 result_dir: test_segmentation_result
 class_names:
     - background

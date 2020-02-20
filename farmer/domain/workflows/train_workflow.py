@@ -127,7 +127,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                             "--val-annotations", val_annotations
                         ]
                     )
-                    trained_model = "{}/resnet50_csv_{:02d}.h5".format(
+                    trained_model = "{}/resnet50_csv_{:02d}.pth".format(
                         self._config.model_path, self._config.epochs
                     )
 

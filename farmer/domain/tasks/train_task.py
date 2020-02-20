@@ -13,18 +13,25 @@ class TrainTask:
     def command(
             self, model, base_model, train_set, validation_set, trial):
 
+        print('【before command】')
+
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set, trial
         )
+
+        print('【_do_generate_batch_task】')
+
         callbacks = self._do_set_callbacks_task(
             base_model, train_set, validation_set
         )
+
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
         )
-        save_model = self._do_save_model_task(trained_model, base_model)
 
-        return save_model
+        saved_model = self._do_save_model_task(trained_model, base_model)
+
+        return saved_model
 
     def _do_generate_batch_task(self, train_set, validation_set, trial):
         np.random.shuffle(train_set)
@@ -33,6 +40,8 @@ class TrainTask:
                 'batch_size', *self.config.batch_size))
         else:
             batch_size = self.config.batch_size
+
+        print("【_do_generate_batch_task, 1】")
 
         sequence_args = dict(
             annotations=train_set,
@@ -45,19 +54,32 @@ class TrainTask:
             input_data_type=self.config.input_data_type
         )
 
+        print("【_do_generate_batch_task, 2】")
+        print(f'config: {self.config}')
+
         if self.config.framework == 'tensorflow':
+            print("【_do_generate_batch_task, 3, tensorflow】")
             train_gen = ncc.generators.ImageSequence(**sequence_args)
 
             sequence_args.update(annotations=validation_set, augmentation=[])
             validation_gen = ncc.generators.ImageSequence(**sequence_args)
 
-        elif self.config.framework == 'pytoch':
-            train_gen = ncc.generators.ImageDataset(**sequence_args)
+            return train_gen, validation_gen
 
+        elif self.config.framework == 'pytorch':
+            print("【_do_generate_batch_task, 3, pytorch】")
+            print(f"sequence_args: {sequence_args}】")
+
+            # train_gen = ncc.generators.ImageDataset(**sequence_args)
+            train_dataset = ncc.generators.ImageDataset(**sequence_args)
+
+            print("【_do_generate_batch_task, 4】")
             sequence_args.update(annotations=validation_set, augmentation=[])
-            validation_gen = ncc.generators.ImageDataset(**sequence_args)
+            # validation_gen = ncc.generators.ImageDataset(**sequence_args)
+            print("【_do_generate_batch_task, 5】")
+            validation_dataset = ncc.generators.ImageDataset(**sequence_args)
 
-        return train_gen, validation_gen
+            return train_dataset, validation_dataset
 
     def _do_fetch_checkpoint(self, base_model, model_save_file):
         if self.config.framework == 'tensorflow':
@@ -135,7 +157,7 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
-            return None
+            return [None]
 
     def _do_fetch_slack_logging(self):
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
@@ -241,16 +263,30 @@ class TrainTask:
 
         elif self.config.framework == 'pytorch':
             print(
-                '[train_task.py, _do_model_optimization_task, pytorch] under construction'
+                '[train_task.py, _do_model_optimization_task, pytorch] PyTorch版のモデル訓練ロジックを行う'
             )
 
         return model
 
     def _do_save_model_task(self, model, base_model):
-        model_path = os.path.join(self.config.model_path, "last_model.h5")
-        if self.config.multi_gpu:
-            base_model.save(model_path)
-            return base_model
-        else:
-            model.save(model_path)
-            return model
+        if self.config.framework == "tensorflow":
+            model_path = os.path.join(self.config.model_path, "last_model.h5")
+
+            if self.config.multi_gpu:
+                base_model.save(model_path)
+                return base_model
+
+            else:
+                model.save(model_path)
+                return model
+
+        elif self.config.framework == "pytorch":
+            model_path = os.path.join(self.config.model_path, "last_model.pth")
+
+            if self.config.multi_gpu:
+                torch.save(base_model.state_dict(), model_path)
+                return base_model
+
+            else:
+                torch.save(model.state_dict(), model_path)
+                return model

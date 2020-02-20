@@ -6,6 +6,8 @@ import random
 from PIL import Image
 import cv2
 
+import torch
+
 
 def random_colors(N, bright=True, scale=True, shuffle=False):
     """ Generate random colors.
@@ -84,9 +86,14 @@ def generate_segmentation_result(
     annotations,
     model,
     save_dir,
+    framework,
     train_colors=None,
 ):
     image_util = ImageUtil(nb_classes, (height, width))
+
+    if framework == "pytorch":
+        model = model.eval()
+
     for sample_image_path in annotations:
         sample_image = image_util.read_image(
             sample_image_path[0],
@@ -98,8 +105,15 @@ def generate_segmentation_result(
             normalization=False,
             train_colors=train_colors
         )
+
         segmented = image_util.cast_to_onehot(segmented)
-        output = model.predict(np.expand_dims(sample_image, axis=0))
+
+        if framework == "tensorflow":
+            output = model.predict(np.expand_dims(sample_image, axis=0))
+
+        elif framework == "pytorch":
+            with torch.no_grad():
+                output = model(sample_image)
 
         result_image = get_imageset(sample_image, output[0], segmented)
         save_image_name = os.path.basename(sample_image_path[0])
@@ -218,4 +232,3 @@ class ImageUtil:
                 before_color, after_color = list(train_color.items())[0]
                 label[label_gray == before_color] = after_color
         return label
-

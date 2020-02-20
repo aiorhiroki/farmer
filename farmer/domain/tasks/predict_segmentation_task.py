@@ -28,7 +28,8 @@ class PredictSegmentationTask:
                 annotations=test_set,
                 model=model,
                 save_dir=save_dir,
-                train_colors=self.config.train_colors
+                framework=self.config.framework,
+                train_colors=self.config.train_colors,
             )
 
         elif self.config.framework == "pytorch":

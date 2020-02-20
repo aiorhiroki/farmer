@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='1.3.3',
+    version='1.3.4',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',

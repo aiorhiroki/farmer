@@ -43,11 +43,19 @@ class ImageLoader:
             class_ids = list()
             with open(class_name_files, "r") as fr:
                 reader = csv.reader(fr)
-                for class_name, class_id in reader:
-                    class_names.append(class_name)
-                    class_ids.append(class_id)
-            if self.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-                self.train_colors = class_ids
+                next(reader)
+                if self.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+                    for class_name, class_id, color_id in reader:
+                        if not class_name in class_names:
+                            class_names.append(class_name)
+                        if class_id == color_id:
+                            class_ids.append(class_id)
+                        else:
+                            class_ids.append(dict(color_id=class_id))
+                    self.train_colors = class_ids
+                else:
+                    for class_name, class_id in reader:
+                        class_names.append(class_name)
             return class_names
         train_files = self._get_train_files()
         if self.task == ncc.tasks.Task.CLASSIFICATION:
@@ -65,7 +73,8 @@ class ImageLoader:
             return self.height, self.width
         else:
             train_files = self._get_train_files()
-            height, width, _ = ncc.readers.search_image_profile(train_files)
+            height, width, _ = ncc.readers.search_image_profile(
+                    train_files, min_count=10)
         return height, width
 
     def get_train_dirs(self):

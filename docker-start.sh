@@ -9,6 +9,6 @@ docker run \
 	--mount type=bind,source=/media,target=/media \
 	--mount type=bind,source=/mnt,target=/mnt \
 	tensorflow:v2 \
-	bash
+	fish
 
-docker exec -it $1 bash
+docker exec -it $1 fish

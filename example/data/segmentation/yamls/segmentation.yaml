@@ -9,8 +9,15 @@ test_dirs:
     - test
 training: yes
 task: segmentation # classification or segmentation is supported
-model_name: deeplab_v3
-backbone: mobilenetv2
+
+# Tensorflow v2, Semantic segmentation
+# model_name: deeplab_v3
+# backbone: mobilenetv2
+
+# PyTorch, Sematic segmentation
+model_name: unet
+backbone: resnet34
+
 loss: dice_loss
 epochs: 2
 segmentation_val_step: 2

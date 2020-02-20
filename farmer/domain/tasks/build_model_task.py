@@ -11,6 +11,10 @@ from ..model.task_model import Task
 
 from tensorflow import keras
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
 segmentation_models.set_framework('tf.keras')
 
 # loss functions
@@ -92,12 +96,14 @@ class BuildModelTask:
                         input_shape=(height, width, 3),
                         classes=nb_classes,
                     )
+
                 elif model_name == "deeplab_v3":
                     model = Deeplabv3(
                         input_shape=(height, width, 3),
                         classes=nb_classes,
                         backbone=backbone,
                     )
+
                 elif model_name == "pspnet":
                     model = PSPNet(
                         backbone_name=backbone,
@@ -106,22 +112,21 @@ class BuildModelTask:
                     )
 
             elif self.config.framework == "pytorch":
+                print('SEMANTIC_SEGMENTATION, pytorch condition')
+                print(backbone, 3, nb_classes)
+
                 if model_name == "unet":
+                    print('fetch Unet model')
                     model = smp.Unet(
-                        backbone_name=backbone,
-                        input_shape=(height, width, 3),
+                        encoder_name=backbone,
+                        in_channels=3,
                         classes=nb_classes,
                     )
-                elif model_name == "deeplab_v3":
-                    model = smp.Deeplabv3(
-                        input_shape=(height, width, 3),
-                        classes=nb_classes,
-                        backbone=backbone,
-                    )
+
                 elif model_name == "pspnet":
                     model = smp.PSPNet(
                         backbone_name=backbone,
-                        input_shape=(height, width, 3),
+                        in_channels=3,
                         classes=nb_classes,
                     )
 
@@ -138,6 +143,11 @@ class BuildModelTask:
             if self.config.framework == "pytorch":
                 print('_do_load_model_task, pytorch, it is under construction.')
 
+                state_dict = torch.load(trained_model_path)
+                # state_dict = torch.load(trained_model_path, map_location=lambda storage, loc:storage)
+
+                model.load_state_dict(state_dict)
+
         return model
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
@@ -146,12 +156,80 @@ class BuildModelTask:
                 model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
 
             elif self.config.framework == "pytorch":
-                print("_do_multi_gpu_task, pytorch, it is under construction.")
+                model = nn.DataParallel(model, device_ids=nb_gpu)
 
         else:
             model = base_model
 
         return model
+
+    def _do_fetch_optimizer_task(self, parameters, optimizer_name, learning_rate):
+        if optimizer_name == "adam":
+            if self.config.framework == "tensorflow":
+                return keras.optimizers.Adam(
+                    lr=learning_rate,
+                    beta_1=0.9,
+                    beta_2=0.999,
+                    decay=0.001,
+                )
+
+            elif self.config.framework == "pytorch":
+                return optim.Adam(
+                    params=parameters,
+                    lr=learning_rate,
+                    betas=(0.9, 0.999),
+                    weight_decay=0.001,
+                )
+
+        else:
+            if self.config.framework == "tensorflow":
+                return keras.optimizers.SGD(
+                    lr=learning_rate,
+                    momentum=0.9,
+                    decay=0.001,
+                )
+
+            elif self.config.framework == "pytorch":
+                return optim.SGD(
+                    params=parameters,
+                    lr=learning_rate,
+                    momentum=0.9,
+                    weight_decay=0.001,
+                )
+
+    def _do_setup_model_task(self, task_id, model, optimizer, loss_func):
+        if task_id == Task.CLASSIFICATION:
+            if self.config.framework == "tensorflow":
+                model.compile(
+                    optimizer=optimizer,
+                    loss=keras.losses.categorical_crossentropy,
+                    metrics=["acc"],
+                )
+
+                return model
+
+            elif self.config.framework == "pytorch":
+                return model
+
+        elif task_id == Task.SEMANTIC_SEGMENTATION:
+            if self.config.framework == "tensorflow":
+                print('------------------')
+                print('Loss:', loss_func)
+                print('------------------')
+                model.compile(
+                    optimizer=optimizer,
+                    loss=globals()[loss_func],
+                    metrics=[metrics.iou_score,
+                             categorical_crossentropy],
+                )
+
+                return model
+
+            elif self.config.framework == "pytorch":
+                return model
+
+        else:
+            raise NotImplementedError
 
     def _do_compile_model_task(
         self,
@@ -168,63 +246,105 @@ class BuildModelTask:
         else:
             learning_rate = self.config.learning_rate
 
-        if self.config.framework == "tensorflow":
-            if optimizer == "adam":
-                optimizer = keras.optimizers.Adam(
-                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
-                )
-            else:
-                optimizer = keras.optimizers.SGD(
-                    lr=learning_rate, momentum=0.9, decay=0.001
-                )
+        # if optimizer == "adam":
 
-            if task_id == Task.CLASSIFICATION:
-                model.compile(
-                    optimizer=optimizer,
-                    loss=keras.losses.categorical_crossentropy,
-                    metrics=["acc"],
-                )
-            elif task_id == Task.SEMANTIC_SEGMENTATION:
-                print('------------------')
-                print('Loss:', loss_func)
-                print('------------------')
-                model.compile(
-                    optimizer=optimizer,
-                    loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                             categorical_crossentropy],
-                )
-            else:
-                raise NotImplementedError
+        #     optimizer = keras.optimizers.Adam(
+        #         lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+        #     )
+        # else:
+        #     optimizer = keras.optimizers.SGD(
+        #         lr=learning_rate, momentum=0.9, decay=0.001
+        #     )
 
-        elif self.config.framework == "pytorch":
-            print('_do_compile_model_task, pytorch, it is under construction.')
-            # if optimizer == "adam":
-            #     optimizer = keras.optimizers.Adam(
-            #         lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
-            #     )
-            # else:
-            #     optimizer = keras.optimizers.SGD(
-            #         lr=learning_rate, momentum=0.9, decay=0.001
-            #     )
+        optimizer = self._do_fetch_optimizer_task(
+            model.parameters(),
+            optimizer,
+            learning_rate
+        )
 
-            # if task_id == Task.CLASSIFICATION:
-            #     model.compile(
-            #         optimizer=optimizer,
-            #         loss=keras.losses.categorical_crossentropy,
-            #         metrics=["acc"],
-            #     )
-            # elif task_id == Task.SEMANTIC_SEGMENTATION:
-            #     print('------------------')
-            #     print('Loss:', loss_func)
-            #     print('------------------')
-            #     model.compile(
-            #         optimizer=optimizer,
-            #         loss=globals()[loss_func],
-            #         metrics=[metrics.iou_score,
-            #                  categorical_crossentropy],
-            #     )
-            # else:
-            #     raise NotImplementedError
+        # if task_id == Task.CLASSIFICATION:
+        #     model.compile(
+        #         optimizer=optimizer,
+        #         loss=keras.losses.categorical_crossentropy,
+        #         metrics=["acc"],
+        #     )
+        # elif task_id == Task.SEMANTIC_SEGMENTATION:
+        #     print('------------------')
+        #     print('Loss:', loss_func)
+        #     print('------------------')
+        #     model.compile(
+        #         optimizer=optimizer,
+        #         loss=globals()[loss_func],
+        #         metrics=[metrics.iou_score,
+        #                  categorical_crossentropy],
+        #     )
+        # else:
+        #     raise NotImplementedError
+
+        model = self._do_setup_model_task(
+            task_id,
+            model,
+            optimizer,
+            loss_func,
+        )
+
+        # if self.config.framework == "tensorflow":
+        #     if optimizer == "adam":
+        #         optimizer = keras.optimizers.Adam(
+        #             lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+        #         )
+        #     else:
+        #         optimizer = keras.optimizers.SGD(
+        #             lr=learning_rate, momentum=0.9, decay=0.001
+        #         )
+
+        #     if task_id == Task.CLASSIFICATION:
+        #         model.compile(
+        #             optimizer=optimizer,
+        #             loss=keras.losses.categorical_crossentropy,
+        #             metrics=["acc"],
+        #         )
+        #     elif task_id == Task.SEMANTIC_SEGMENTATION:
+        #         print('------------------')
+        #         print('Loss:', loss_func)
+        #         print('------------------')
+        #         model.compile(
+        #             optimizer=optimizer,
+        #             loss=globals()[loss_func],
+        #             metrics=[metrics.iou_score,
+        #                      categorical_crossentropy],
+        #         )
+        #     else:
+        #         raise NotImplementedError
+
+        # elif self.config.framework == "pytorch":
+        #     print('_do_compile_model_task, pytorch, it is under construction.')
+        #     # if optimizer == "adam":
+        #     #     optimizer = keras.optimizers.Adam(
+        #     #         lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+        #     #     )
+        #     # else:
+        #     #     optimizer = keras.optimizers.SGD(
+        #     #         lr=learning_rate, momentum=0.9, decay=0.001
+        #     #     )
+
+        #     # if task_id == Task.CLASSIFICATION:
+        #     #     model.compile(
+        #     #         optimizer=optimizer,
+        #     #         loss=keras.losses.categorical_crossentropy,
+        #     #         metrics=["acc"],
+        #     #     )
+        #     # elif task_id == Task.SEMANTIC_SEGMENTATION:
+        #     #     print('------------------')
+        #     #     print('Loss:', loss_func)
+        #     #     print('------------------')
+        #     #     model.compile(
+        #     #         optimizer=optimizer,
+        #     #         loss=globals()[loss_func],
+        #     #         metrics=[metrics.iou_score,
+        #     #                  categorical_crossentropy],
+        #     #     )
+        #     # else:
+        #     #     raise NotImplementedError
 
         return model

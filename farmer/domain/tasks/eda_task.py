@@ -23,11 +23,10 @@ class EdaTask:
         with open(f"{self.config.info_path}/classes.csv", "w") as fw:
             if self.config.train_colors:
                 fw.write("class_name,class_id,color_id\n")
-                for class_data in self.config.train_colors:
+                for class_id, class_data in enumerate(self.config.train_colors):
                     if type(class_data) == int:
-                        class_name = self.config.class_names[class_data]
+                        class_name = self.config.class_names[class_id]
                         color_id = class_data
-                        class_id = color_id
                     elif type(class_data) == dict:
                         color_id, class_id = list(class_data.items())[0]
                         class_name = self.config.class_names[class_id]

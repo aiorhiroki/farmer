@@ -27,8 +27,8 @@ class ReadAnnotationTask:
                 annotations = ncc.readers.classification_video_set(
                     self.config.target_dir,
                     data_list,
-                    csv_file=f"{self.config.info_path}/{phase}.csv",
                     class_names=self.config.class_names,
+                    csv_file=self.config.video_csv,
                     skip_frame=self.config.skip_frame,
                     time_format=self.config.time_format
                 )

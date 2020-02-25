@@ -4,6 +4,10 @@ from farmer import ncc
 from tensorflow.python import keras
 
 import torch
+import torch.utils.data as data
+import random
+
+import tqdm
 
 
 class TrainTask:
@@ -13,13 +17,9 @@ class TrainTask:
     def command(
             self, model, base_model, train_set, validation_set, trial):
 
-        print('【before command】')
-
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set, trial
         )
-
-        print('【_do_generate_batch_task】')
 
         callbacks = self._do_set_callbacks_task(
             base_model, train_set, validation_set
@@ -33,15 +33,13 @@ class TrainTask:
 
         return saved_model
 
-    def _do_generate_batch_task(self, train_set, validation_set, trial):
+    def _do_generate_batch_task(self, train_set, validation_set, trial) -> (list, list):
         np.random.shuffle(train_set)
         if self.config.op_batch_size:
             batch_size = int(trial.suggest_discrete_uniform(
                 'batch_size', *self.config.batch_size))
         else:
             batch_size = self.config.batch_size
-
-        print("【_do_generate_batch_task, 1】")
 
         sequence_args = dict(
             annotations=train_set,
@@ -54,11 +52,9 @@ class TrainTask:
             input_data_type=self.config.input_data_type
         )
 
-        print("【_do_generate_batch_task, 2】")
         print(f'config: {self.config}')
 
         if self.config.framework == 'tensorflow':
-            print("【_do_generate_batch_task, 3, tensorflow】")
             train_gen = ncc.generators.ImageSequence(**sequence_args)
 
             sequence_args.update(annotations=validation_set, augmentation=[])
@@ -67,19 +63,15 @@ class TrainTask:
             return train_gen, validation_gen
 
         elif self.config.framework == 'pytorch':
-            print("【_do_generate_batch_task, 3, pytorch】")
-            print(f"sequence_args: {sequence_args}】")
-
-            # train_gen = ncc.generators.ImageDataset(**sequence_args)
             train_dataset = ncc.generators.ImageDataset(**sequence_args)
 
-            print("【_do_generate_batch_task, 4】")
             sequence_args.update(annotations=validation_set, augmentation=[])
-            # validation_gen = ncc.generators.ImageDataset(**sequence_args)
-            print("【_do_generate_batch_task, 5】")
             validation_dataset = ncc.generators.ImageDataset(**sequence_args)
 
             return train_dataset, validation_dataset
+
+        # unexpected case
+        return [None], [None]
 
     def _do_fetch_checkpoint(self, base_model, model_save_file):
         if self.config.framework == 'tensorflow':
@@ -262,9 +254,96 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
-            print(
-                '[train_task.py, _do_model_optimization_task, pytorch] PyTorch版のモデル訓練ロジックを行う'
+            if self.config.multi_gpu:
+                train_dataloader = data.DataLoader(
+                    train_gen,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+                val_dataloader = data.DataLoader(
+                    validation_gen,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+            else:
+                train_dataloader = data.DataLoader(
+                    train_gen,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=1,
+                )
+
+                val_dataloader = data.DataLoader(
+                    validation_gen,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=1,
+                )
+
+            dataloaders = {
+                'train': train_dataloader,
+                'val': val_dataloader,
+            }
+
+            model = self._do_train_pytorch_model_task(
+                dataloaders,
+                self.config.epochs,
+                optimzier,
+                device,
+                model,
+                criterion,
             )
+
+        return model
+
+    def worker_init_fn(worker_id, seed=1):
+        random.seed(worker_id + seed)
+        np.random.seed(worker_id + seed)
+
+    def _do_train_pytorch_model_task(
+        dataloaders,
+        epochs,
+        optimizer,
+        device,
+        model,
+        criterion
+    ):
+        for epoch in range(epochs):
+            for phase in ['train', 'val']:
+                if phase == 'train':
+                    model.train()
+                    optimizer.zero_grad()
+
+                else:
+                    model.eval()
+
+                for idx, (images, labels) in tqdm(enumerate(dataloaders[phase]), total=len(dataloaders[phase])):
+                    if images.size(0) == 1:
+                        continue
+
+                    images = images.to(device)
+                    labels = labels.to(labels)
+
+                    with torch.set_grad_enabled(phase == 'train'):
+                        outputs = model(images)
+                        loss = criterion(outputs, labels.long())
+
+                        if phase == 'train':
+                            loss.backward()
+                            epoch_train_loss += loss.item()
+
+                            optimizer.step()
+                            optimizer.zero_grad()
+
+                        else:
+                            _, predict_result = torch.max(outputs.data, 1)
+                            epoch_val_loss += loss.item()
 
         return model
 

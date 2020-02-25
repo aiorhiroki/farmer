@@ -24,9 +24,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow()
 
-        model, base_model = self.build_model_flow(trial)
+        model, base_model, optimizer = self.build_model_flow(trial)
         result = self.model_execution_flow(
-            train_set, model, base_model, validation_set, test_set, trial
+            train_set, model, base_model, validation_set, test_set, trial, optimizer
         )
 
         return self.output_flow(result)
@@ -53,13 +53,21 @@ class TrainWorkflow(AbstractImageAnalyzer):
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model, base_model = BuildModelTask(self._config).command(trial)
+        model, base_model, optimizer = BuildModelTask(
+            self._config).command(trial)
         print("build model flow done")
-        return model, base_model
+
+        return model, base_model, optimizer
 
     def model_execution_flow(
         self,
-        annotation_set, model, base_model, validation_set, test_set, trial
+        annotation_set,
+        model,
+        base_model,
+        validation_set,
+        test_set,
+        trial,
+        optimizer
     ):
         # print(
         #     f'[train_workflow.py][model_execution_flow] config: {self._config}/n')
@@ -135,7 +143,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                     trained_model = TrainTask(self._config).command(
                         model, base_model,
                         annotation_set, validation_set,
-                        trial
+                        trial, optimizer
                     )
 
         if self._config.training and len(test_set) == 0:

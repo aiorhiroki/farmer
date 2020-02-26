@@ -139,8 +139,6 @@ class BuildModelTask:
                 model.load_weights(trained_model_path)
 
             if self.config.framework == "pytorch":
-                # state_dict = torch.load(trained_model_path)
-                # model.load_state_dict(state_dict)
                 model.load_state_dict(
                     torch.load(trained_model_path)
                 )

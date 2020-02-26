@@ -41,3 +41,5 @@ train_colors:
     - 5
     - 10
     - 15
+
+framework: pytorch

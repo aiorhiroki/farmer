@@ -7,7 +7,14 @@ import torch
 import torch.utils.data as data
 import random
 
-import tqdm
+from tqdm import tqdm
+
+import segmentation_models_pytorch as smp
+from segmentation_models_pytorch.utils.train import TrainEpoch, ValidEpoch
+
+from segmentation_models_pytorch.utils.losses import (
+    DiceLoss, JaccardLoss
+)
 
 
 class TrainTask:
@@ -15,7 +22,7 @@ class TrainTask:
         self.config = config
 
     def command(
-            self, model, base_model, train_set, validation_set, trial):
+            self, model, base_model, train_set, validation_set, trial, optimizer):
 
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set, trial
@@ -26,7 +33,7 @@ class TrainTask:
         )
 
         trained_model = self._do_model_optimization_task(
-            model, train_gen, validation_gen, callbacks
+            model, train_gen, validation_gen, callbacks, optimizer
         )
 
         saved_model = self._do_save_model_task(trained_model, base_model)
@@ -51,8 +58,6 @@ class TrainTask:
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-
-        print(f'config: {self.config}')
 
         if self.config.framework == 'tensorflow':
             train_gen = ncc.generators.ImageSequence(**sequence_args)
@@ -171,7 +176,14 @@ class TrainTask:
             return None
 
     def _do_set_callbacks_task(self, base_model, train_set, validation_set):
-        best_model_name = "best_model.h5"
+
+        if self.config.framework == 'pytorch':
+            best_model_name = "best_model.pth"
+            return None
+
+        if self.config.framework == 'tensorflow':
+            best_model_name = "best_model.h5"
+
         model_save_file = os.path.join(self.config.model_path, best_model_name)
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
@@ -238,7 +250,7 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_gen, validation_gen, callbacks
+        self, model, train_gen, validation_gen, callbacks, optimizer
     ):
         if self.config.framework == 'tensorflow':
             model.fit_generator(
@@ -276,14 +288,14 @@ class TrainTask:
                     train_gen,
                     batch_size=self.config.batch_size,
                     shuffle=False,
-                    num_workers=1,
+                    num_workers=0,
                 )
 
                 val_dataloader = data.DataLoader(
                     validation_gen,
                     batch_size=self.config.batch_size,
                     shuffle=False,
-                    num_workers=1,
+                    num_workers=0,
                 )
 
             dataloaders = {
@@ -291,30 +303,85 @@ class TrainTask:
                 'val': val_dataloader,
             }
 
+            criterion = self._do_fetch_criterion(self.config.loss)
+
             model = self._do_train_pytorch_model_task(
                 dataloaders,
                 self.config.epochs,
-                optimzier,
-                device,
+                optimizer,
                 model,
                 criterion,
             )
 
         return model
 
+    def _do_fetch_criterion(self, criterion_name: str):
+        if criterion_name == 'dice_loss':
+            return DiceLoss()
+
+        elif criterion_name == 'jaccard_loss':
+            return JaccardLoss()
+
+        else:
+            return None
+
     def worker_init_fn(worker_id, seed=1):
         random.seed(worker_id + seed)
         np.random.seed(worker_id + seed)
 
     def _do_train_pytorch_model_task(
+        self,
         dataloaders,
         epochs,
         optimizer,
-        device,
         model,
         criterion
     ):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+
+        metrics = [
+            smp.utils.metrics.IoU(threshold=0.5)
+        ]
+
+        # train_epoch = TrainEpoch(
+        #     model,
+        #     loss=criterion,
+        #     metrics=metrics,
+        #     optimizer=optimizer,
+        #     device=device,
+        #     verbose=True,
+        # )
+
+        # valid_epoch = ValidEpoch(
+        #     model,
+        #     loss=criterion,
+        #     metrics=metrics,
+        #     device=device,
+        #     verbose=True,
+        # )
+
+        # max_score = 0
+
+        # for i in range(epochs):
+        #     print(f"\nEpoch: {i}")
+
+        #     # RuntimeError: Expected 4-dimensional input for 4-dimensional weight 64 3 7 7,
+        #     # but got 5-dimensional input of size [2, 2, 256, 512, 3] instead
+        #     train_logs = train_epoch.run(dataloaders['train'])
+        #     valid_logs = valid_epoch.run(dataloaders['val'])
+
+        #     if max_score < valid_logs['iou_score']:
+        #         max_score = valid_logs['iou_score']
+
+        #         torch.save(model, "./best_model.pth")
+
+        #         print('print("Models saved!)')
+
         for epoch in range(epochs):
+            epoch_train_loss = 0.0
+            epoch_val_loss = 0.0
+
             for phase in ['train', 'val']:
                 if phase == 'train':
                     model.train()
@@ -323,12 +390,16 @@ class TrainTask:
                 else:
                     model.eval()
 
-                for idx, (images, labels) in tqdm(enumerate(dataloaders[phase]), total=len(dataloaders[phase])):
+                for images, labels in tqdm(dataloaders[phase], total=len(dataloaders[phase])):
                     if images.size(0) == 1:
                         continue
 
+                    # (mini-batch, height, width, ch) => (mini-batch, ch, height, width)
+                    images = images.permute(0, 3, 1, 2)
+                    labels = labels.permute(0, 3, 1, 2)
+
                     images = images.to(device)
-                    labels = labels.to(labels)
+                    labels = labels.to(device)
 
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
@@ -344,6 +415,9 @@ class TrainTask:
                         else:
                             _, predict_result = torch.max(outputs.data, 1)
                             epoch_val_loss += loss.item()
+
+            print(
+                f"Epoch {epoch:03d}, Train loss: {epoch_train_loss}, Val loss: {epoch_val_loss}")
 
         return model
 

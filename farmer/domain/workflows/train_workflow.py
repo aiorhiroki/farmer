@@ -33,7 +33,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
-        print(f'[train_workflow.py][set_env_flow] config: {self._config}')
         print("set env flow done")
 
     def read_annotation_flow(self):
@@ -103,7 +102,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                     trained_model = TrainTask(self._config).command(
                         model, base_model,
                         annotation_set, validation_set,
-                        trial
+                        trial, optimizer
                     )
 
             elif self._config.framework == 'pytorch':

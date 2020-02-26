@@ -1,5 +1,6 @@
 import segmentation_models
 import segmentation_models_pytorch as smp
+
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 from segmentation_models.losses import (
@@ -112,9 +113,6 @@ class BuildModelTask:
                     )
 
             elif self.config.framework == "pytorch":
-                print('SEMANTIC_SEGMENTATION, pytorch condition')
-                print(backbone, 3, nb_classes)
-
                 if model_name == "unet":
                     print('fetch Unet model')
                     model = smp.Unet(
@@ -125,7 +123,7 @@ class BuildModelTask:
 
                 elif model_name == "pspnet":
                     model = smp.PSPNet(
-                        backbone_name=backbone,
+                        encoder_name=backbone,
                         in_channels=3,
                         classes=nb_classes,
                     )
@@ -141,12 +139,11 @@ class BuildModelTask:
                 model.load_weights(trained_model_path)
 
             if self.config.framework == "pytorch":
-                print('_do_load_model_task, pytorch, it is under construction.')
-
-                state_dict = torch.load(trained_model_path)
-                # state_dict = torch.load(trained_model_path, map_location=lambda storage, loc:storage)
-
-                model.load_state_dict(state_dict)
+                # state_dict = torch.load(trained_model_path)
+                # model.load_state_dict(state_dict)
+                model.load_state_dict(
+                    torch.load(trained_model_path)
+                )
 
         return model
 
@@ -163,7 +160,7 @@ class BuildModelTask:
 
         return model
 
-    def _do_fetch_optimizer_task(self, parameters, optimizer_name, learning_rate):
+    def _do_fetch_optimizer_task(self, model, optimizer_name, learning_rate):
         if optimizer_name == "adam":
             if self.config.framework == "tensorflow":
                 return keras.optimizers.Adam(
@@ -175,7 +172,7 @@ class BuildModelTask:
 
             elif self.config.framework == "pytorch":
                 return optim.Adam(
-                    params=parameters,
+                    params=model.parameters(),
                     lr=learning_rate,
                     betas=(0.9, 0.999),
                     weight_decay=0.001,
@@ -191,7 +188,7 @@ class BuildModelTask:
 
             elif self.config.framework == "pytorch":
                 return optim.SGD(
-                    params=parameters,
+                    params=model.parameters(),
                     lr=learning_rate,
                     momentum=0.9,
                     weight_decay=0.001,
@@ -247,7 +244,7 @@ class BuildModelTask:
             learning_rate = self.config.learning_rate
 
         optimizer = self._do_fetch_optimizer_task(
-            model.parameters(),
+            model,
             optimizer,
             learning_rate
         )

@@ -28,9 +28,16 @@ class PredictSegmentationTask:
                 annotations=test_set,
                 model=model,
                 save_dir=save_dir,
-                framework=self.config.framework,
                 train_colors=self.config.train_colors,
             )
 
         elif self.config.framework == "pytorch":
-            print('[_do_segmentation_predict_task, pytorch] it is under construction')
+            ncc.utils.generate_segmentation_result_pytorch(
+                nb_classes=self.config.nb_classes,
+                height=self.config.height,
+                width=self.config.width,
+                annotations=test_set,
+                model=model,
+                save_dir=save_dir,
+                train_colors=self.config.train_colors,
+            )

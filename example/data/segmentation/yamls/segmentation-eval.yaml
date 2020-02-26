@@ -26,6 +26,7 @@ label_dir: label
 
 # For Tensorflow
 # trained_model_path: segmentation/result/segmentation_result/model/last_model.h5
+# trained_model_path: segmentation/result/segmentation_result/model/best_model.h5
 
 # For PyTorch
 trained_model_path: segmentation/result/segmentation_result/model/last_model.pth

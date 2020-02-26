@@ -86,13 +86,9 @@ def generate_segmentation_result(
     annotations,
     model,
     save_dir,
-    framework,
     train_colors=None,
 ):
     image_util = ImageUtil(nb_classes, (height, width))
-
-    if framework == "pytorch":
-        model = model.eval()
 
     for sample_image_path in annotations:
         sample_image = image_util.read_image(
@@ -107,15 +103,52 @@ def generate_segmentation_result(
         )
 
         segmented = image_util.cast_to_onehot(segmented)
-
-        if framework == "tensorflow":
-            output = model.predict(np.expand_dims(sample_image, axis=0))
-
-        elif framework == "pytorch":
-            with torch.no_grad():
-                output = model(sample_image)
+        output = model.predict(np.expand_dims(sample_image, axis=0))
 
         result_image = get_imageset(sample_image, output[0], segmented)
+        save_image_name = os.path.basename(sample_image_path[0])
+        result_image.save(f"{save_dir}/{save_image_name}")
+
+
+def generate_segmentation_result_pytorch(
+    nb_classes,
+    height,
+    width,
+    annotations,
+    model,
+    save_dir,
+    train_colors=None,
+):
+    image_util = ImageUtil(nb_classes, (height, width))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model.to(device)
+    model.eval()
+
+    for sample_image_path in annotations:
+        sample_image = image_util.read_image(
+            sample_image_path[0],
+            anti_alias=True
+        )
+        sample_image = np.asarray(sample_image, dtype=np.float32)
+        segmented = image_util.read_image(
+            sample_image_path[1],
+            normalization=False,
+            train_colors=train_colors
+        )
+
+        segmented = image_util.cast_to_onehot(segmented)
+        sample_image_tensor = torch.tensor(sample_image) \
+            .permute(2, 0, 1)   \
+            .unsqueeze(0)
+
+        sample_image_tensor = sample_image_tensor.to(device)
+
+        output = model(sample_image_tensor)
+        output_cpu = output.to("cpu")
+        output_np = output_cpu[0].detach().numpy()
+
+        result_image = get_imageset(sample_image, output_np, segmented)
         save_image_name = os.path.basename(sample_image_path[0])
         result_image.save(f"{save_dir}/{save_image_name}")
 

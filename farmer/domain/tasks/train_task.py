@@ -344,40 +344,6 @@ class TrainTask:
             smp.utils.metrics.IoU(threshold=0.5)
         ]
 
-        # train_epoch = TrainEpoch(
-        #     model,
-        #     loss=criterion,
-        #     metrics=metrics,
-        #     optimizer=optimizer,
-        #     device=device,
-        #     verbose=True,
-        # )
-
-        # valid_epoch = ValidEpoch(
-        #     model,
-        #     loss=criterion,
-        #     metrics=metrics,
-        #     device=device,
-        #     verbose=True,
-        # )
-
-        # max_score = 0
-
-        # for i in range(epochs):
-        #     print(f"\nEpoch: {i}")
-
-        #     # RuntimeError: Expected 4-dimensional input for 4-dimensional weight 64 3 7 7,
-        #     # but got 5-dimensional input of size [2, 2, 256, 512, 3] instead
-        #     train_logs = train_epoch.run(dataloaders['train'])
-        #     valid_logs = valid_epoch.run(dataloaders['val'])
-
-        #     if max_score < valid_logs['iou_score']:
-        #         max_score = valid_logs['iou_score']
-
-        #         torch.save(model, "./best_model.pth")
-
-        #         print('print("Models saved!)')
-
         for epoch in range(epochs):
             epoch_train_loss = 0.0
             epoch_val_loss = 0.0
@@ -418,6 +384,18 @@ class TrainTask:
 
             print(
                 f"Epoch {epoch:03d}, Train loss: {epoch_train_loss}, Val loss: {epoch_val_loss}")
+
+        # callbacks
+        # 1-1. 学習済モデルの保存 (複数GPU or GPU) - on_epoch_end: すべてのエポックの終了時に呼ばれます．
+        # 2-1. スケジューラの取得
+        # 3-1. plot_historyの取得               - 訓練の開始時、全てのエポックの終了時
+        #  plot_history = ncc.callbacks.PlotHistory(
+        #     self.config.learning_path,
+        #     ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+        # )
+        # 4-1. iou_historyの取得                - 訓練の開始時、全てのエポックの終了時
+        # 4-2. generate_sample_resultの取得     - 全てのエポックの終了時
+        # 5. Slackへの画像送信
 
         return model
 

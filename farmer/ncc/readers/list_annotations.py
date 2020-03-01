@@ -46,7 +46,7 @@ def classification_video_set(
             csv_path = f"{data_case_path}/{csv_file}"
         else:
             csv_paths = glob(f"{data_case_path}/*.csv")
-            if len(csv_paths) = 0:
+            if len(csv_paths) == 0:
                 continue
             else:
                 csv_path = csv_paths[0]

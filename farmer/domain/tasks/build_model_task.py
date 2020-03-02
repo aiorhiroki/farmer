@@ -78,6 +78,7 @@ class BuildModelTask:
                     model = Model2D(nb_classes, height, width)
 
             elif self.config.framework == 'pytorch':
+                # TODO: pytorch版classification
                 model = None
 
         elif task == Task.SEMANTIC_SEGMENTATION:

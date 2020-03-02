@@ -8,7 +8,14 @@ import torch
 
 
 def iou_dice_val(
-        nb_classes, height, width, data_set, model, framework="tensorflow", train_colors=None):
+        nb_classes, 
+        height, 
+        width, 
+        data_set, 
+        model, 
+        framework="tensorflow", 
+        train_colors=None
+    ):
     image_util = ImageUtil(nb_classes, (height, width))
     conf = np.zeros((nb_classes, nb_classes), dtype=np.int32)
 

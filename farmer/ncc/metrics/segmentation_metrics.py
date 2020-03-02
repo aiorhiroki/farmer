@@ -8,58 +8,16 @@ import torch
 
 
 def iou_dice_val(
-        nb_classes, height, width, data_set, model, train_colors=None):
+        nb_classes, height, width, data_set, model, framework, train_colors=None):
     image_util = ImageUtil(nb_classes, (height, width))
     conf = np.zeros((nb_classes, nb_classes), dtype=np.int32)
 
     print('validation...')
 
-    for image_file, seg_file in tqdm(data_set):
-        # Get a training sample and make a prediction using current model
-        sample = image_util.read_image(image_file, anti_alias=True)
-        target = image_util.read_image(
-            seg_file, normalization=False, train_colors=train_colors)
-        predicted = np.asarray(model.predict_on_batch(
-            np.expand_dims(sample, axis=0)))[0]
-
-        # Convert predictions and target from categorical to integer format
-        predicted = np.argmax(predicted, axis=-1).ravel()
-        target = target.ravel()
-
-        x = predicted + nb_classes * target
-        bincount_2d = np.bincount(
-            x.astype(np.int32), minlength=nb_classes**2)
-        assert bincount_2d.size == nb_classes**2
-        conf += bincount_2d.reshape((nb_classes, nb_classes))
-
-    # Compute the IoU and mean IoU from the confusion matrix
-    true_positive = np.diag(conf)
-    false_positive = np.sum(conf, 0) - true_positive
-    false_negative = np.sum(conf, 1) - true_positive
-
-    # Just in case we get a division by 0, set the value to 0
-    with np.errstate(divide='ignore', invalid='ignore'):
-        iou = true_positive / \
-            (true_positive + false_positive + false_negative)
-        dice = 2 * true_positive / \
-            (2 * true_positive + false_positive + false_negative)
-    iou[np.isnan(iou)] = 0
-    dice[np.isnan(dice)] = 0
-
-    return {'iou': iou, 'dice': dice}
-
-
-def iou_dice_val_pytorch(
-        nb_classes, height, width, data_set, model, train_colors=None):
-    image_util = ImageUtil(nb_classes, (height, width))
-    conf = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-
-    print('validation...')
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    model.to(device)
-    model.eval()
+    if framework == "pytorch": 
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+        model.eval()
 
     for image_file, seg_file in tqdm(data_set):
         # Get a training sample and make a prediction using current model
@@ -67,26 +25,21 @@ def iou_dice_val_pytorch(
         target = image_util.read_image(
             seg_file, normalization=False, train_colors=train_colors)
 
-        sample_tensor = torch.tensor(sample) \
-            .permute(2, 0, 1)   \
-            .unsqueeze(0)
+        if framework == "tensorflow":
+            predicted = np.asarray(model.predict_on_batch(
+                np.expand_dims(sample, axis=0)))[0]
 
-        # RuntimeError: Input type (torch.cuda.DoubleTensor)
-        #               and weight type (torch.cuda.FloatTensor) should be the same
-        sample_tensor = sample_tensor.to(device, dtype=torch.float)
-        # sample_tensor = sample_tensor.type(torch.cuda.FloatTensor)
-
-        # predicted = np.asarray(model.predict_on_batch(
-        #     np.expand_dims(sample, axis=0)))[0]
-
-        output = model(sample_tensor)
-
-        # delete temporary dimension and rearrange dimensions to fit Tensorflow logic
-        output = torch.squeeze(output[0], 0)
-        output_permuted = output.permute(1, 2, 0)
-
-        # output_cpu = output_permuted.to("cpu")
-        predicted = output_permuted.to("cpu").detach().numpy()
+        elif framework == "pytorch":        
+            # Convert to channel fisrt
+            sample_tensor = torch.tensor(sample).permute(2, 0, 1)
+            sample_tensor = sample_tensor.unsqueeze(0)
+            sample_tensor = sample_tensor.to(device, dtype=torch.float)
+            # Predect on model
+            output = model(sample_tensor)
+            # delete temporary dimension and rearrange dimensions to fit Tensorflow logic
+            output = torch.squeeze(output[0], 0)
+            output = output.permute(1, 2, 0)  # Convert to channel last
+            predicted = output.to("cpu").detach().numpy()
 
         # Convert predictions and target from categorical to integer format
         predicted = np.argmax(predicted, axis=-1).ravel()

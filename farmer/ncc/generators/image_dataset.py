@@ -3,7 +3,7 @@ import cv2
 
 # from tensorflow.python.keras.utils.data_utils import Sequence
 import numpy as np
-from ..augmentation import segmentation_aug
+from ..augmentation import segmentation_aug_pytorch
 from ..tasks import Task
 from ..utils import ImageUtil
 
@@ -83,8 +83,19 @@ class ImageDataset(data.Dataset):
             #     self.augmentation
             # )
 
+            # input_image_aug, label_aug = segmentation_aug_pytorch(
+            #     input_image, label, self.input_shape, self.augmentation
+            # )
+
         input_image_result = np.array(input_image, dtype=np.float32)
         label_result = self.image_util.cast_to_onehot(label)
+        # label_result = label
+
+        # if self.config.framework == 'tensorflow':
+        #     label_result = self.image_util.cast_to_onehot(label)
+
+        # elif self.config.framework == 'pytorch':
+        #     label_result = label
 
         return input_image_result, label_result
 

@@ -77,6 +77,7 @@ class TrainTask:
             return train_gen, validation_gen
 
         elif self.config.framework == 'pytorch':
+            # ImageDatasetの引数にtransform=DataTransform()を追加する
             train_dataset = ncc.generators.ImageDataset(**sequence_args)
 
             sequence_args.update(annotations=validation_set, augmentation=[])
@@ -350,7 +351,11 @@ class TrainTask:
             return JaccardLoss()
 
         elif criterion_name == 'crossentropy_loss':
-            return CrossEntropyLoss()
+            # 一旦、ダイスロスにしておく
+            # 関数「CrossEntropyLoss」使用時のエラーメッセージ
+            # RuntimeError: The size of tensor a (2) must match the size of tensor b (4) at non-singleton dimension 1
+            # return CrossEntropyLoss()
+            return DiceLoss()
 
         else:
             return None
@@ -371,6 +376,8 @@ class TrainTask:
         model = model.to(device)
 
         scheduler = self._do_fetch_scheduler(optimizer)
+
+        print(f'criterion_loss type: {type(criterion_loss)}')
 
         logs = []
 
@@ -414,7 +421,7 @@ class TrainTask:
 
                     # (mini-batch, height, width, ch) => (mini-batch, ch, height, width)
                     images = images.permute(0, 3, 1, 2)
-                    # labels = labels.permute(0, 3, 1, 2)
+                    labels = labels.permute(0, 3, 1, 2)
 
                     images = images.to(device)
                     labels = labels.to(device)
@@ -426,7 +433,8 @@ class TrainTask:
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
 
-                        # print('outputs', outputs)
+                        print('outputs size: ', outputs.size(),
+                              ', labels size: ', labels.size())
 
                         loss = criterion_loss(outputs, labels.long())
                         # loss_ce = criterion_ce(outputs, labels.long())

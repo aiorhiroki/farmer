@@ -75,17 +75,16 @@ class ImageDataset(data.Dataset):
             )
 
         if self.augmentation and len(self.augmentation) > 0:
-            print("一旦、オーギュメンテーションなし")
-            # input_image, label = segmentation_aug(
-            #     input_image,
-            #     label,
-            #     self.input_shape,
-            #     self.augmentation
-            # )
+            print("オーギュメンテーションお試し中")
 
-            # input_image_aug, label_aug = segmentation_aug_pytorch(
-            #     input_image, label, self.input_shape, self.augmentation
-            # )
+            print(f'self.augmentation: ', self.augmentation)
+
+            input_image, label = segmentation_aug_pytorch(
+                input_image,
+                label,
+                self.input_shape,
+                self.augmentation
+            )
 
         input_image_result = np.array(input_image, dtype=np.float32)
         label_result = self.image_util.cast_to_onehot(label)

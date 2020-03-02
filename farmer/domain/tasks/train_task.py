@@ -354,8 +354,8 @@ class TrainTask:
             # 一旦、ダイスロスにしておく
             # 関数「CrossEntropyLoss」使用時のエラーメッセージ
             # RuntimeError: The size of tensor a (2) must match the size of tensor b (4) at non-singleton dimension 1
-            # return CrossEntropyLoss()
-            return DiceLoss()
+            return CrossEntropyLoss()
+            # return DiceLoss()
 
         else:
             return None
@@ -381,11 +381,11 @@ class TrainTask:
 
         logs = []
 
-        # criterion_ce = self._do_fetch_criterion('crossentropy_loss')
+        criterion_ce = self._do_fetch_criterion('crossentropy_loss')
         criterion_iou = IoU()
         criterion_acc = Accuracy()
 
-        # print('criterion type:', type(criterion_ce))
+        print('criterion type:', type(criterion_ce))
 
         for epoch in range(epochs):
             # リファクタリング対象
@@ -411,7 +411,7 @@ class TrainTask:
                 else:
                     model.eval()
 
-                for images, labels in tqdm(dataloaders[phase], total=len(dataloaders[phase])):
+                for images, labels, labels_raw in tqdm(dataloaders[phase], total=len(dataloaders[phase])):
                     if images.size(0) == 1:
                         continue
 
@@ -425,10 +425,12 @@ class TrainTask:
 
                     images = images.to(device)
                     labels = labels.to(device)
+                    labels_raw = labels_raw.to(device)
 
                     print('after permute')
                     print(f'images size:', images.size())
                     print(f'labels size:', labels.size())
+                    print(f'labels_raw size:', labels_raw.size())
 
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
@@ -437,7 +439,7 @@ class TrainTask:
                               ', labels size: ', labels.size())
 
                         loss = criterion_loss(outputs, labels.long())
-                        # loss_ce = criterion_ce(outputs, labels.long())
+                        loss_ce = criterion_ce(outputs, labels_raw.long())
                         iou = criterion_iou(outputs, labels.long())
                         acc = criterion_acc(outputs, labels.long())
 
@@ -450,7 +452,7 @@ class TrainTask:
                             loss.backward()
 
                             epoch_train_loss += loss.item()
-                            # epoch_train_loss_ce += loss_ce.item()
+                            epoch_train_loss_ce += loss_ce.item()
                             iou_train_list.append(iou.item())
                             acc_train_list.append(acc.item())
 
@@ -461,7 +463,7 @@ class TrainTask:
                             _, predict_result = torch.max(outputs.data, 1)
 
                             epoch_val_loss += loss.item()
-                            # epoch_val_loss_ce += loss_ce.item()
+                            epoch_val_loss_ce += loss_ce.item()
                             iou_val_list.append(iou.item())
                             acc_val_list.append(acc.item())
 
@@ -472,7 +474,7 @@ class TrainTask:
                 {
                     'epoch': epoch + 1,
                     'loss': epoch_train_loss,
-                    # 'crossentropy': epoch_train_loss_ce,
+                    'crossentropy': epoch_train_loss_ce,
                     'iou_train': self._do_calculate_avg(iou_train_list),
                     'acc_train': self._do_calculate_avg(acc_train_list),
                     'iou_val': self._do_calculate_avg(iou_val_list),

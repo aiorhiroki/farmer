@@ -96,7 +96,7 @@ class ImageDataset(data.Dataset):
         # elif self.config.framework == 'pytorch':
         #     label_result = label
 
-        return input_image_result, label_result
+        return input_image_result, label_result, label
 
     def __len__(self) -> int:
         return len(self.annotations)

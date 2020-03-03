@@ -437,11 +437,6 @@ class TrainTask:
                             optimizer.step()
                             optimizer.zero_grad()
 
-                            if best_iou < iou.item():
-                                best_model_path = os.path.join(
-                                    self.config.model_path, "best_model.pth")
-                                torch.save(model.state_dict(), best_model_path)
-
                         else:
                             _, predict_result = torch.max(outputs.data, 1)
 
@@ -452,6 +447,14 @@ class TrainTask:
 
             print(
                 f"Epoch {epoch + 1:03d}, Train loss: {epoch_train_loss}, Val loss: {epoch_val_loss}")
+
+            avg_train_iou = self._do_calculate_avg(iou_train_list)
+
+            if best_iou < avg_train_iou:
+                best_model_path = os.path.join(
+                    self.config.model_path, "best_model.pth"
+                )
+                torch.save(model.state_dict(), best_model_path)
 
             logs.append(
                 {

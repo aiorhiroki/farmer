@@ -29,8 +29,6 @@ def fit():
             config.update(secret_config)
         trainer = Trainer(**config)
 
-        # print(f'trainer: {trainer}')
-
         assert trainer.framework in [
             "tensorflow", "pytorch"
         ], "You need to specify either tensorflow or pytorch as framework."

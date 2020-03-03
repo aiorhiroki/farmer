@@ -75,10 +75,6 @@ class ImageDataset(data.Dataset):
             )
 
         if self.augmentation and len(self.augmentation) > 0:
-            print("オーギュメンテーションお試し中")
-
-            print(f'self.augmentation: ', self.augmentation)
-
             input_image, label = segmentation_aug_pytorch(
                 input_image,
                 label,

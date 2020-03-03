@@ -19,8 +19,6 @@ def fit():
     else:
         secret_config = None
     for config_path in config_paths:
-        print("config path running: ", config_path)
-
         with open(config_path) as yamlfile:
             config = yaml.safe_load(yamlfile)
         config.update(

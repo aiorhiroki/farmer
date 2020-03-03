@@ -191,12 +191,19 @@ class ImageUtil:
         self.current_raw_size = None
         self.current_raw_frame = None
 
+    # def read_image(
+    #     self,
+    #     file_path: str,
+    #     normalization=True: bool,
+    #     anti_alias=False: bool,
+    #     train_colors=None: list,
+    # ):
     def read_image(
         self,
-        file_path: str,
+        file_path,
         normalization=True,
         anti_alias=False,
-        train_colors=None
+        train_colors=None,
     ):
         image = Image.open(file_path)
         self.current_raw_frame = image

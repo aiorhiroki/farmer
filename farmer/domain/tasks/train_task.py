@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from farmer import ncc
-from tensorflow.python import keras
+from tensorflow import keras
 
 import torch
 import torch.optim as optim
@@ -102,6 +102,7 @@ class TrainTask:
                 )
 
         elif self.config.framework == 'pytorch':
+            # TODO: Callbacks of ModelCheckpoint at PyTorch
             return None
 
     def _do_fetch_scheduler(self, optimizer):
@@ -182,6 +183,7 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
+            # TODO: 推論の結果画像生成
             return [None]
 
     def _do_fetch_slack_logging(self):
@@ -201,6 +203,7 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
+            # TODO: Slackにログを飛ばす
             return None
 
     def _do_set_callbacks_task(self, base_model, train_set, validation_set):
@@ -351,11 +354,7 @@ class TrainTask:
             return JaccardLoss()
 
         elif criterion_name == 'crossentropy_loss':
-            # 一旦、ダイスロスにしておく
-            # 関数「CrossEntropyLoss」使用時のエラーメッセージ
-            # RuntimeError: The size of tensor a (2) must match the size of tensor b (4) at non-singleton dimension 1
             return CrossEntropyLoss()
-            # return DiceLoss()
 
         else:
             return None

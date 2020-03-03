@@ -12,7 +12,7 @@ from ..model.task_model import Task
 from tensorflow import keras
 import torch
 
-segmentation_models.set_framework('tf.keras')
+sm.set_framework('tf.keras')
 
 # loss functions
 cce_dice_loss = categorical_crossentropy + dice_loss

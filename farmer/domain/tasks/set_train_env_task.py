@@ -29,7 +29,11 @@ class SetTrainEnvTask:
 
         elif self.config.framework == 'pytorch':
             torch.manual_seed(seed)
-            # It is needed to set seed to worker_init_fn in data.DataLoader function
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
 
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices

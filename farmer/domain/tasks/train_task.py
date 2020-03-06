@@ -519,11 +519,3 @@ class TrainTask:
             else:
                 torch.save(model.state_dict(), model_path)
                 return model
-
-
-class CrossEntropy(nn.Module):
-    def __init__(self):
-        super(CrossEntropy, self).__init__()
-
-    def forward(self, outputs, targets):
-        return F.cross_entropy(outputs, targets, reduction='mean')

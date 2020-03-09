@@ -4,6 +4,7 @@ from ..augmentation import segmentation_aug_pytorch
 from ..tasks import Task
 from ..utils import ImageUtil
 
+import torch
 import torch.utils.data as data
 from torchvision import transforms
 
@@ -68,18 +69,24 @@ class ImageDataset(data.Dataset):
                 train_colors=self.train_colors
             )
 
-        label_raw = transforms.functional.to_tensor(label)
+        label_raw = torch.from_numpy(label)
+        label_tmp = torch.from_numpy(
+            self.image_util.cast_to_onehot(label)
+        )
+
+        # [height, width, channel] -> [channel, height, width]
+        label_tmp = label_tmp.permute(2, 0, 1)
 
         if self.augmentation and len(self.augmentation) > 0:
             input_image_augmented, label_augmented = segmentation_aug_pytorch(
                 input_image,
-                label_raw,
+                label_tmp,
                 self.input_shape,
                 self.augmentation
             )
         else:
             input_image_augmented = input_image
-            label_augmented = label_raw
+            label_augmented = label_tmp
 
         return input_image_augmented, label_augmented, label_raw
 

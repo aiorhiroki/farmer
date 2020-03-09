@@ -1,4 +1,3 @@
-from ncc.utils.image import get_imageset, ImageUtil
 import os
 import numpy as np
 from farmer import ncc
@@ -6,8 +5,6 @@ from tensorflow.python import keras
 
 import torch
 import torch.optim as optim
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.utils.data as data
 import random
 
@@ -401,8 +398,6 @@ class TrainTask:
                     if self.config.cosine_decay:
                         scheduler.step()
 
-                    optimizer.zero_grad()
-
                 else:
                     model.eval()
 
@@ -410,13 +405,13 @@ class TrainTask:
                     if images.size(0) == 1:
                         continue
 
-                    # (mini-batch, height, width, ch) => (mini-batch, ch, height, width)
-                    images = images.permute(0, 3, 1, 2)
-                    labels = labels.permute(0, 3, 1, 2)
+                    images = images.to(device, dtype=torch.float)
+                    labels = labels.to(device, dtype=torch.float)
+                    labels_raw = labels_raw.to(device, dtype=torch.float)
 
-                    images = images.to(device)
-                    labels = labels.to(device)
-                    labels_raw = labels_raw.to(device)
+                    # Due to handle a RuntimeError: 1only batches of spatial targets supported (non-empty 3D tensors)
+                    # but got targets of size: [batch, 1, height, width]
+                    labels_raw = torch.squeeze(labels_raw, dim=1)
 
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
@@ -427,15 +422,14 @@ class TrainTask:
                         acc = criterion_acc(outputs, labels.long())
 
                         if phase == 'train':
+                            optimizer.zero_grad()
                             loss.backward()
+                            optimizer.step()
 
                             epoch_train_loss += loss.item()
                             epoch_train_loss_ce += loss_ce.item()
                             iou_train_list.append(iou.item())
                             acc_train_list.append(acc.item())
-
-                            optimizer.step()
-                            optimizer.zero_grad()
 
                         else:
                             _, predict_result = torch.max(outputs.data, 1)
@@ -472,7 +466,7 @@ class TrainTask:
         df.to_csv('log_output.csv', index=False)
 
         if epochs % self.config.segmentation_val_step != 0:
-            return
+            return model
 
         val_save_dir = os.path.join(self.config.image_path, "validation")
         save_sample_dir = f"{val_save_dir}/epoch_{epoch}"

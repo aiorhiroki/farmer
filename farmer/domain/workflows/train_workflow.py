@@ -68,11 +68,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
         trial,
         optimizer
     ):
-        # print(
-        #     f'[train_workflow.py][model_execution_flow] config: {self._config}/n')
-        # print(f'Used framework: {self._config.Trainer.framework}')
-        # tmp = self._config.framework
-
         if not self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
                 trained_model = self._config.trained_model_path
@@ -106,37 +101,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
                     )
 
             elif self._config.framework == 'pytorch':
+                # untorched pytorch object detection
                 if self._config.task == Task.OBJECT_DETECTION:
-                    """
-                    Remarks
-                    1. Check keras and tf version
-                    2. Set up GPU
-                    3. Load config parameters
-                    4. Create the generators
-                    5. Create the model
-                    6. Print model summary
-                    7. Compute backbone layers shapes using the actual backbone model
-                    8. Create the callbacks
-                    9. Start trainging (training_mode.fit_generator(...))
-                    -> Train model using generated data per batch from Python generator 
-                    """
-                    # https://github.com/fizyr/keras-retinanet/blob/master/keras_retinanet/bin/train.py
-                    from keras_retinanet.bin import train
-                    annotations = f"{self._config.info_path}/train.csv"
-                    classes = f"{self._config.info_path}/classes.csv"
-                    val_annotations = f"{self._config.info_path}/validation.csv"
-                    train.main(
-                        [
-                            "--epochs", str(self._config.epochs),
-                            "--steps", str(self._config.steps),
-                            "--snapshot-path", self._config.model_path,
-                            "csv", annotations, classes,
-                            "--val-annotations", val_annotations
-                        ]
-                    )
-                    trained_model = "{}/resnet50_csv_{:02d}.pth".format(
-                        self._config.model_path, self._config.epochs
-                    )
+                    print()
 
                 else:
                     trained_model = TrainTask(self._config).command(

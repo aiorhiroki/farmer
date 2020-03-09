@@ -1,18 +1,11 @@
-import math
 import cv2
 
-# from tensorflow.python.keras.utils.data_utils import Sequence
-import numpy as np
 from ..augmentation import segmentation_aug_pytorch
 from ..tasks import Task
 from ..utils import ImageUtil
 
 import torch.utils.data as data
-
-# PyTorch版では、モデルの方に設定するパラメータが含まれている。　
-# Kerasと混同してしまう？ので不要パラメータ削除予定
-# -> LSTM対応やる際、1つのミニバッチで複数読み込む必要がでてくるa
-# -> batch_sizeを削除する予定だったが、撤回して残す。
+from torchvision import transforms
 
 
 class ImageDataset(data.Dataset):
@@ -52,7 +45,6 @@ class ImageDataset(data.Dataset):
             if not ret:
                 return None, None
 
-            input_image = input_image / 255.0
             # (with,height) for cv2.resize
             resize_shape = self.input_shape[::-1]
 
@@ -64,8 +56,10 @@ class ImageDataset(data.Dataset):
                 )
         else:
             input_image = self.image_util.read_image(
-                input_file, anti_alias=True
+                input_file, normalization=False, anti_alias=True
             )
+
+        input_image = transforms.functional.to_tensor(input_image)
 
         if self.task == Task.SEMANTIC_SEGMENTATION:
             label = self.image_util.read_image(
@@ -74,25 +68,20 @@ class ImageDataset(data.Dataset):
                 train_colors=self.train_colors
             )
 
+        label_raw = transforms.functional.to_tensor(label)
+
         if self.augmentation and len(self.augmentation) > 0:
-            input_image, label = segmentation_aug_pytorch(
+            input_image_augmented, label_augmented = segmentation_aug_pytorch(
                 input_image,
-                label,
+                label_raw,
                 self.input_shape,
                 self.augmentation
             )
+        else:
+            input_image_augmented = input_image
+            label_augmented = label_raw
 
-        input_image_result = np.array(input_image, dtype=np.float32)
-        label_result = self.image_util.cast_to_onehot(label)
-        # label_result = label
-
-        # if self.config.framework == 'tensorflow':
-        #     label_result = self.image_util.cast_to_onehot(label)
-
-        # elif self.config.framework == 'pytorch':
-        #     label_result = label
-
-        return input_image_result, label_result, label
+        return input_image_augmented, label_augmented, label_raw
 
     def __len__(self) -> int:
         return len(self.annotations)

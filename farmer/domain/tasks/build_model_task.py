@@ -114,7 +114,6 @@ class BuildModelTask:
 
             elif self.config.framework == "pytorch":
                 if model_name == "unet":
-                    print('fetch Unet model')
                     model = smp.Unet(
                         encoder_name=backbone,
                         in_channels=3,

@@ -25,7 +25,6 @@ class TrainTask:
         return save_model
 
     def _do_generate_batch_task(self, train_set, validation_set, trial):
-        np.random.shuffle(train_set)
         if self.config.op_batch_size:
             batch_size = int(trial.suggest_discrete_uniform(
                 'batch_size', *self.config.batch_size))

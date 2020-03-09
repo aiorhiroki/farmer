@@ -1,12 +1,80 @@
 import requests
 import numpy as np
 import os
+import csv
 import warnings
 from ..utils import get_imageset, PostClient
 from ..utils import MatPlotManager, generate_segmentation_result
 from ..metrics import iou_dice_val
 
 from tensorflow.python import keras
+
+
+class BatchCheckpoint(keras.callbacks.Callback):
+    # n batchごとに、モデルのsave & trainのaccとlossをcsvと画像で保存してslackに通知する
+    def __init__(
+        self,
+        learning_path,
+        filepath,
+        token=None,
+        channel=None,
+        period=100
+    ):
+        self.learning_path = learning_path
+        self.filepath = filepath
+        self.period = period
+        self.metric_filename = 'batch_metrics'
+        self.metric_csv = f'{learning_path}/{self.metric_filename}.csv'
+        self.title = f'train metrics every {self.period} batch'
+        self.token = token
+        self.channel = channel
+
+        with open(self.metric_csv, 'w') as fw:
+            writer = csv.writer(fw)
+            writer.writerow(['acc', 'loss'])
+        self.plot_manager = MatPlotManager(self.learning_path)
+        self.plot_manager.add_figure(
+            title=self.title,
+            xy_labels=(f"{self.period}*batch", 'metrics'),
+            labels=[
+                "acc",
+                "loss"
+            ],
+            filename=self.metric_filename
+        )
+
+    def on_train_batch_end(self, batch, logs={}):
+        if (batch + 1) % self.period != 0:
+            return
+        self.model.save(self.filepath)
+        new_metric = [
+            logs.get('acc'),
+            logs.get('loss')
+        ]
+        with open(self.metric_csv, 'a') as fw:
+            writer = csv.writer(fw)
+            writer.writerow(new_metric)
+
+        figure = self.plot_manager.get_figure(self.title)
+        figure.add(new_metric, is_update=True)
+
+        if self.token and self.channel:
+            files = {
+                'file': open(
+                    f'{self.learning_path}/{self.metric_filename}.png','rb'
+                )
+            }
+            param = dict(
+                token=self.token,
+                channels=self.channel,
+                filename='metric figure',
+                title=self.title
+            )
+            requests.post(
+                url='https://slack.com/api/files.upload',
+                params=param,
+                files=files
+            )
 
 
 class GenerateSampleResult(keras.callbacks.Callback):

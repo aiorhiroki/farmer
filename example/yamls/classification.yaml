@@ -7,6 +7,7 @@ train_dirs:
     - train_3
     - train_4
     - train_5
+val_dirs:
     - train_6
     - train_7
 task: classification # classification or segmentation or detection
@@ -23,7 +24,8 @@ learning_rate:
     - 0.001 # min
     - 0.01 # max
     - 0.001 # step
+n_trials: 2
 width: 80
 height: 80
-trained_model_path:
+trained_path:
 result_dir: classification_result

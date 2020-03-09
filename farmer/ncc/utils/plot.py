@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import os
+import csv
 import numpy as np
 
 
@@ -41,6 +42,7 @@ class MatPlot:
         self._series = np.concatenate([self._series, series], axis=1)
         if is_update:
             self.save()
+            self.to_csv()
 
     def save(self):
         plt.cla()
@@ -53,3 +55,9 @@ class MatPlot:
         plt.title(self._title)
         plt.savefig(os.path.join(self._root_dir,
                                  self._filename+self.EXTENSION))
+
+    def to_csv(self):
+        with open(f'{self._root_dir}/{self._filename}.csv', 'w') as fw:
+            writer = csv.writer(fw)
+            writer.writerow(self._labels)
+            writer.writerows(self._series.transpose())

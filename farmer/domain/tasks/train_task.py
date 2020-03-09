@@ -98,12 +98,23 @@ class TrainTask:
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
+        elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
+            if self.config.input_data_type == "video":
+                batch_checkpoint = ncc.callbacks.BatchCheckpoint(
+                    self.config.learning_path,
+                    f'{self.config.model_path}/batch_model.h5',
+                    token=self.config.slack_token,
+                    channel=self.config.slack_channel,
+                    period=self.config.batch_period
+                )
+                callbacks.append(batch_checkpoint)
+
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
                 file_name = os.path.join(self.config.learning_path, "IoU.png")
             else:
                 file_name = os.path.join(
-                    self.config.learning_path, "Metric.png"
+                    self.config.learning_path, "acc.png"
                 )
 
             slack_logging = ncc.callbacks.SlackLogger(

@@ -470,7 +470,7 @@ class TrainTask:
                             metrics_logs["val_acc"].append(acc.item())
 
             print(
-                f"Epoch: {epoch+1:03d} - Train loss: {loss_logs['train']} - Val loss: {loss_logs['val']}")
+                f"Epoch: {epoch+1:03d} \nTrain loss: {loss_logs['train']:.4f} - Train IoU: {self._do_calculate_avg(metrics_logs['train_iou']):.4f}\n Valid loss: {loss_logs['val']:.4f} - Valid IoU: {self._do_calculate_avg(metrics_logs['val_iou']):.4f}")
 
             logs.append(
                 {

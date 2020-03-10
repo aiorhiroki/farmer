@@ -368,17 +368,23 @@ class TrainTask:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
         scheduler = self._do_fetch_scheduler(optimizer)
+        ce_loss = self._do_fetch_criterion('crossentropy_loss')
         logs = list()
 
         for epoch in range(epochs):
-            # リファクタリング対象
-            epoch_train_loss = 0.0
-            epoch_val_loss = 0.0
+            loss_logs = dict(
+                train=0.0,
+                val=0.0,
+                train_ce=0.0,
+                val_ce=0.0
+            )
 
-            iou_train_list = []
-            acc_train_list = []
-            iou_val_list = []
-            acc_val_list = []
+            metrics_logs = dict(
+                train_iou=list(),
+                val_iou=list(),
+                train_acc=list(),
+                val_acc=list()
+            )
 
             for phase in ['train', 'val']:
                 if phase == 'train':
@@ -401,18 +407,18 @@ class TrainTask:
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
 
-                        loss = criterion(outputs, labels.long()) \
-                                 if self.config.loss != "crossentropy_loss" \
-                                 else criterion(outputs, torch.argmax(labels, axis=1).long())
+                        loss_ce = ce_loss(outputs, torch.argmax(labels, axis=1).long())  # crossentropyはonehot化しない
+                        loss = criterion(outputs, labels.long()) if self.config.loss != "crossentropy_loss" else loss_ce
                         iou = IoU()(outputs, labels.long())
                         acc = Accuracy()(outputs, labels.long())
 
                         if phase == 'train':
                             loss.backward()
 
-                            epoch_train_loss += loss.item()
-                            iou_train_list.append(iou.item())
-                            acc_train_list.append(acc.item())
+                            loss_logs["train"] += loss.item()
+                            loss_logs["train_ce"] += loss_ce.item()
+                            metrics_logs["train_iou"].append(iou.item())
+                            metrics_logs["train_acc"].append(acc.item())
 
                             optimizer.step()
                             optimizer.zero_grad()
@@ -420,21 +426,25 @@ class TrainTask:
                         else:
                             _, predict_result = torch.max(outputs.data, 1)
 
-                            epoch_val_loss += loss.item()
-                            iou_val_list.append(iou.item())
-                            acc_val_list.append(acc.item())
+                            loss_logs["val"] += loss.item()
+                            loss_logs["val_ce"] += loss_ce.item()
+                            metrics_logs["val_iou"].append(iou.item())
+                            metrics_logs["val_acc"].append(acc.item())
 
             print(
-                f"Epoch: {epoch:03d}, Train loss: {epoch_train_loss}, Val loss: {epoch_val_loss}")
+                f"Epoch: {epoch+1:03d} - Train loss: {loss_logs['train']} - Val loss: {loss_logs['val']}")
 
             logs.append(
                 {
                     'epoch': epoch + 1,
-                    'loss': epoch_train_loss,
-                    'iou_train': self._do_calculate_avg(iou_train_list),
-                    'acc_train': self._do_calculate_avg(acc_train_list),
-                    'iou_val': self._do_calculate_avg(iou_val_list),
-                    'acc_val': self._do_calculate_avg(acc_val_list),
+                    'train_loss': loss_logs["train"],
+                    'train_crossentropy': loss_logs["train_ce"],
+                    'val_loss': loss_logs["val"],
+                    'val_crossentropy': loss_logs["val_ce"],
+                    'iou_train': self._do_calculate_avg(metrics_logs["train_iou"]),
+                    'acc_train': self._do_calculate_avg(metrics_logs["train_acc"]),
+                    'iou_val': self._do_calculate_avg(metrics_logs["val_iou"]),
+                    'acc_val': self._do_calculate_avg(metrics_logs["val_acc"]),
                 }
             )
 
@@ -485,11 +495,3 @@ class TrainTask:
             else:
                 torch.save(model.state_dict(), model_path)
                 return model
-
-
-class OnehotCrossEntropyLoss(torch.nn.Module):
-    def __init__(self):
-        super(OnehotCrossEntropyLoss, self).__init__()
-
-    def forward(self, outputs, targets):
-        return F.cross_entropy(outputs, targets, reduction='mean')

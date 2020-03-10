@@ -309,14 +309,14 @@ class TrainTask:
                 )
 
             else:
-                train_dataloader = torch.utils.data.DataLoader(
+                train_loader = torch.utils.data.DataLoader(
                     train_gen,
                     batch_size=self.config.batch_size,
                     shuffle=False,
                     num_workers=0,
                 )
 
-                val_dataloader = torch.utils.data.DataLoader(
+                valid_loader = torch.utils.data.DataLoader(
                     validation_gen,
                     batch_size=self.config.batch_size,
                     shuffle=False,
@@ -324,8 +324,8 @@ class TrainTask:
                 )
 
             dataloaders = {
-                'train': train_dataloader,
-                'val': val_dataloader,
+                'train': train_loader,
+                'val': valid_loader,
             }
 
             criterion = self._do_fetch_criterion(self.config.loss)
@@ -337,6 +337,44 @@ class TrainTask:
                 model,
                 criterion,
             )
+
+            """
+            # Segmentation_models_pytorchのtrainerを使った場合
+            # 参考 https://github.com/qubvel/segmentation_models.pytorch/blob/master/examples/cars%20segmentation%20(camvid).ipynb
+            # CrossEntropyは使えない
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            metrics = [IoU(), Accuracy()]
+
+            train_epoch = TrainEpoch(
+                model, 
+                loss=criterion, 
+                metrics=metrics, 
+                optimizer=optimizer,
+                device=device,
+                verbose=True
+            )
+
+            valid_epoch = ValidEpoch(
+                model, 
+                loss=criterion, 
+                metrics=metrics, 
+                device=device,
+                verbose=True
+            )
+
+            max_score = 0
+            for i in range(self.config.epochs):
+                
+                print('\nEpoch: {}'.format(i))
+                train_logs = train_epoch.run(train_loader)
+                valid_logs = valid_epoch.run(valid_loader)
+                
+                # do something (save model, change lr, etc.)
+                if max_score < valid_logs['iou_score']:
+                    max_score = valid_logs['iou_score']
+                    torch.save(model, './best_model.pth')
+                    print('Model saved!')
+            """
 
         return model
 

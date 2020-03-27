@@ -3,7 +3,7 @@ from .palette import palettes
 import numpy as np
 import os
 import random
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import cv2
 
 
@@ -101,9 +101,37 @@ def generate_segmentation_result(
         segmented = image_util.cast_to_onehot(segmented)
         output = model.predict(np.expand_dims(sample_image, axis=0))
 
-        result_image = get_imageset(sample_image, output[0], segmented)
+        dice = compute_iou_dice(output[0], segmented, nb_classes)['dice']
+        result_image = get_imageset(sample_image, output[0], segmented, put_text=f'dice: {dice}')
         save_image_name = os.path.basename(sample_image_path[0])
         result_image.save(f"{save_dir}/{save_image_name}")
+
+
+def compute_iou_dice(y_pred, y_true, nb_classes):
+    # Convert predictions and target from categorical to integer format
+    y_pred = np.argmax(y_pred, axis=-1).ravel()
+    y_true = np.argmax(y_true, axis=-1).ravel()
+    x = y_pred + nb_classes * y_true
+    bincount_2d = np.bincount(
+        x.astype(np.int32), minlength=nb_classes**2)
+    conf = bincount_2d.reshape((nb_classes, nb_classes))
+
+    # Compute the IoU and mean IoU from the confusion matrix
+    true_positive = np.diag(conf)
+    false_positive = np.sum(conf, 0) - true_positive
+    false_negative = np.sum(conf, 1) - true_positive
+
+    # Just in case we get a division by 0, set the value to 0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        iou = true_positive / \
+            (true_positive + false_positive + false_negative)
+        dice = 2 * true_positive / \
+            (2 * true_positive + false_positive + false_negative)
+
+    iou[np.isnan(iou)] = 0
+    dice[np.isnan(dice)] = 0
+
+    return {'iou': iou, 'dice': dice}
 
 
 def get_imageset(
@@ -111,7 +139,8 @@ def get_imageset(
     image_out_np,
     image_gt_np,
     palette=palettes,
-    index_void=None
+    index_void=None,
+    put_text=None
 ):
     # 3つの画像(in, out, gt)をくっつけます。
     image_out = cast_to_pil(
@@ -123,6 +152,12 @@ def get_imageset(
     image_merged = concat_images(
         image_out, image_tc, palette, "P"
     ).convert("RGB")
+
+    if put_text is not None:
+        # font = ImageFont.truetype('arial.ttf', 24)
+        draw = ImageDraw.Draw(image_merged)
+        draw.text((0, 0), put_text, fill='white')
+
     image_in_pil = Image.fromarray(
         np.uint8(image_in_np * 255), mode="RGB"
     )

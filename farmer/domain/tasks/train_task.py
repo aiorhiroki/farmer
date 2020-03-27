@@ -77,7 +77,39 @@ class TrainTask:
             sequence_args.update(annotations=validation_set, augmentation=[])
             validation_dataset = ncc.generators.ImageDataset(**sequence_args)
 
-            return train_dataset, validation_dataset
+            if self.config.multi_gpu:
+                train_dataloader = torch.utils.data.DataLoader(
+                    train_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+                valid_dataloader = torch.utils.data.DataLoader(
+                    validation_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+            else:
+                train_dataloader = torch.utils.data.DataLoader(
+                    train_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=0,
+                )
+
+                valid_dataloader = torch.utils.data.DataLoader(
+                    validation_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=0,
+                )
+
+            return train_dataloader, valid_dataloader
 
         # unexpected case
         return [None], [None]
@@ -220,6 +252,7 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
+
         if self.config.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
                 self.config.cosine_lr_max,
@@ -237,6 +270,7 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
         callbacks = [checkpoint, scheduler, plot_history]
+
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(
                 save_dir=self.config.learning_path,
@@ -246,6 +280,7 @@ class TrainTask:
                 width=self.config.width,
                 train_colors=self.config.train_colors
             )
+
             val_save_dir = os.path.join(self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
@@ -257,6 +292,7 @@ class TrainTask:
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
+
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
                 file_name = os.path.join(self.config.learning_path, "IoU.png")
@@ -291,45 +327,13 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
-            if self.config.multi_gpu:
-                train_dataloader = torch.utils.data.DataLoader(
-                    train_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=16,
-                    worker_init_fn=self.worker_init_fn,
-                )
-
-                val_dataloader = torch.utils.data.DataLoader(
-                    validation_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=16,
-                    worker_init_fn=self.worker_init_fn,
-                )
-
-            else:
-                train_loader = torch.utils.data.DataLoader(
-                    train_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=0,
-                )
-
-                valid_loader = torch.utils.data.DataLoader(
-                    validation_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=0,
-                )
-
+            """
             dataloaders = {
-                'train': train_loader,
-                'val': valid_loader,
+                'train': train_gen,
+                'val': validation_gen,
             }
-
             criterion = self._do_fetch_criterion(self.config.loss)
-
+            
             model = self._do_train_pytorch_model_task(
                 dataloaders,
                 self.config.epochs,
@@ -337,13 +341,15 @@ class TrainTask:
                 model,
                 criterion,
             )
-
             """
+            
             # Segmentation_models_pytorchのtrainerを使った場合
             # 参考 https://github.com/qubvel/segmentation_models.pytorch/blob/master/examples/cars%20segmentation%20(camvid).ipynb
-            # CrossEntropyは使えない
+            # :WIP: Unetで `UserWarnig: Couldn't retrieve source code for container of type Unet. It won't be checked for correctness upon loading.`がめっちゃ出る`
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            criterion = self._do_fetch_criterion(self.config.loss)
             metrics = [IoU(), Accuracy()]
+            scheduler = self._do_fetch_scheduler(optimizer)
 
             train_epoch = TrainEpoch(
                 model, 
@@ -353,7 +359,6 @@ class TrainTask:
                 device=device,
                 verbose=True
             )
-
             valid_epoch = ValidEpoch(
                 model, 
                 loss=criterion, 
@@ -362,19 +367,28 @@ class TrainTask:
                 verbose=True
             )
 
+            # TRAIN LOOP
             max_score = 0
             for i in range(self.config.epochs):
-                
-                print('\nEpoch: {}'.format(i))
-                train_logs = train_epoch.run(train_loader)
-                valid_logs = valid_epoch.run(valid_loader)
-                
-                # do something (save model, change lr, etc.)
+                print(f'\nEpoch: {i}/{self.config.epochs}')
+                train_logs = train_epoch.run(train_gen)
+                valid_logs = valid_epoch.run(validation_gen)
+
+                # save model
                 if max_score < valid_logs['iou_score']:
                     max_score = valid_logs['iou_score']
                     torch.save(model, './best_model.pth')
                     print('Model saved!')
-            """
+
+                # change learning rate
+                if self.config.cosine_decay:
+                    scheduler.step()
+
+            # save logs to csv
+            # df_train = pd.DataFrame(train_logs)
+            # df_train.to_csv('log_train.csv', index=False)
+            # df_valid = pd.DataFrame(valid_logs)
+            # df_valid.to_csv('log_valid.csv', index=False)
 
         return model
 
@@ -386,7 +400,7 @@ class TrainTask:
             return JaccardLoss()
 
         elif criterion_name == 'crossentropy_loss':
-            return CrossEntropyLoss()
+            return OneHotCrossEntropy()
 
         else:
             return None
@@ -406,7 +420,7 @@ class TrainTask:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
         scheduler = self._do_fetch_scheduler(optimizer)
-        ce_loss = self._do_fetch_criterion('crossentropy_loss')
+        crossentropy = self._do_fetch_criterion('crossentropy_loss')
         logs = list()
 
         for epoch in range(epochs):
@@ -445,7 +459,7 @@ class TrainTask:
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
 
-                        loss_ce = ce_loss(outputs, torch.argmax(labels, axis=1).long())  # crossentropyはonehot化しない
+                        loss_ce = crossentropy(outputs, torch.argmax(labels, axis=1).long())  # crossentropyはonehot化しない
                         loss = criterion(outputs, labels.long()) if self.config.loss != "crossentropy_loss" else loss_ce
                         iou = IoU()(outputs, labels.long())
                         acc = Accuracy()(outputs, labels.long())
@@ -533,3 +547,13 @@ class TrainTask:
             else:
                 torch.save(model.state_dict(), model_path)
                 return model
+
+
+class OneHotCrossEntropy(torch.nn.Module):
+    def __init__(self):
+        super(OneHotCrossEntropy, self).__init__()
+        self.crossentropy_loss = CrossEntropyLoss()
+    
+    def forward(self, y_pred, y_true_onehot):
+        y_true = torch.argmax(y_true_onehot, axis=1)
+        return self.crossentropy_loss(y_pred, y_true.long())

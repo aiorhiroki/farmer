@@ -75,9 +75,6 @@ class ImageDataset(data.Dataset):
             )
 
         if self.augmentation and len(self.augmentation) > 0:
-            print("オーギュメンテーションお試し中")
-            print('self.augmentation: ', self.augmentation)
-
             input_image, label = segmentation_aug_pytorch(
                 input_image,
                 label,
@@ -88,7 +85,6 @@ class ImageDataset(data.Dataset):
         labels_onehot = self.image_util.cast_to_onehot(label.squeeze())
         input_image_tensor = transforms.functional.to_tensor(input_image)
         label_tensor = transforms.functional.to_tensor(labels_onehot)
-
 
         return input_image_tensor, label_tensor
 

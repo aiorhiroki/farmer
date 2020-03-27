@@ -108,6 +108,8 @@ class BuildModelTask:
                         input_shape=(height, width, 3),
                         classes=nb_classes,
                     )
+                else:
+                    raise NotImplementedError
 
             elif self.config.framework == "pytorch":
                 if model_name == "unet":
@@ -123,6 +125,8 @@ class BuildModelTask:
                         in_channels=3,
                         classes=nb_classes,
                     )
+                else:
+                    raise NotImplementedError
 
         else:
             raise NotImplementedError

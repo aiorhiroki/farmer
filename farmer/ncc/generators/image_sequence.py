@@ -21,10 +21,10 @@ class ImageSequence(Sequence):
         input_data_type="image"
     ):
         self.annotations = annotations
-        self.batch_size = batch_size
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
+        self.batch_size = batch_size
         self.augmentation = augmentation
         self.train_colors = train_colors
         self.input_data_type = input_data_type

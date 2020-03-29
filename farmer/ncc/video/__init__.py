@@ -1,2 +1,2 @@
-from .utils import FPS
+from .utils import FPS, OutsideExcluder
 from .VideoProcess import VideoProcess

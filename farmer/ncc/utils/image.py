@@ -1,9 +1,10 @@
 import colorsys
 from .palette import palettes
+from ..metrics import calc_segmentation_confusion, calc_dice_from_confusion
 import numpy as np
 import os
 import random
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import cv2
 
 
@@ -88,50 +89,26 @@ def generate_segmentation_result(
 ):
     image_util = ImageUtil(nb_classes, (height, width))
     for sample_image_path in annotations:
+        input_image_path, mask_image_path = sample_image_path
         sample_image = image_util.read_image(
-            sample_image_path[0],
+            input_image_path,
             anti_alias=True
         )
         sample_image = np.asarray(sample_image, dtype=np.float32)
         segmented = image_util.read_image(
-            sample_image_path[1],
+            mask_image_path,
             normalization=False,
             train_colors=train_colors
         )
+
+        output = model.predict(np.expand_dims(sample_image, axis=0))[0]
+        confusion = calc_segmentation_confusion(output, segmented, nb_classes)
+        dice = calc_dice_from_confusion(confusion)
         segmented = image_util.cast_to_onehot(segmented)
-        output = model.predict(np.expand_dims(sample_image, axis=0))
-
-        dice = compute_iou_dice(output[0], segmented, nb_classes)['dice']
-        result_image = get_imageset(sample_image, output[0], segmented, put_text=f'dice: {dice}')
-        save_image_name = os.path.basename(sample_image_path[0])
+        result_image = get_imageset(
+            sample_image, output, segmented, put_text=f'dice: {dice}')
+        save_image_name = os.path.basename(input_image_path)
         result_image.save(f"{save_dir}/{save_image_name}")
-
-
-def compute_iou_dice(y_pred, y_true, nb_classes):
-    # Convert predictions and target from categorical to integer format
-    y_pred = np.argmax(y_pred, axis=-1).ravel()
-    y_true = np.argmax(y_true, axis=-1).ravel()
-    x = y_pred + nb_classes * y_true
-    bincount_2d = np.bincount(
-        x.astype(np.int32), minlength=nb_classes**2)
-    conf = bincount_2d.reshape((nb_classes, nb_classes))
-
-    # Compute the IoU and mean IoU from the confusion matrix
-    true_positive = np.diag(conf)
-    false_positive = np.sum(conf, 0) - true_positive
-    false_negative = np.sum(conf, 1) - true_positive
-
-    # Just in case we get a division by 0, set the value to 0
-    with np.errstate(divide='ignore', invalid='ignore'):
-        iou = true_positive / \
-            (true_positive + false_positive + false_negative)
-        dice = 2 * true_positive / \
-            (2 * true_positive + false_positive + false_negative)
-
-    iou[np.isnan(iou)] = 0
-    dice[np.isnan(dice)] = 0
-
-    return {'iou': iou, 'dice': dice}
 
 
 def get_imageset(

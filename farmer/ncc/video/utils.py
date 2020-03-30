@@ -38,7 +38,7 @@ class OutsideExcluder:
     """
     draw cross lines if frame is outside body
     out_ex = OutsideExcluder(MODEl_PATH)
-    out_ex.out(draw)
+    out, draw = out_ex.out(draw)
     """
     def __init__(self, model_path: str):
         self.model = load_model(model_path)

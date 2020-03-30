@@ -9,5 +9,5 @@ config_paths:
     - yamls/segmentation.yaml
     - yamls/segmentation-eval.yaml
     # detection #bug 
-    - yamls/detection.yaml
-    - yamls/detection-eval.yaml
+    # - yamls/detection.yaml
+    # - yamls/detection-eval.yaml

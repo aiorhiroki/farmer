@@ -43,15 +43,17 @@ class OutsideExcluder:
     def __init__(self, model_path: str):
         self.model = load_model(model_path)
         self.input_size = (299, 299)
+        self.color = (255, 0, 0)
 
     def out(self, draw: np.ndarray) -> (bool, np.ndarray):
+        height, width = draw.shape[:2]
         in_frame = cv2.cvtColor(draw, cv2.COLOR_BGR2RGB)
         in_frame = cv2.resize(in_frame, self.input_size) / 255.
         # outside recognition
         prediction = self.model.predict(np.expand_dims(in_frame, axis=0))[0]
         outside_class = np.argmax(prediction)
         if outside_class == 0:
-            cv2.line(draw, (0, 0), (1280, 720), (255, 0, 0), thickness=4)
-            cv2.line(draw, (1280, 0), (0, 720), (255, 0, 0), thickness=4)
+            cv2.line(draw, (0, 0), (width, height), self.color, thickness=4)
+            cv2.line(draw, (width, 0), (0, height), self.color, thickness=4)
             return True, draw
         return False, draw

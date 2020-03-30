@@ -25,6 +25,7 @@ def iou_dice_val(
 
     return {'iou': iou, 'dice': dice}
 
+
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     # Convert predictions and target from categorical to integer format
     y_pred = np.argmax(y_pred, axis=-1).ravel()
@@ -37,6 +38,7 @@ def calc_segmentation_confusion(y_pred, y_true, nb_classes):
 
     return confusion
 
+
 def calc_iou_from_confusion(confusion):
     true_positive = np.diag(confusion)
     false_positive = np.sum(confusion, 0) - true_positive
@@ -48,6 +50,7 @@ def calc_iou_from_confusion(confusion):
 
     iou[np.isnan(iou)] = 0
     return iou
+
 
 def calc_dice_from_confusion(confusion):
     true_positive = np.diag(confusion)

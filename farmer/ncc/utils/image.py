@@ -131,7 +131,6 @@ def get_imageset(
     ).convert("RGB")
 
     if put_text is not None:
-        # font = ImageFont.truetype('arial.ttf', 24)
         draw = ImageDraw.Draw(image_merged)
         draw.text((0, 0), put_text, fill='white')
 

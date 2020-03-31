@@ -8,40 +8,61 @@ import matplotlib.pyplot as plt
 def iou_dice_val(
         nb_classes, height, width, data_set, model, train_colors=None):
     image_util = ImageUtil(nb_classes, (height, width))
-    conf = np.zeros((nb_classes, nb_classes), dtype=np.int32)
+    confusion = np.zeros((nb_classes, nb_classes), dtype=np.int32)
     print('validation...')
     for image_file, seg_file in tqdm(data_set):
         # Get a training sample and make a prediction using current model
         sample = image_util.read_image(image_file, anti_alias=True)
         target = image_util.read_image(
             seg_file, normalization=False, train_colors=train_colors)
-        predicted = np.asarray(model.predict_on_batch(
-            np.expand_dims(sample, axis=0)))[0]
+        predicted = np.asarray(
+            model.predict_on_batch(np.expand_dims(sample, axis=0)))[0]
+        confusion += calc_segmentation_confusion(
+            predicted, target, nb_classes)
 
-        # Convert predictions and target from categorical to integer format
-        predicted = np.argmax(predicted, axis=-1).ravel()
-        target = target.ravel()
-        x = predicted + nb_classes * target
-        bincount_2d = np.bincount(
-            x.astype(np.int32), minlength=nb_classes**2)
-        assert bincount_2d.size == nb_classes**2
-        conf += bincount_2d.reshape((nb_classes, nb_classes))
+    iou = calc_iou_from_confusion(confusion)
+    dice = calc_dice_from_confusion(confusion)
 
-    # Compute the IoU and mean IoU from the confusion matrix
-    true_positive = np.diag(conf)
-    false_positive = np.sum(conf, 0) - true_positive
-    false_negative = np.sum(conf, 1) - true_positive
+    return {'iou': iou, 'dice': dice}
 
+
+def calc_segmentation_confusion(y_pred, y_true, nb_classes):
+    # Convert predictions and target from categorical to integer format
+    y_pred = np.argmax(y_pred, axis=-1).ravel()
+    y_true = np.argmax(y_true, axis=-1).ravel()
+    x = y_pred + nb_classes * y_true
+    bincount_2d = np.bincount(
+        x.astype(np.int32), minlength=nb_classes**2)
+    assert bincount_2d.size == nb_classes**2
+    confusion = bincount_2d.reshape((nb_classes, nb_classes))
+
+    return confusion
+
+
+def calc_iou_from_confusion(confusion):
+    true_positive = np.diag(confusion)
+    false_positive = np.sum(confusion, 0) - true_positive
+    false_negative = np.sum(confusion, 1) - true_positive
     # Just in case we get a division by 0, set the value to 0
     with np.errstate(divide='ignore', invalid='ignore'):
         iou = true_positive / \
             (true_positive + false_positive + false_negative)
-        dice = 2*true_positive / \
-            (2*true_positive + false_positive + false_negative)
-    iou[np.isnan(iou)] = 0
-    dice[np.isnan(dice)] = 0
 
-    return {'iou': iou, 'dice': dice}
+    iou[np.isnan(iou)] = 0
+    return iou
+
+
+def calc_dice_from_confusion(confusion):
+    true_positive = np.diag(confusion)
+    false_positive = np.sum(confusion, 0) - true_positive
+    false_negative = np.sum(confusion, 1) - true_positive
+    # Just in case we get a division by 0, set the value to 0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        dice = 2 * true_positive / \
+            (2 * true_positive + false_positive + false_negative)
+
+    dice[np.isnan(dice)] = 0
+    return dice
 
 
 def detection_rate_confusions(pred_labels, gt_labels, nb_classes):

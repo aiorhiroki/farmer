@@ -52,44 +52,24 @@ class PredictClassificationTask:
             )
 
         elif self.config.framework == "pytorch":
-            print(
-                "[_do_classification_predict_task, pytorch] it is under construction.")
+            # TODO: pytorch版classification
+            raise NotImplementedError("[_do_classification_predict_task, pytorch] it is under construction.")
 
         return prediction
 
     def _do_save_result_task(self, annotation_set, prediction, save_npy):
-        if self.config.framework == "tensorflow":
-            if save_npy:
-                np.save(f"{self.config.info_path}/pred.npy", prediction)
-            prediction_classes = np.argmax(prediction, axis=-1)
-            pred_result = list()
-            for files, prediction_cls in zip(annotation_set, prediction_classes):
-                image_file, *_ = files
-                pred_result.append(
-                    [
-                        image_file,
-                        self.config.class_names[int(prediction_cls)]
-                    ]
-                )
-            with open(f"{self.config.info_path}/pred.csv", "w") as fw:
-                writer = csv.writer(fw)
-                writer.writerows(pred_result)
-
-        elif self.config.framework == "pytorch":
-            if save_npy:
-                np.save(f"{self.config.info_path}/pred.npy", prediction)
-
-            prediction_classes = np.argmax(prediction, axis=-1)
-            pred_result = list()
-
-            for files, prediction_cls in zip(annotation_set, prediction_classes):
-                image_file, *_ = files
-                pred_result.append(
-                    [
-                        image_file,
-                        self.config.class_names[int(prediction_cls)]
-                    ]
-                )
-            with open(f"{self.config.info_path}/pred.csv", "w") as fw:
-                writer = csv.writer(fw)
-                writer.writerows(pred_result)
+        if save_npy:
+            np.save(f"{self.config.info_path}/pred.npy", prediction)
+        prediction_classes = np.argmax(prediction, axis=-1)
+        pred_result = list()
+        for files, prediction_cls in zip(annotation_set, prediction_classes):
+            image_file, *_ = files
+            pred_result.append(
+                [
+                    image_file,
+                    self.config.class_names[int(prediction_cls)]
+                ]
+            )
+        with open(f"{self.config.info_path}/pred.csv", "w") as fw:
+            writer = csv.writer(fw)
+            writer.writerows(pred_result)

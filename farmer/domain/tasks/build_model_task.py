@@ -1,7 +1,6 @@
-import segmentation_models
+import segmentation_models as sm
 import segmentation_models_pytorch as smp
 
-from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 from segmentation_models.losses import (
     dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
@@ -11,12 +10,9 @@ from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
 
 from tensorflow import keras
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
 
-segmentation_models.set_framework('tf.keras')
+sm.set_framework('tf.keras')
 
 # loss functions
 cce_dice_loss = categorical_crossentropy + dice_loss
@@ -82,6 +78,7 @@ class BuildModelTask:
                     model = Model2D(nb_classes, height, width)
 
             elif self.config.framework == 'pytorch':
+                # TODO: pytorch版classification
                 model = None
 
         elif task == Task.SEMANTIC_SEGMENTATION:
@@ -92,7 +89,7 @@ class BuildModelTask:
 
             if self.config.framework == "tensorflow":
                 if model_name == "unet":
-                    model = Unet(
+                    model = sm.Unet(
                         backbone_name=backbone,
                         input_shape=(height, width, 3),
                         classes=nb_classes,
@@ -106,15 +103,16 @@ class BuildModelTask:
                     )
 
                 elif model_name == "pspnet":
-                    model = PSPNet(
+                    model = sm.PSPNet(
                         backbone_name=backbone,
                         input_shape=(height, width, 3),
                         classes=nb_classes,
                     )
+                else:
+                    raise NotImplementedError
 
             elif self.config.framework == "pytorch":
                 if model_name == "unet":
-                    print('fetch Unet model')
                     model = smp.Unet(
                         encoder_name=backbone,
                         in_channels=3,
@@ -127,6 +125,8 @@ class BuildModelTask:
                         in_channels=3,
                         classes=nb_classes,
                     )
+                else:
+                    raise NotImplementedError
 
         else:
             raise NotImplementedError
@@ -151,12 +151,44 @@ class BuildModelTask:
                 model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
 
             elif self.config.framework == "pytorch":
-                model = nn.DataParallel(model, device_ids=nb_gpu)
+                model = torch.nn.DataParallel(model, device_ids=nb_gpu)
 
         else:
             model = base_model
 
         return model
+
+
+    def _do_compile_model_task(
+        self,
+        model,
+        optimizer,
+        learning_rate,
+        task_id,
+        loss_func,
+        trial
+    ):
+        if self.config.op_learning_rate:
+            learning_rate = int(trial.suggest_discrete_uniform(
+                'learning_rate', *self.config.learning_rate))
+        else:
+            learning_rate = self.config.learning_rate
+
+        optimizer = self._do_fetch_optimizer_task(
+            model,
+            optimizer,
+            learning_rate
+        )
+
+        model = self._do_setup_model_task(
+            task_id,
+            model,
+            optimizer,
+            loss_func,
+        )
+
+        return model, optimizer
+
 
     def _do_fetch_optimizer_task(self, model, optimizer_name, learning_rate):
         if optimizer_name == "adam":
@@ -169,7 +201,7 @@ class BuildModelTask:
                 )
 
             elif self.config.framework == "pytorch":
-                return optim.Adam(
+                return torch.optim.Adam(
                     params=model.parameters(),
                     lr=learning_rate,
                     betas=(0.9, 0.999),
@@ -185,7 +217,7 @@ class BuildModelTask:
                 )
 
             elif self.config.framework == "pytorch":
-                return optim.SGD(
+                return torch.optim.SGD(
                     params=model.parameters(),
                     lr=learning_rate,
                     momentum=0.9,
@@ -225,33 +257,3 @@ class BuildModelTask:
 
         else:
             raise NotImplementedError
-
-    def _do_compile_model_task(
-        self,
-        model,
-        optimizer,
-        learning_rate,
-        task_id,
-        loss_func,
-        trial
-    ):
-        if self.config.op_learning_rate:
-            learning_rate = int(trial.suggest_discrete_uniform(
-                'learning_rate', *self.config.learning_rate))
-        else:
-            learning_rate = self.config.learning_rate
-
-        optimizer = self._do_fetch_optimizer_task(
-            model,
-            optimizer,
-            learning_rate
-        )
-
-        model = self._do_setup_model_task(
-            task_id,
-            model,
-            optimizer,
-            loss_func,
-        )
-
-        return model, optimizer

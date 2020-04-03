@@ -19,25 +19,14 @@ class PredictSegmentationTask:
         self, test_set, model, return_result=False
     ):
         save_dir = f"{self.config.image_path}/test"
+        ncc.utils.generate_segmentation_result(
+            nb_classes=self.config.nb_classes,
+            height=self.config.height,
+            width=self.config.width,
+            annotations=test_set,
+            model=model,
+            save_dir=save_dir,
+            framework=self.config.framework,
+            train_colors=self.config.train_colors,
+        )
 
-        if self.config.framework == "tensorflow":
-            ncc.utils.generate_segmentation_result(
-                nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                annotations=test_set,
-                model=model,
-                save_dir=save_dir,
-                train_colors=self.config.train_colors,
-            )
-
-        elif self.config.framework == "pytorch":
-            ncc.utils.generate_segmentation_result_pytorch(
-                nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                annotations=test_set,
-                model=model,
-                save_dir=save_dir,
-                train_colors=self.config.train_colors,
-            )

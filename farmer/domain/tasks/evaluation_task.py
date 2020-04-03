@@ -30,25 +30,16 @@ class EvaluationTask:
                 return [None]
 
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            if self.config.framework == "tensorflow":
-                return ncc.metrics.iou_dice_val(
-                    self.config.nb_classes,
-                    self.config.height,
-                    self.config.width,
-                    annotation_set,
-                    model,
-                    self.config.train_colors
-                )
+            return ncc.metrics.iou_dice_val(
+                self.config.nb_classes,
+                self.config.height,
+                self.config.width,
+                annotation_set,
+                model,
+                self.config.framework,
+                self.config.train_colors
+            )
 
-            elif self.config.framework == "pytorch":
-                return ncc.metrics.iou_dice_val_pytorch(
-                    self.config.nb_classes,
-                    self.config.height,
-                    self.config.width,
-                    annotation_set,
-                    model,
-                    self.config.train_colors
-                )
 
         elif self.config.task == ncc.tasks.Task.OBJECT_DETECTION:
             if self.config.framework == "tensorflow":

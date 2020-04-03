@@ -1,16 +1,12 @@
 import os
-import numpy as np
-from farmer import ncc
-from tensorflow.python import keras
-
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.data as data
 import random
-
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
+
+from tensorflow import keras
+import torch
+from farmer import ncc
 
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.utils.train import TrainEpoch, ValidEpoch
@@ -22,8 +18,6 @@ from segmentation_models_pytorch.utils.losses import (
 from segmentation_models_pytorch.utils.metrics import (
     IoU, Accuracy
 )
-
-import pandas as pd
 
 
 class TrainTask:
@@ -83,7 +77,39 @@ class TrainTask:
             sequence_args.update(annotations=validation_set, augmentation=[])
             validation_dataset = ncc.generators.ImageDataset(**sequence_args)
 
-            return train_dataset, validation_dataset
+            if self.config.multi_gpu:
+                train_dataloader = torch.utils.data.DataLoader(
+                    train_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+                valid_dataloader = torch.utils.data.DataLoader(
+                    validation_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=16,
+                    worker_init_fn=self.worker_init_fn,
+                )
+
+            else:
+                train_dataloader = torch.utils.data.DataLoader(
+                    train_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=0,
+                )
+
+                valid_dataloader = torch.utils.data.DataLoader(
+                    validation_dataset,
+                    batch_size=self.config.batch_size,
+                    shuffle=False,
+                    num_workers=0,
+                )
+
+            return train_dataloader, valid_dataloader
 
         # unexpected case
         return [None], [None]
@@ -102,6 +128,7 @@ class TrainTask:
                 )
 
         elif self.config.framework == 'pytorch':
+            # TODO: Callbacks of ModelCheckpoint at PyTorch
             return None
 
     def _do_fetch_scheduler(self, optimizer):
@@ -132,13 +159,13 @@ class TrainTask:
                     self.config.epochs
                 )
 
-                return optim.lr_scheduler.LambdaLR(
+                return torch.optim.lr_scheduler.LambdaLR(
                     optimizer,
                     lr_lambda=ncc_scheduler.cosine_decay
                 )
 
             else:
-                return optim.lr_scheduler.ReduceLROnPlateau(
+                return torch.optim.lr_scheduler.ReduceLROnPlateau(
                     optimizer,
                     factor=0.5,
                     patience=10,
@@ -182,6 +209,7 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
+            # TODO: 推論の結果画像生成
             return [None]
 
     def _do_fetch_slack_logging(self):
@@ -201,6 +229,7 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
+            # TODO: Slackにログを飛ばす
             return None
 
     def _do_set_callbacks_task(self, base_model, train_set, validation_set):
@@ -223,6 +252,7 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
+
         if self.config.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
                 self.config.cosine_lr_max,
@@ -240,6 +270,7 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
         callbacks = [checkpoint, scheduler, plot_history]
+
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             iou_history = ncc.callbacks.IouHistory(
                 save_dir=self.config.learning_path,
@@ -249,6 +280,7 @@ class TrainTask:
                 width=self.config.width,
                 train_colors=self.config.train_colors
             )
+
             val_save_dir = os.path.join(self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
@@ -260,6 +292,7 @@ class TrainTask:
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
+
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
                 file_name = os.path.join(self.config.learning_path, "IoU.png")
@@ -294,45 +327,13 @@ class TrainTask:
             )
 
         elif self.config.framework == 'pytorch':
-            if self.config.multi_gpu:
-                train_dataloader = data.DataLoader(
-                    train_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=16,
-                    worker_init_fn=self.worker_init_fn,
-                )
-
-                val_dataloader = data.DataLoader(
-                    validation_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=16,
-                    worker_init_fn=self.worker_init_fn,
-                )
-
-            else:
-                train_dataloader = data.DataLoader(
-                    train_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=0,
-                )
-
-                val_dataloader = data.DataLoader(
-                    validation_gen,
-                    batch_size=self.config.batch_size,
-                    shuffle=False,
-                    num_workers=0,
-                )
-
+            """
             dataloaders = {
-                'train': train_dataloader,
-                'val': val_dataloader,
+                'train': train_gen,
+                'val': validation_gen,
             }
-
             criterion = self._do_fetch_criterion(self.config.loss)
-
+            
             model = self._do_train_pytorch_model_task(
                 dataloaders,
                 self.config.epochs,
@@ -340,6 +341,54 @@ class TrainTask:
                 model,
                 criterion,
             )
+            """
+            
+            # Segmentation_models_pytorchのtrainerを使った場合
+            # 参考 https://github.com/qubvel/segmentation_models.pytorch/blob/master/examples/cars%20segmentation%20(camvid).ipynb
+            # :WIP: Unetで `UserWarnig: Couldn't retrieve source code for container of type Unet. It won't be checked for correctness upon loading.`がめっちゃ出る`
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            criterion = self._do_fetch_criterion(self.config.loss)
+            metrics = [IoU(), Accuracy()]
+            scheduler = self._do_fetch_scheduler(optimizer)
+
+            train_epoch = TrainEpoch(
+                model, 
+                loss=criterion, 
+                metrics=metrics, 
+                optimizer=optimizer,
+                device=device,
+                verbose=True
+            )
+            valid_epoch = ValidEpoch(
+                model, 
+                loss=criterion, 
+                metrics=metrics, 
+                device=device,
+                verbose=True
+            )
+
+            # TRAIN LOOP
+            max_score = 0
+            for i in range(self.config.epochs):
+                print(f'\nEpoch: {i}/{self.config.epochs}')
+                train_logs = train_epoch.run(train_gen)
+                valid_logs = valid_epoch.run(validation_gen)
+
+                # save model
+                if max_score < valid_logs['iou_score']:
+                    max_score = valid_logs['iou_score']
+                    torch.save(model, './best_model.pth')
+                    print('Model saved!')
+
+                # change learning rate
+                if self.config.cosine_decay:
+                    scheduler.step()
+
+            # save logs to csv
+            # df_train = pd.DataFrame(train_logs)
+            # df_train.to_csv('log_train.csv', index=False)
+            # df_valid = pd.DataFrame(valid_logs)
+            # df_valid.to_csv('log_valid.csv', index=False)
 
         return model
 
@@ -351,11 +400,7 @@ class TrainTask:
             return JaccardLoss()
 
         elif criterion_name == 'crossentropy_loss':
-            # 一旦、ダイスロスにしておく
-            # 関数「CrossEntropyLoss」使用時のエラーメッセージ
-            # RuntimeError: The size of tensor a (2) must match the size of tensor b (4) at non-singleton dimension 1
-            return CrossEntropyLoss()
-            # return DiceLoss()
+            return OneHotCrossEntropy()
 
         else:
             return None
@@ -370,34 +415,28 @@ class TrainTask:
         epochs,
         optimizer,
         model,
-        criterion_loss
+        criterion
     ):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
-
         scheduler = self._do_fetch_scheduler(optimizer)
-
-        print(f'criterion_loss type: {type(criterion_loss)}')
-
-        logs = []
-
-        criterion_ce = self._do_fetch_criterion('crossentropy_loss')
-        criterion_iou = IoU()
-        criterion_acc = Accuracy()
-
-        print('criterion type:', type(criterion_ce))
+        crossentropy = self._do_fetch_criterion('crossentropy_loss')
+        logs = list()
 
         for epoch in range(epochs):
-            # リファクタリング対象
-            epoch_train_loss = 0.0
-            epoch_val_loss = 0.0
-            epoch_train_loss_ce = 0.0
-            epoch_val_loss_ce = 0.0
+            loss_logs = dict(
+                train=0.0,
+                val=0.0,
+                train_ce=0.0,
+                val_ce=0.0
+            )
 
-            iou_train_list = []
-            acc_train_list = []
-            iou_val_list = []
-            acc_val_list = []
+            metrics_logs = dict(
+                train_iou=list(),
+                val_iou=list(),
+                train_acc=list(),
+                val_acc=list()
+            )
 
             for phase in ['train', 'val']:
                 if phase == 'train':
@@ -411,50 +450,27 @@ class TrainTask:
                 else:
                     model.eval()
 
-                for images, labels, labels_raw in tqdm(dataloaders[phase], total=len(dataloaders[phase])):
+                for images, labels in tqdm(dataloaders[phase], total=len(dataloaders[phase])):
                     if images.size(0) == 1:
                         continue
 
-                    print('before permute')
-                    print(f'images size:', images.size())
-                    print(f'labels size:', labels.size())
-
-                    # (mini-batch, height, width, ch) => (mini-batch, ch, height, width)
-                    images = images.permute(0, 3, 1, 2)
-                    labels = labels.permute(0, 3, 1, 2)
-
                     images = images.to(device)
                     labels = labels.to(device)
-                    labels_raw = labels_raw.to(device)
-
-                    print('after permute')
-                    print(f'images size:', images.size())
-                    print(f'labels size:', labels.size())
-                    print(f'labels_raw size:', labels_raw.size())
-
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(images)
 
-                        print('outputs size: ', outputs.size(),
-                              ', labels size: ', labels.size())
-
-                        loss = criterion_loss(outputs, labels.long())
-                        loss_ce = criterion_ce(outputs, labels_raw.long())
-                        iou = criterion_iou(outputs, labels.long())
-                        acc = criterion_acc(outputs, labels.long())
-
-                        print(
-                            f'outputs type: {type(outputs)}, labels type: {type(labels)}')
-                        print(
-                            f'outputs type: {type(outputs)}, labels.long() type: {type(labels.long())}')
+                        loss_ce = crossentropy(outputs, torch.argmax(labels, axis=1).long())  # crossentropyはonehot化しない
+                        loss = criterion(outputs, labels.long()) if self.config.loss != "crossentropy_loss" else loss_ce
+                        iou = IoU()(outputs, labels.long())
+                        acc = Accuracy()(outputs, labels.long())
 
                         if phase == 'train':
                             loss.backward()
 
-                            epoch_train_loss += loss.item()
-                            epoch_train_loss_ce += loss_ce.item()
-                            iou_train_list.append(iou.item())
-                            acc_train_list.append(acc.item())
+                            loss_logs["train"] += loss.item()
+                            loss_logs["train_ce"] += loss_ce.item()
+                            metrics_logs["train_iou"].append(iou.item())
+                            metrics_logs["train_acc"].append(acc.item())
 
                             optimizer.step()
                             optimizer.zero_grad()
@@ -462,44 +478,44 @@ class TrainTask:
                         else:
                             _, predict_result = torch.max(outputs.data, 1)
 
-                            epoch_val_loss += loss.item()
-                            epoch_val_loss_ce += loss_ce.item()
-                            iou_val_list.append(iou.item())
-                            acc_val_list.append(acc.item())
+                            loss_logs["val"] += loss.item()
+                            loss_logs["val_ce"] += loss_ce.item()
+                            metrics_logs["val_iou"].append(iou.item())
+                            metrics_logs["val_acc"].append(acc.item())
 
             print(
-                f"Epoch {epoch:03d}, Train loss: {epoch_train_loss}, Val loss: {epoch_val_loss}")
+                f"Epoch: {epoch+1:03d} \nTrain loss: {loss_logs['train']:.4f} - Train IoU: {self._do_calculate_avg(metrics_logs['train_iou']):.4f}\n Valid loss: {loss_logs['val']:.4f} - Valid IoU: {self._do_calculate_avg(metrics_logs['val_iou']):.4f}")
 
             logs.append(
                 {
                     'epoch': epoch + 1,
-                    'loss': epoch_train_loss,
-                    'crossentropy': epoch_train_loss_ce,
-                    'iou_train': self._do_calculate_avg(iou_train_list),
-                    'acc_train': self._do_calculate_avg(acc_train_list),
-                    'iou_val': self._do_calculate_avg(iou_val_list),
-                    'acc_val': self._do_calculate_avg(acc_val_list),
+                    'train_loss': loss_logs["train"],
+                    'train_crossentropy': loss_logs["train_ce"],
+                    'val_loss': loss_logs["val"],
+                    'val_crossentropy': loss_logs["val_ce"],
+                    'iou_train': self._do_calculate_avg(metrics_logs["train_iou"]),
+                    'acc_train': self._do_calculate_avg(metrics_logs["train_acc"]),
+                    'iou_val': self._do_calculate_avg(metrics_logs["val_iou"]),
+                    'acc_val': self._do_calculate_avg(metrics_logs["val_acc"]),
                 }
             )
-
-        print('before output csv')
 
         df = pd.DataFrame(logs)
         df.to_csv('log_output.csv', index=False)
 
-        print('after output csv')
-
-        # callbacks
-        # 1-1. 学習済モデルの保存 (複数GPU or GPU) - on_epoch_end: すべてのエポックの終了時に呼ばれます．
-        # 2-1. スケジューラの取得
-        # 3-1. plot_historyの取得               - 訓練の開始時、全てのエポックの終了時
-        #  plot_history = ncc.callbacks.PlotHistory(
-        #     self.config.learning_path,
-        #     ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
-        # )
-        # 4-1. iou_historyの取得                - 訓練の開始時、全てのエポックの終了時
-        # 4-2. generate_sample_resultの取得     - 全てのエポックの終了時
-        # 5. Slackへの画像送信 -> 一旦、廃止
+        '''
+        TODO: callbacks
+        1-1. 学習済モデルの保存 (複数GPU or GPU) - on_epoch_end: すべてのエポックの終了時に呼ばれます．
+        2-1. スケジューラの取得
+        3-1. plot_historyの取得               - 訓練の開始時、全てのエポックの終了時
+         plot_history = ncc.callbacks.PlotHistory(
+            self.config.learning_path,
+            ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+        )
+        4-1. iou_historyの取得                - 訓練の開始時、全てのエポックの終了時
+        4-2. generate_sample_resultの取得     - 全てのエポックの終了時
+        5. Slackへの画像送信 -> 一旦、廃止
+        '''
 
         return model
 
@@ -533,9 +549,11 @@ class TrainTask:
                 return model
 
 
-class CrossEntropy(nn.Module):
+class OneHotCrossEntropy(torch.nn.Module):
     def __init__(self):
-        super(CrossEntropy, self).__init__()
-
-    def forward(self, outputs, targets):
-        return F.cross_entropy(outputs, targets, reduction='mean')
+        super(OneHotCrossEntropy, self).__init__()
+        self.crossentropy_loss = CrossEntropyLoss()
+    
+    def forward(self, y_pred, y_true_onehot):
+        y_true = torch.argmax(y_true_onehot, axis=1)
+        return self.crossentropy_loss(y_pred, y_true.long())

@@ -26,6 +26,7 @@ class Trainer(Config, ImageLoader, Optuna):
     trained_model_path: str = None
     model_name: str = None
     backbone: str = None
+    activation: str = "softmax"
     nb_train_data: int = 0
     nb_validation_data: int = 0
     nb_test_data: int = 0
@@ -54,7 +55,7 @@ class Trainer(Config, ImageLoader, Optuna):
                 self.trained_model_path = self.trained_path
             else:
                 self.trained_model_path = os.path.join(
-                        self.trained_path, "model/last_model.h5"
+                    self.trained_path, "model/last_model.h5"
                 )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)

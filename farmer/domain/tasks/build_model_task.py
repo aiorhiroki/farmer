@@ -33,6 +33,7 @@ class BuildModelTask:
             height=self.config.height,
             width=self.config.width,
             backbone=self.config.backbone,
+            activation=self.config.activation
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -59,6 +60,7 @@ class BuildModelTask:
         width=299,
         height=299,
         backbone="resnet50",
+        activation="softmax"
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
@@ -88,6 +90,7 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
+                    activation=activation
                 )
             elif model_name == "pspnet":
                 model = PSPNet(

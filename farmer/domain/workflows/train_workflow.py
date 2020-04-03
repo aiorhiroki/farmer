@@ -23,7 +23,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow()
-
         model, base_model, optimizer = self.build_model_flow(trial)
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial, optimizer
@@ -44,14 +43,15 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return train_set, validation_set, test_set
 
     def eda_flow(self):
-        print("eda flow done")
         EdaTask(self._config).command()
+        print("eda flow done")
 
     def build_model_flow(self, trial=None):
-        if self._config.task == Task.OBJECT_DETECTION:
+        if self._config.framework == 'tensorflow' \
+            and self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
-            return None, None
+            return None, None, None
         model, base_model, optimizer = BuildModelTask(
             self._config).command(trial)
         print("build model flow done")
@@ -68,83 +68,37 @@ class TrainWorkflow(AbstractImageAnalyzer):
         trial,
         optimizer
     ):
-        # print(
-        #     f'[train_workflow.py][model_execution_flow] config: {self._config}/n')
-        # print(f'Used framework: {self._config.Trainer.framework}')
-        # tmp = self._config.framework
+        if self._config.training:
+            if self._config.task == Task.OBJECT_DETECTION:
+                # Object Detectionのみ例外的にkeras-retinaでbuild_model含めてTrainまで全て行う
+                from keras_retinanet.bin import train
+                annotations = f"{self._config.info_path}/train.csv"
+                classes = f"{self._config.info_path}/classes.csv"
+                val_annotations = f"{self._config.info_path}/validation.csv"
+                train.main(
+                    [
+                        "--epochs", str(self._config.epochs),
+                        "--steps", str(self._config.steps),
+                        "--snapshot-path", self._config.model_path,
+                        "csv", annotations, classes,
+                        "--val-annotations", val_annotations
+                    ]
+                )
+                trained_model = "{}/resnet50_csv_{:02d}.h5".format(
+                    self._config.model_path, self._config.epochs
+                )
+            else:
+                trained_model = TrainTask(self._config).command(
+                    model, base_model,
+                    annotation_set, validation_set,
+                    trial, optimizer
+                )
 
-        if not self._config.training:
+        else:
             if self._config.task == Task.OBJECT_DETECTION:
                 trained_model = self._config.trained_model_path
             else:
                 trained_model = model
-
-        else:
-            if self._config.framework == 'tensorflow':
-                if self._config.task == Task.OBJECT_DETECTION:
-                    from keras_retinanet.bin import train
-                    annotations = f"{self._config.info_path}/train.csv"
-                    classes = f"{self._config.info_path}/classes.csv"
-                    val_annotations = f"{self._config.info_path}/validation.csv"
-                    train.main(
-                        [
-                            "--epochs", str(self._config.epochs),
-                            "--steps", str(self._config.steps),
-                            "--snapshot-path", self._config.model_path,
-                            "csv", annotations, classes,
-                            "--val-annotations", val_annotations
-                        ]
-                    )
-                    trained_model = "{}/resnet50_csv_{:02d}.h5".format(
-                        self._config.model_path, self._config.epochs
-                    )
-                else:
-                    trained_model = TrainTask(self._config).command(
-                        model, base_model,
-                        annotation_set, validation_set,
-                        trial, optimizer
-                    )
-
-            elif self._config.framework == 'pytorch':
-                if self._config.task == Task.OBJECT_DETECTION:
-                    """
-                    Remarks
-                    1. Check keras and tf version
-                    2. Set up GPU
-                    3. Load config parameters
-                    4. Create the generators
-                    5. Create the model
-                    6. Print model summary
-                    7. Compute backbone layers shapes using the actual backbone model
-                    8. Create the callbacks
-                    9. Start trainging (training_mode.fit_generator(...))
-                    -> Train model using generated data per batch from Python generator 
-                    """
-                    # https://github.com/fizyr/keras-retinanet/blob/master/keras_retinanet/bin/train.py
-                    from keras_retinanet.bin import train
-                    annotations = f"{self._config.info_path}/train.csv"
-                    classes = f"{self._config.info_path}/classes.csv"
-                    val_annotations = f"{self._config.info_path}/validation.csv"
-                    train.main(
-                        [
-                            "--epochs", str(self._config.epochs),
-                            "--steps", str(self._config.steps),
-                            "--snapshot-path", self._config.model_path,
-                            "csv", annotations, classes,
-                            "--val-annotations", val_annotations
-                        ]
-                    )
-                    trained_model = "{}/resnet50_csv_{:02d}.pth".format(
-                        self._config.model_path, self._config.epochs
-                    )
-
-                else:
-                    trained_model = TrainTask(self._config).command(
-                        model, base_model,
-                        annotation_set, validation_set,
-                        trial, optimizer
-                    )
-
         if self._config.training and len(test_set) == 0:
             test_set = validation_set
 

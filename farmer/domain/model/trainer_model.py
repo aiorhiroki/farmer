@@ -48,7 +48,7 @@ class Trainer(Config, ImageLoader, Optuna):
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
         if self.trained_model_path is not None:
             self.trained_model_path = os.path.join(
-                    self.root_dir, self.trained_model_path
+                self.root_dir, self.trained_model_path
             )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
@@ -67,3 +67,8 @@ class Trainer(Config, ImageLoader, Optuna):
         self.op_batch_size = type(self.batch_size) == list
         self.op_learning_rate = type(self.learning_rate) == list
         self.optuna = self.op_batch_size or self.op_learning_rate
+
+    def check_arg(self):
+        assert self.framework in [
+            "tensorflow", "pytorch"
+        ], "You need to specify either tensorflow or pytorch as framework."

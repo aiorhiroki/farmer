@@ -8,5 +8,5 @@ class Task(IntEnum):
 
 
 class Framework(Enum):
-    TENSORFLOW = "tensorflow"
-    PYTORCH = "pytorch"
+    TENSORFLOW = 1
+    PYTORCH = 2

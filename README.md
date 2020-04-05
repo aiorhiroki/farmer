@@ -6,8 +6,18 @@ You can train Classification and Segmentation tasks semi-automatically
 
 Docker >= 19.03
 
+for bash user
 ```bash
-docker build -t tensorflow:v2 .
+docker build -t tensorflow:v2 --build-arg UID=$(id -u) .
+```
+
+for fish user
+```fish
+docker build -t tensorflow:v2 --build-arg UID=(id -u) .
+```
+
+run container
+```
 sh docker-start.sh farmer 5000
 ```
 

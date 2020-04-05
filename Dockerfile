@@ -1,5 +1,7 @@
 FROM tensorflow/tensorflow:2.0.0-gpu-py3
 
+MAINTAINER Hiroki Matsuzaki
+
 RUN apt-get update \
     && apt-get install -y apt-utils \
     && apt-get install -y vim git locales \
@@ -18,17 +20,15 @@ RUN pip install pipenv
 RUN pipenv install --system
 RUN rm Pipfile.lock
 
-RUN pip install git+https://github.com/aiorhiroki/farmer.git@v1.3.4
-RUN pip install git+https://github.com/fizyr/keras-retinanet.git@0.5.2.beta0
+# ユーザーを作成
+ARG UID=9001
+ARG USERNAME=docker
+RUN useradd -m -u ${UID} ${USERNAME}
 
-ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
-ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /root/.keras/models/
+ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /home/${USERNAME}/.keras/models/
+ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /home/${USERNAME}/.keras/models/
 
-# fish shell
-RUN apt-add-repository ppa:fish-shell/release-3 -y
-RUN apt-get update
-RUN apt-get install fish -y
-RUN exec fish
-
-WORKDIR /home
+# 作成したユーザーに切り替える
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}/src
 

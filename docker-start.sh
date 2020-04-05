@@ -3,12 +3,10 @@ docker run \
 	-itd \
 	--rm \
 	-p $2:$2 \
-	--name $1 \
-	--mount type=bind,source="$PWD",target=/app \
-	--mount type=bind,source=/home,target=/home \
-	--mount type=bind,source=/media,target=/media \
+	--name $1-$USER \
 	--mount type=bind,source=/mnt,target=/mnt \
+	--mount type=bind,source=/home/$USER/src,target=/home/docker/src \
 	tensorflow:v2 \
-	fish
+	bash
 
-docker exec -it $1 fish
+docker exec -it $1-$USER bash

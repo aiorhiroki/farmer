@@ -30,13 +30,11 @@ def get_user_list():
             name='atsushi',
             uid=1002,
             sudo='true',
-            pub='pub key to be set'
         ),
         dict(
             name='yhamajima',
             uid=1003,
             sudo='false',
-            pub='pub key to be set'
         ),
     ]
 

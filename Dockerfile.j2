@@ -29,12 +29,6 @@ RUN echo "{{user.name}}:{{password}}" | chpasswd
 {% if user.sudo == "true" %}
 RUN gpasswd -a {{user.name}} sudo
 {% endif %}
-WORKDIR /home/{{user.name}}
-RUN sudo -u {{user.name}} mkdir -p .ssh
-RUN sudo -u {{user.name}} chmod 700 .ssh
-RUN sudo -u {{user.name}} touch .ssh/authorized_keys
-RUN sudo -u {{user.name}} chmod 600 .ssh/authorized_keys
-RUN sudo -u {{user.name}} echo "{{user.pub}}" > .ssh/authorized_keys
 {% endfor %}
 
 # cleanup

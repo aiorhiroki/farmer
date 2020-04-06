@@ -6,6 +6,8 @@ You can train Classification and Segmentation tasks semi-automatically
 
 Docker >= 19.03
 
+(python library) jinja2
+
 build docker
 ```bash
 docker build -t tensorflow:v2 .

@@ -4,8 +4,8 @@ MAINTAINER Hiroki Matsuzaki
 
 RUN apt-get update \
     && apt-get install -y apt-utils \
-    && apt-get install -y vim git locales \
-    libglib2.0-0 libsm6 libxrender1 libxext6 
+    && apt-get install -y vim git locales sudo \
+    libglib2.0-0 libsm6 libxrender1 libxext6
 
 RUN pip install --upgrade pip
 
@@ -20,15 +20,50 @@ RUN pip install pipenv
 RUN pipenv install --system
 RUN rm Pipfile.lock
 
-# ユーザーを作成
-ARG UID=9001
-ARG USERNAME=docker
-RUN useradd -m -u ${UID} ${USERNAME}
+# create user
 
-ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5" /home/${USERNAME}/.keras/models/
-ADD "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5" /home/${USERNAME}/.keras/models/
+RUN groupadd hiroki -g 1001
+RUN useradd -m hiroki -u 1001 -g 1001
+RUN usermod -s /bin/bash hiroki
+RUN echo "hiroki:sigmoid" | chpasswd
 
-# 作成したユーザーに切り替える
-USER ${USERNAME}
-WORKDIR /home/${USERNAME}/src
+RUN gpasswd -a hiroki sudo
 
+WORKDIR /home/hiroki
+RUN sudo -u hiroki mkdir -p .ssh
+RUN sudo -u hiroki chmod 700 .ssh
+RUN sudo -u hiroki touch .ssh/authorized_keys
+RUN sudo -u hiroki chmod 600 .ssh/authorized_keys
+RUN sudo -u hiroki echo "" > .ssh/authorized_keys
+
+RUN groupadd atsushi -g 1002
+RUN useradd -m atsushi -u 1002 -g 1002
+RUN usermod -s /bin/bash atsushi
+RUN echo "atsushi:sigmoid" | chpasswd
+
+RUN gpasswd -a atsushi sudo
+
+WORKDIR /home/atsushi
+RUN sudo -u atsushi mkdir -p .ssh
+RUN sudo -u atsushi chmod 700 .ssh
+RUN sudo -u atsushi touch .ssh/authorized_keys
+RUN sudo -u atsushi chmod 600 .ssh/authorized_keys
+RUN sudo -u atsushi echo "pub key to be set" > .ssh/authorized_keys
+
+RUN groupadd yhamajima -g 1003
+RUN useradd -m yhamajima -u 1003 -g 1003
+RUN usermod -s /bin/bash yhamajima
+RUN echo "yhamajima:sigmoid" | chpasswd
+
+WORKDIR /home/yhamajima
+RUN sudo -u yhamajima mkdir -p .ssh
+RUN sudo -u yhamajima chmod 700 .ssh
+RUN sudo -u yhamajima touch .ssh/authorized_keys
+RUN sudo -u yhamajima chmod 600 .ssh/authorized_keys
+RUN sudo -u yhamajima echo "pub key to be set" > .ssh/authorized_keys
+
+
+# cleanup
+RUN apt-get autoremove && apt-get clean
+
+WORKDIR /home/

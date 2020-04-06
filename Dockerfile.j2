@@ -14,6 +14,11 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+# fish shell
+RUN apt-add-repository ppa:fish-shell/release-3 -y
+RUN apt-get update
+RUN apt-get install fish -y
+
 COPY Pipfile ./
 COPY Pipfile.lock ./
 RUN pip install pipenv

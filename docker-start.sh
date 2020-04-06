@@ -7,6 +7,6 @@ docker run \
 	--mount type=bind,source=/mnt,target=/mnt \
 	--mount type=bind,source=/home,target=/home \
 	test:v1 \
-	bash
+	fish
 
-docker exec -it --user $USER $1 bash
+docker exec -it --user $USER $1 fish

@@ -5,7 +5,8 @@ docker run \
 	-p $2:22 \
 	--name $1 \
 	--mount type=bind,source=/mnt,target=/mnt \
-	test:v1 \
+    --mount type=bind,source=/home/$USER/src,target=/home/$USER/src \
+    tensorflow:v2
 	bash
 
 docker exec -it --user $USER $1 bash --login

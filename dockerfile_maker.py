@@ -1,3 +1,4 @@
+import json
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -20,24 +21,8 @@ def main():
 
 
 def get_user_list():
-    user_list = [
-        dict(
-            name='hiroki',
-            uid=1001,
-            sudo='true',
-        ),
-        dict(
-            name='atsushi',
-            uid=1002,
-            sudo='true',
-        ),
-        dict(
-            name='yhamajima',
-            uid=1003,
-            sudo='false',
-        ),
-    ]
-
+    with open("user_setting.json", "r") as fr:
+        user_list = json.load(fr)
     return user_list
 
 

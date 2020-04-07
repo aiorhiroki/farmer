@@ -25,6 +25,8 @@ RUN pip install pipenv
 RUN pipenv install --system
 RUN rm Pipfile.lock
 
+RUN pip install git+https://github.com/aiorhiroki/farmer.git@v1.3.4
+
 # create user
 {% for user in user_list %}
 RUN groupadd {{user.name}} -g {{user.uid}}
@@ -35,9 +37,10 @@ RUN echo "{{user.name}}:{{password}}" | chpasswd
 RUN gpasswd -a {{user.name}} sudo
 {% endif %}
 WORKDIR /home/{{user.name}}
-RUN sudo -u {{user.name}} echo 'export PIP_ROOT=/home/{{user.name}}/.local' >> .bash_profile
-RUN sudo -u {{user.name}} echo 'export PATH=$PIP_ROOT/shims:$PIP_ROOT/bin:$PATH' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'export PIP_ROOT=/home/{{user.name}}/.local' >> .bashrc
+RUN sudo -u {{user.name}} echo 'export PATH=$PIP_ROOT/shims:$PIP_ROOT/bin:$PATH' >> .bashrc
 RUN sudo -u {{user.name}} echo 'source ~/.bashrc' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'cd /home/{{user.name}}' >> .bash_profile
 RUN sudo -u {{user.name}} echo 'exec fish' >> .bash_profile
 {% endfor %}
 

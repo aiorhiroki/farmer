@@ -74,5 +74,5 @@ Godfarmer
 ## For Developer
 If you change files, run following command before *Godfarmer*
 ```bash
-pip install .
+python setup.py develop --user
 ```

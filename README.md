@@ -18,7 +18,7 @@ sh docker-start.sh farmer 5000
 
 exec container
 ```
-docker exec -it --user $USER farmer-dev-$USER fish
+docker exec -it --user $USER farmer-dev bash --login
 ```
 
 ## Prepare Data set folder

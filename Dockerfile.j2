@@ -34,6 +34,11 @@ RUN echo "{{user.name}}:{{password}}" | chpasswd
 {% if user.sudo == "true" %}
 RUN gpasswd -a {{user.name}} sudo
 {% endif %}
+WORKDIR /home/{{user.name}}
+RUN sudo -u {{user.name}} echo 'export PIP_ROOT=/home/{{user.name}}/.local' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'export PATH=$PIP_ROOT/shims:$PIP_ROOT/bin:$PATH' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'source ~/.bashrc' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'exec fish' >> .bash_profile
 {% endfor %}
 
 # cleanup

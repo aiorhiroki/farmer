@@ -1,0 +1,50 @@
+FROM tensorflow/tensorflow:2.0.0-gpu-py3
+
+MAINTAINER Hiroki Matsuzaki
+
+RUN apt-get update \
+    && apt-get install -y apt-utils \
+    && apt-get install -y vim git locales sudo \
+    libglib2.0-0 libsm6 libxrender1 libxext6
+
+RUN pip install --upgrade pip
+
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# fish shell
+RUN apt-add-repository ppa:fish-shell/release-3 -y
+RUN apt-get update
+RUN apt-get install fish -y
+
+COPY Pipfile ./
+COPY Pipfile.lock ./
+RUN pip install pipenv
+RUN pipenv install --system
+RUN rm Pipfile.lock
+
+RUN pip install git+https://github.com/aiorhiroki/farmer.git@v1.3.4
+
+# create user
+{% for user in user_list %}
+RUN groupadd {{user.name}} -g {{user.uid}}
+RUN useradd -m {{user.name}} -u {{user.uid}} -g {{user.uid}}
+RUN usermod -s /bin/bash {{user.name}}
+RUN echo "{{user.name}}:{{password}}" | chpasswd
+{% if user.sudo == "true" %}
+RUN gpasswd -a {{user.name}} sudo
+{% endif %}
+WORKDIR /home/{{user.name}}
+RUN sudo -u {{user.name}} echo 'export PIP_ROOT=/home/{{user.name}}/.local' >> .bashrc
+RUN sudo -u {{user.name}} echo 'export PATH=$PIP_ROOT/shims:$PIP_ROOT/bin:$PATH' >> .bashrc
+RUN sudo -u {{user.name}} echo 'source ~/.bashrc' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'cd /home/{{user.name}}' >> .bash_profile
+RUN sudo -u {{user.name}} echo 'exec fish' >> .bash_profile
+{% endfor %}
+
+# cleanup
+RUN apt-get autoremove && apt-get clean
+
+WORKDIR /home/

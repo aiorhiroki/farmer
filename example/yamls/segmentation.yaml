@@ -10,12 +10,20 @@ test_dirs:
 training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
-backbone: mobilenetv2
+backbone: 
+    - mobilenetv2
+    - xception
 loss: dice_loss
 epochs: 2
 segmentation_val_step: 2
-batch_size: 2
-optimizer: adam
+batch_size:
+    - 4 # min
+    - 16 # max
+    - 4 # step
+n_trials: 5
+optimizer: 
+    - adam
+    - sgd
 augmentation:
     - horizontal_flip
     - zoom

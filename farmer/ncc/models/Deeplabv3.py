@@ -451,8 +451,8 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
     else:
         inputs = img_input
 
-    if activation in {'softmax', 'sigmoid'}:
-        x = tf.keras.layers.Activation(activation)(x)
+    if activation in {'softmax', 'sigmoid', 'linear'}:
+        x = Activation(activation)(x)
 
     model = Model(inputs, x, name='deeplabv3plus')
 

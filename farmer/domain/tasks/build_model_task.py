@@ -132,8 +132,14 @@ class BuildModelTask:
         trial
     ):
         if self.config.op_learning_rate:
-            learning_rate = int(trial.suggest_discrete_uniform(
-                'learning_rate', *self.config.learning_rate))
+            if len(self.config.learning_rate) == 2:
+                # learning_rate = [10^(min), 10^(max)]
+                learning_rate = int(trial.suggest_loguniform(
+                    'learning_rate', *self.config.learning_rate))
+            elif len(self.config.learning_rate) == 3:
+                # learning_rate = [min, max, step]
+                learning_rate = int(trial.suggest_discrete_uniform(
+                    'learning_rate', *self.config.learning_rate))
         else:
             learning_rate = self.config.learning_rate
 

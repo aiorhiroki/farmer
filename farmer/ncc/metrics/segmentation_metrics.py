@@ -81,7 +81,7 @@ def detection_rate_confusions(pred_labels, gt_labels, nb_classes):
                 confusion_tabel[class_id, 0] += 1
             elif np.sum(gt_mask) == 0 and np.sum(pred_mask) > 0:
                 confusion_tabel[class_id, 1] += 1
-            elif np.sum(gt_mask*pred_mask) == 0:
+            elif np.sum(gt_mask * pred_mask) == 0:
                 confusion_tabel[class_id, 2] += 1
             else:
                 confusion_tabel[class_id, 3] += 1

@@ -78,7 +78,7 @@ class BuildModelTask:
         elif task == Task.SEMANTIC_SEGMENTATION:
             if self.config.op_backbone:
                 backbone = trial.suggest_categorical(
-                    'backbone', [*self.config.backbone]
+                    'backbone', self.config.backbone
                 )
             print('------------------')
             print('Model:', model_name)
@@ -146,7 +146,7 @@ class BuildModelTask:
         if self.config.framework == "tensorflow":
             if self.config.op_optimizer:
                 optimizer = trial.suggest_categorical(
-                    'optimizer', [*self.config.optimizer]
+                    'optimizer', self.config.optimizer
                 )
                 print('------------------')
                 print('Optimizer:', optimizer)

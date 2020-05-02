@@ -1,5 +1,6 @@
 import os
 import csv
+import numpy as np
 from farmer import ncc
 
 
@@ -56,6 +57,7 @@ class ReadAnnotationTask:
 
         if phase == "train":
             self.config.nb_train_data = len(annotations)
+            np.random.shuffle(annotations)
         elif phase == "validation":
             self.config.nb_validation_data = len(annotations)
         elif phase == "test":

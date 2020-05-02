@@ -3,11 +3,11 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='1.3.4',
+    version='1.3.5',
     description='Auto Machine Learning for Doctor',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
-    url='https://github.com/NCC-AI/apps',
+    url='https://github.com/aiorhiroki/farmer.git',
     download_url='',
     license='Apache 2.0',
     install_requires=[

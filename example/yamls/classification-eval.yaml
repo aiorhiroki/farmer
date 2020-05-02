@@ -15,5 +15,5 @@ augmentation:
 learning_rate: 0.01
 width: 80
 height: 80
-trained_path: result/classification/images/classification_result/cv_4
+trained_path: result/classification/images/classification_result
 result_dir: test_classification_result

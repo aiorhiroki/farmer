@@ -1,14 +1,13 @@
-docker run \
+sudo docker run \
 	--gpus all \
 	-itd \
 	--rm \
-	-p $2:$2 \
+	-p $2:22 \
 	--name $1 \
-	--mount type=bind,source="$PWD",target=/app \
-	--mount type=bind,source=/home,target=/home \
-	--mount type=bind,source=/media,target=/media \
+	--mount type=bind,source=/data,target=/data \
 	--mount type=bind,source=/mnt,target=/mnt \
-	tensorflow:v2 \
-	fish
+        --mount type=bind,source=/home/$USER/src,target=/home/$USER/src \
+        tensorflow:v2 \
+	bash
 
-docker exec -it $1 fish
+sudo docker exec -it --user $USER $1 bash --login

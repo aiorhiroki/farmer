@@ -26,7 +26,6 @@ class TrainTask:
         return save_model
 
     def _do_generate_batch_task(self, train_set, validation_set, trial):
-        np.random.shuffle(train_set)
         if self.config.op_batch_size:
             batch_size = int(trial.suggest_discrete_uniform(
                 'batch_size', *self.config.batch_size))
@@ -100,11 +99,13 @@ class TrainTask:
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
+
             if self.config.optuna:
                 print('***************')
                 print('Use Optuna')
                 print('***************')
                 callbacks.append(KerasPruningCallback(trial, 'dice'))
+
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
@@ -115,6 +116,7 @@ class TrainTask:
                     period=self.config.batch_period
                 )
                 callbacks.append(batch_checkpoint)
+
             if self.config.optuna:
                 print('***************')
                 print('Use Optuna')
@@ -126,7 +128,7 @@ class TrainTask:
                 file_name = os.path.join(self.config.learning_path, "IoU.png")
             else:
                 file_name = os.path.join(
-                    self.config.learning_path, "Metric.png"
+                    self.config.learning_path, "acc.png"
                 )
 
             slack_logging = ncc.callbacks.SlackLogger(

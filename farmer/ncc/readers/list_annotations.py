@@ -41,14 +41,21 @@ def classification_video_set(
     target_dir = os.path.abspath(target_dir)
     annotations = list()
     for data_case in data_list:
-        data_case_files = os.listdir(f"{target_dir}/{data_case}")
-        video_path, csv_path = None, None
+        data_case_path = f"{target_dir}/{data_case}"
+        if csv_file:
+            csv_path = f"{data_case_path}/{csv_file}"
+        else:
+            csv_paths = glob(f"{data_case_path}/*.csv")
+            if len(csv_paths) == 0:
+                continue
+            else:
+                csv_path = csv_paths[0]
+        video_path = None
+        data_case_files = os.listdir(f"{data_case_path}")
         for data_case_file in data_case_files:
             if data_case_file.endswith((".mp4", ".avi")):
-                video_path = f"{target_dir}/{data_case}/{data_case_file}"
-            elif data_case_file.endswith(".csv"):
-                csv_path = f"{target_dir}/{data_case}/{data_case_file}"
-        if not video_path or not csv_path:
+                video_path = f"{data_case_path}/{data_case_file}"
+        if video_path is None:
             continue
         fps = cv2.VideoCapture(video_path).get(cv2.CAP_PROP_FPS)
         with open(csv_path, "r") as fr:

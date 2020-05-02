@@ -26,12 +26,14 @@ class Trainer(Config, ImageLoader, Optuna):
     trained_model_path: str = None
     model_name: str = None
     backbone: str = None
+    activation: str = "softmax"
     nb_train_data: int = 0
     nb_validation_data: int = 0
     nb_test_data: int = 0
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    batch_period: int = 100
     cosine_decay: bool = False
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001

@@ -6,9 +6,21 @@ You can train Classification and Segmentation tasks semi-automatically
 
 Docker >= 19.03
 
+(python library) jinja2
+
+build docker
 ```bash
 docker build -t tensorflow:v2 .
+```
+
+run container
+```
 sh docker-start.sh farmer 5000
+```
+
+exec container
+```
+docker exec -it --user $USER farmer-dev bash --login
 ```
 
 ## Prepare Data set folder
@@ -64,5 +76,5 @@ Godfarmer
 ## For Developer
 If you change files, run following command before *Godfarmer*
 ```bash
-pip install .
+python setup.py develop --user
 ```

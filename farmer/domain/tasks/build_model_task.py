@@ -96,7 +96,7 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
-                    activation=activation,
+                    activation=activation
                 )
             elif model_name == "pspnet":
                 model = PSPNet(

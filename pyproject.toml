@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "tmp"
-version = "0.1.0"
-description = ""
+name = "farmer"
+version = "1.4.0"
+description = "Auto Machine Learning"
 authors = ["Hiroki Matsuzaki"]
 
 [tool.poetry.dependencies]

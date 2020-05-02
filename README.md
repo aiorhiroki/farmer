@@ -4,38 +4,144 @@ You can train Classification and Segmentation tasks semi-automatically
 
 ## Prerequisite
 
-Docker >= 19.03
+### `install docker`
+- Docker >= 19.03
 
-(python library) jinja2
-
-build docker
+### `build docker`
 ```bash
 docker build -t tensorflow:v2 .
 ```
 
-run container in the same path with run.yaml
+### `register env & command`
+
+```bash
+# bash
+
+# write farmer path in .bash_profile
+echo "export FARMERPATH=$PWD" >> ~/.bash_profile
+
+# ...or in .bashrc
+echo "export FARMERPATH=$PWD" >> ~/.bashrc
+
+# fish
+echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 ```
-docker run \
-    --gpus all \
-    -it \
-    --rm \
-    -v $PWD:/tmp \
-    -w /tmp \
-    poetry:v1 \
-    poetry run Godfarmer
-    # poetry run python  # python shell with docker env
-    # bash  # login
+
+#### **`~/.bash_aliases`**
+```bash
+dogrun () {
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp -v $1 \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run Godfarmer
+}
+
+dogdev () {
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp -v $FARMERPATH:/app $1 \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run Godfarmer
+}
+
+dogpy () {
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp -v $FARMERPATH:/app $1 \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run python
+}
+
+dogin () {
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp \
+        -v $FARMERPATH:/app $1 \
+        -w /tmp \
+        tensorflow:v2 \
+        bash
+}
+```
+
+#### **`~/.config/fish/config.fish`**
+``` bash
+function dogrun
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp $argv \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run Godfarmer
+end
+
+function dogdev
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp -v $FARMERPATH:/app $argv \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run Godfarmer
+end
+
+function dogpy
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp -v $FARMERPATH:/app $argv \
+        -w /tmp \
+        tensorflow:v2 \
+        poetry run python
+end
+
+function dogin
+    docker run \
+        --gpus all \
+        -it \
+        --rm \
+        -v $PWD:/tmp \
+        -v $FARMERPATH:/app $argv \
+        -w /tmp \
+        tensorflow:v2 \
+        bash
+end
+```
 
 
-# options to develop farmer
-# -v /Path_To_Farmer:/app
+```bash
+# command list
+dogrun  # run farmer @ master code
+dogdev  # run farmer @ local code
+dogpy   # python shell @ docker env
+dogin   # login docker
+
+# with additional mount
+# bash 
+dogin "-v /data:/data"
+# fish
+dogin -v /data:/data
 ```
+* **dogrun** and **dogdev** needs run.yaml in the same path
 
 ## Prepare Data set folder
 
-classification folder tree
-
-e.g.)
+#### **`classification folder tree`**
 
 ```yaml
 - target_directory
@@ -45,9 +151,7 @@ e.g.)
   - data_case_directory(dataB)
 ```
 
-segmentation folder tree
-
-e.g.)
+#### **`segmentation folder tree`**
 
 ```yaml
 - target_directory
@@ -67,7 +171,10 @@ e.g.)
   - model (best model and last model)
 ```
 
-### Integration Test
+## Integration Test
 
-cd example & run container
+```
+cd example
+dogrun
+```
 

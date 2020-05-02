@@ -15,12 +15,7 @@ docker build -t tensorflow:v2 .
 
 run container
 ```
-sh docker-start.sh farmer 5000
-```
-
-exec container
-```
-docker exec -it --user $USER farmer-dev bash --login
+docker run --gpus all --rm -v $PWD:/tmp -w /tmp poetry run Godfarmer
 ```
 
 ## Prepare Data set folder

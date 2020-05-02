@@ -4,9 +4,7 @@ sudo docker run \
 	--rm \
 	-p $2:22 \
 	--name $1 \
-	--mount type=bind,source=/data,target=/data \
-	--mount type=bind,source=/mnt,target=/mnt \
-        --mount type=bind,source=/home/$USER/src,target=/home/$USER/src \
+	--mount type=bind,source=/mnt/hdd2,target=/mnt/hdd2 \
         tensorflow:v2 \
 	bash
 

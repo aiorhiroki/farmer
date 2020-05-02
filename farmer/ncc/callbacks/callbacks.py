@@ -3,9 +3,8 @@ import numpy as np
 import os
 import csv
 import warnings
-from ..utils import get_imageset, PostClient
-from ..utils import MatPlotManager, generate_segmentation_result
-from ..metrics import iou_dice_val
+from ..utils import PostClient, MatPlotManager
+from ..metrics import iou_dice_val, generate_segmentation_result
 
 from tensorflow.python import keras
 

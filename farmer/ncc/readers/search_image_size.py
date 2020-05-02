@@ -1,7 +1,7 @@
 from glob import glob
 from collections import Counter
 import numpy as np
-import pandas as pd
+import csv
 from PIL import Image
 
 
@@ -15,11 +15,15 @@ def search_from_dir(target_dir):
 
 
 def search_from_annotation(annotation_file):
-    annotation_df = pd.read_csv(annotation_file).values.T
-    files = annotation_df[0]
-    class_index = annotation_df[1]
+    files = list()
+    classes = list()
+    with open(annotation_file, "r") as fr:
+        reader = csv.reader(fr)
+        for row in reader:
+            files.append(row[0])
+            classes.append(row[1])
 
-    class_names = np.unique(class_index)
+    class_names = np.unique(classes)
 
     return search_image_profile(files), class_names
 
@@ -29,8 +33,8 @@ def search_image_profile(files):
         files = files[:10000]  # ignore large image files
 
     height_list, width_list, channel_list = [], [], []
-    for file in files:
-        image = Image.open(file)
+    for img_file in files:
+        image = Image.open(img_file)
         width, height = image.size[:2]
         channel = 1 if len(np.array(image).shape) == 2 else 3
         height_list.append(height)

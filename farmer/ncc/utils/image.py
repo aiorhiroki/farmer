@@ -1,8 +1,6 @@
 import colorsys
 from .palette import palettes
-from ..metrics import calc_segmentation_confusion, calc_dice_from_confusion
 import numpy as np
-import os
 import random
 from PIL import Image, ImageDraw
 import cv2
@@ -76,39 +74,6 @@ def cast_to_pil(ndarray, palette, index_void=None):
     image = Image.fromarray(np.uint8(res), mode="P")
     image.putpalette(palette)
     return image
-
-
-def generate_segmentation_result(
-    nb_classes,
-    height,
-    width,
-    annotations,
-    model,
-    save_dir,
-    train_colors=None,
-):
-    image_util = ImageUtil(nb_classes, (height, width))
-    for sample_image_path in annotations:
-        input_image_path, mask_image_path = sample_image_path
-        sample_image = image_util.read_image(
-            input_image_path,
-            anti_alias=True
-        )
-        sample_image = np.asarray(sample_image, dtype=np.float32)
-        segmented = image_util.read_image(
-            mask_image_path,
-            normalization=False,
-            train_colors=train_colors
-        )
-
-        output = model.predict(np.expand_dims(sample_image, axis=0))[0]
-        confusion = calc_segmentation_confusion(output, segmented, nb_classes)
-        dice = calc_dice_from_confusion(confusion)
-        segmented = image_util.cast_to_onehot(segmented)
-        result_image = get_imageset(
-            sample_image, output, segmented, put_text=f'dice: {dice}')
-        save_image_name = os.path.basename(input_image_path)
-        result_image.save(f"{save_dir}/{save_image_name}")
 
 
 def get_imageset(

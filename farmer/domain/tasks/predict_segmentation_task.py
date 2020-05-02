@@ -1,8 +1,4 @@
 from farmer import ncc
-import os
-import cv2
-import numpy as np
-import tqdm
 
 
 class PredictSegmentationTask:
@@ -19,7 +15,7 @@ class PredictSegmentationTask:
         self, test_set, model, return_result=False
     ):
         save_dir = f"{self.config.image_path}/test"
-        ncc.utils.generate_segmentation_result(
+        ncc.segmentation_metrics.generate_segmentation_result(
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,

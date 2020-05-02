@@ -15,7 +15,14 @@ docker build -t tensorflow:v2 .
 
 run container
 ```
-docker run --gpus all --rm -v $PWD:/tmp -w /tmp poetry run Godfarmer
+docker run --gpus all --rm -v $PWD:/tmp -w /tmp tensorflow:v2 poetry run Godfarmer
+```
+
+other usages
+```
+docker run -it OPTIONS bash  # login
+docker run -it OPTIONS poetry run python  # python with docker env
+docker run -v Path_To_Farmer:/app OPTIONS  # develop farmer by local file change
 ```
 
 ## Prepare Data set folder
@@ -44,13 +51,6 @@ e.g.)
   - data_case_directory(dataB)
 ```
 
-## Training
-
-1. start docker `$ docker exec -it farmer bash`
-1. set param in `~.yaml` and `run.yaml`
-1. set param in `secret.yaml` (optional for slack logger)
-1. run `$ Godfarmer`
-
 ## Result
 
 ```yaml
@@ -65,11 +65,5 @@ e.g.)
 
 ```bash
 cd example
-Godfarmer
-```
-
-## For Developer
-If you change files, run following command before *Godfarmer*
-```bash
-python setup.py develop --user
+docker run --gpus all --rm -v $PWD:/tmp -w /tmp tensorflow:v2 poetry run Godfarmer
 ```

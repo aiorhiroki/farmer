@@ -37,6 +37,21 @@ class FPS(object):
             print(self.fps)
 
 
+def delete_small_mask(mask: np.array, threshold: int) -> np.array:
+    gray = mask.copy()
+    _, bw = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    contours, hierarchy = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+    if len(contours) == 0:
+        return mask
+
+    for i in range(0, len(contours)):
+        area = cv2.contourArea(contours[i])
+        if area < threshold:
+            cv2.drawContours(gray, contours, i, 0, -1)
+    return gray
+
+
 class OutsideExcluder:
     """
     draw cross lines if frame is outside body

@@ -127,7 +127,12 @@ class TrainWorkflow(AbstractImageAnalyzer):
             n_trials=self._config.n_trials,
             timeout=self._config.timeout
         )
-        print('Number of finished trials: {}'.format(len(study.trials)))
+        pruned_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.PRUNED]
+        complete_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.COMPLETE]
+        print("Study statistics: ")
+        print("  Number of finished trials: ", len(study.trials))
+        print("  Number of pruned trials: ", len(pruned_trials))
+        print("  Number of complete trials: ", len(complete_trials))
 
         print('Best trial:')
         trial = study.best_trial

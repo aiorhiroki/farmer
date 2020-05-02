@@ -2,6 +2,7 @@ import os
 import numpy as np
 from farmer import ncc
 from tensorflow.python import keras
+from optuna.integration import KerasPruningCallback
 
 
 class TrainTask:
@@ -9,13 +10,13 @@ class TrainTask:
         self.config = config
 
     def command(
-        self, model, base_model, train_set, validation_set, trial):
+            self, model, base_model, train_set, validation_set, trial):
 
         train_gen, validation_gen = self._do_generate_batch_task(
             train_set, validation_set, trial
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_set, validation_set
+            base_model, train_set, validation_set, trial
         )
         trained_model = self._do_model_optimization_task(
             model, train_gen, validation_gen, callbacks
@@ -48,7 +49,7 @@ class TrainTask:
 
         return train_gen, validation_gen
 
-    def _do_set_callbacks_task(self, base_model, train_set, validation_set):
+    def _do_set_callbacks_task(self, base_model, train_set, validation_set, trial):
         best_model_name = "best_model.h5"
         model_save_file = os.path.join(self.config.model_path, best_model_name)
         if self.config.multi_gpu:
@@ -71,7 +72,7 @@ class TrainTask:
                 ncc_scheduler.cosine_decay)
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
-            factor=0.5, patience=10, verbose=1)
+                factor=0.5, patience=10, verbose=1)
 
         plot_history = ncc.callbacks.PlotHistory(
             self.config.learning_path,
@@ -98,6 +99,10 @@ class TrainTask:
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
+
+            if self.config.optuna:
+                callbacks.append(KerasPruningCallback(trial, 'dice'))
+
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
@@ -108,6 +113,9 @@ class TrainTask:
                     period=self.config.batch_period
                 )
                 callbacks.append(batch_checkpoint)
+
+            if self.config.optuna:
+                callbacks.append(KerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:

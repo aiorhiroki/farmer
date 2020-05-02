@@ -71,6 +71,15 @@ class Trainer(Config, ImageLoader, Optuna):
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
 
+        # For optuna analysis hyperparameter
         self.op_batch_size = type(self.batch_size) == list
         self.op_learning_rate = type(self.learning_rate) == list
-        self.optuna = self.op_batch_size or self.op_learning_rate
+        self.op_optimizer = type(self.optimizer) == list
+        self.op_backbone = type(self.backbone) == list
+
+        self.optuna = any((
+            self.op_batch_size,
+            self.op_learning_rate,
+            self.op_optimizer,
+            self.op_backbone,
+        ))

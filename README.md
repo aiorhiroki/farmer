@@ -13,16 +13,22 @@ build docker
 docker build -t tensorflow:v2 .
 ```
 
-run container
+run container in the same path with run.yaml
 ```
-docker run --gpus all --rm -v $PWD:/tmp -w /tmp tensorflow:v2 poetry run Godfarmer
-```
+docker run \
+    --gpus all \
+    -it \
+    --rm \
+    -v $PWD:/tmp \
+    -w /tmp \
+    poetry:v1 \
+    poetry run Godfarmer
+    # poetry run python  # python shell with docker env
+    # bash  # login
 
-other usages
-```
-docker run -it OPTIONS bash  # login
-docker run -it OPTIONS poetry run python  # python with docker env
-docker run -v Path_To_Farmer:/app OPTIONS  # develop farmer by local file change
+
+# options to develop farmer
+# -v /Path_To_Farmer:/app
 ```
 
 ## Prepare Data set folder
@@ -63,7 +69,5 @@ e.g.)
 
 ### Integration Test
 
-```bash
-cd example
-docker run --gpus all --rm -v $PWD:/tmp -w /tmp tensorflow:v2 poetry run Godfarmer
-```
+cd example & run container
+

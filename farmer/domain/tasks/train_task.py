@@ -49,7 +49,9 @@ class TrainTask:
 
         return train_gen, validation_gen
 
-    def _do_set_callbacks_task(self, base_model, train_set, validation_set, trial):
+    def _do_set_callbacks_task(
+            self, base_model, train_set, validation_set, trial):
+
         best_model_name = "best_model.h5"
         model_save_file = os.path.join(self.config.model_path, best_model_name)
         if self.config.multi_gpu:

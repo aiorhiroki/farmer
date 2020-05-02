@@ -1,7 +1,8 @@
 import numpy as np
+import os
 import itertools
 from tqdm import tqdm
-from ..utils import ImageUtil
+from ..utils import ImageUtil, get_imageset
 import matplotlib.pyplot as plt
 
 
@@ -16,7 +17,7 @@ def iou_dice_val(
         target = image_util.read_image(
             seg_file, normalization=False, train_colors=train_colors)
         predicted = np.asarray(
-            model.predict_on_batch(np.expand_dims(sample, axis=0)))[0]
+            model.predict(np.expand_dims(sample, axis=0)))[0]
         confusion += calc_segmentation_confusion(
             predicted, target, nb_classes)
 
@@ -29,7 +30,7 @@ def iou_dice_val(
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     # Convert predictions and target from categorical to integer format
     y_pred = np.argmax(y_pred, axis=-1).ravel()
-    y_true = np.argmax(y_true, axis=-1).ravel()
+    y_true = y_true.ravel()
     x = y_pred + nb_classes * y_true
     bincount_2d = np.bincount(
         x.astype(np.int32), minlength=nb_classes**2)
@@ -125,3 +126,30 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
     plt.tight_layout()
     plt.savefig('{}.png'.format(save_file))
+
+
+def generate_segmentation_result(
+    nb_classes,
+    height,
+    width,
+    annotations,
+    model,
+    save_dir,
+    train_colors=None,
+):
+    image_util = ImageUtil(nb_classes, (height, width))
+    for sample_image_path in annotations:
+        input_image_path, mask_image_path = sample_image_path
+        sample_image = image_util.read_image(
+            input_image_path, anti_alias=True)
+        segmented = image_util.read_image(
+            mask_image_path, normalization=False, train_colors=train_colors)
+
+        output = model.predict(np.expand_dims(sample_image, axis=0))[0]
+        confusion = calc_segmentation_confusion(output, segmented, nb_classes)
+        dice = calc_dice_from_confusion(confusion)
+        segmented = image_util.cast_to_onehot(segmented)
+        result_image = get_imageset(
+            sample_image, output, segmented, put_text=f'dice: {dice}')
+        save_image_name = os.path.basename(input_image_path)
+        result_image.save(f"{save_dir}/{save_image_name}")

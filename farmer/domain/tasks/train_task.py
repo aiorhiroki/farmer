@@ -101,9 +101,6 @@ class TrainTask:
             callbacks.extend([iou_history, generate_sample_result])
 
             if self.config.optuna:
-                print('***************')
-                print('Use Optuna')
-                print('***************')
                 callbacks.append(KerasPruningCallback(trial, 'dice'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
@@ -118,9 +115,6 @@ class TrainTask:
                 callbacks.append(batch_checkpoint)
 
             if self.config.optuna:
-                print('***************')
-                print('Use Optuna')
-                print('***************')
                 callbacks.append(KerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:

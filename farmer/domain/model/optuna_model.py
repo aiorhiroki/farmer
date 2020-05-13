@@ -7,5 +7,6 @@ class Optuna:
     op_learning_rate: bool = False
     op_optimizer: bool = False
     op_backbone: bool = False
+    op_loss: bool = False
     n_trials: int = 3
     timeout: int = 3 * 60 * 60

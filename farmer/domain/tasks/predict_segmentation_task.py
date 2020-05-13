@@ -19,6 +19,8 @@ class PredictSegmentationTask:
             # result_dir/trial#/image/validation/
             trial_image_path = self.config.image_path.split('/')
             trial_image_path.insert(-1, f"trial{trial.number}")
+            if trial_image_path[0] == '':
+                trial_image_path[0] = '/'
             save_dir = os.path.join(*trial_image_path, "test")
         else:
             save_dir = os.path.join(self.config.image_path, "test")

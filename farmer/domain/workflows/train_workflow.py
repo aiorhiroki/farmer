@@ -12,6 +12,7 @@ from ..model.task_model import Task
 
 import optuna
 import numpy as np
+import os
 from keras.backend import clear_session
 
 
@@ -20,17 +21,19 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
 
     def command(self, trial=None):
-        self.set_env_flow()
+        self.set_env_flow(trial)
         train_set, validation_set, test_set = self.read_annotation_flow()
-        self.eda_flow()
+        if trial is None or trial.number == 0:
+            # 1回目のtrialのみEDAを行う
+            self.eda_flow()
         model, base_model = self.build_model_flow(trial)
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
         )
-        return self.output_flow(result)
+        return self.output_flow(result, trial)
 
-    def set_env_flow(self):
-        SetTrainEnvTask(self._config).command()
+    def set_env_flow(self, trial):
+        SetTrainEnvTask(self._config).command(trial)
         print("set env flow done")
 
     def read_annotation_flow(self):
@@ -100,7 +103,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
             PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model
+                test_set, model=trained_model, trial=trial
             )
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model
@@ -115,33 +118,48 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
         return eval_report
 
-    def output_flow(self, result):
-        OutputResultTask(self._config).command(result)
+    def output_flow(self, result, trial):
+        OutputResultTask(self._config).command(result, trial)
         print("output flow done")
         return result
 
     def optuna_command(self):
+        # Logger for Optuna
+        import logging
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)  # Setup the root logger.
+        # TODO: 任意のパスを設定したら保存されない問題．infoフォルダにいれたい．
+        logger.addHandler(logging.FileHandler(
+            "optuna_trials.log", mode="w")
+        )
+        optuna.logging.enable_propagation()  # Propagate logs to the root logger.
+        optuna.logging.enable_default_handler()  # Stop showing logs in sys.stderr.
+
         study = optuna.create_study(direction='maximize')
         study.optimize(
             self.objective,
             n_trials=self._config.n_trials,
             timeout=self._config.timeout
         )
+        print("Study statistics: ")
         pruned_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.PRUNED]
         complete_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.COMPLETE]
-        print("Study statistics: ")
         print("  Number of finished trials: ", len(study.trials))
         print("  Number of pruned trials: ", len(pruned_trials))
         print("  Number of complete trials: ", len(complete_trials))
 
-        print('Best trial:')
+        print("Best trial:")
         trial = study.best_trial
+        param_path = os.path.join(self._config.info_path, "best_hyperparams.txt")
 
-        print('  Value: {}'.format(trial.value))
+        with open(param_path, mode="w") as configfile:
+            print(f"  Value: {trial.value}")
+            configfile.write(f"optuna objective value = {trial.value}\n")
+            print("  Params: ")
+            configfile.write(f"optuna set params = {trial.params}\n")
+            for key, value in trial.params.items():
+                print(f"    {key}: {value}")
 
-        print('  Params: ')
-        for key, value in trial.params.items():
-            print('    {}: {}'.format(key, value))
         return study
 
     def objective(self, trial):

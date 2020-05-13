@@ -19,9 +19,9 @@ class TrainTask:
             base_model, train_set, validation_set, trial
         )
         trained_model = self._do_model_optimization_task(
-            model, train_gen, validation_gen, callbacks
+            model, train_gen, validation_gen, callbacks, trial
         )
-        save_model = self._do_save_model_task(trained_model, base_model)
+        save_model = self._do_save_model_task(trained_model, base_model, trial)
 
         return save_model
 
@@ -53,7 +53,14 @@ class TrainTask:
             self, base_model, train_set, validation_set, trial):
 
         best_model_name = "best_model.h5"
-        model_save_file = os.path.join(self.config.model_path, best_model_name)
+        if trial:
+            # result_dir/trial#/model/
+            trial_model_path = self.config.model_path.split('/')
+            trial_model_path.insert(-1, f"trial{trial.number}")
+            model_save_file = os.path.join(*trial_model_path, best_model_name)
+        else:
+            model_save_file = os.path.join(self.config.model_path, best_model_name)
+        # Save Model Checkpoint
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
                 filepath=model_save_file,
@@ -64,6 +71,7 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
+        # Learning Rate Schedule
         if self.config.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
                 self.config.cosine_lr_max,
@@ -75,22 +83,41 @@ class TrainTask:
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
+        # Plot History
+        if trial:
+            # result_dir/trial#/learning/
+            trial_learning_path = self.config.learning_path.split('/')
+            trial_learning_path.insert(-1, f"trial{trial.number}")
+            learning_path = os.path.join(*trial_learning_path)
+        else:
+            learning_path = self.config.learning_path
 
         plot_history = ncc.callbacks.PlotHistory(
-            self.config.learning_path,
+            learning_path,
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
+
         callbacks = [checkpoint, scheduler, plot_history]
+
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            # Plot IoU History
             iou_history = ncc.callbacks.IouHistory(
-                save_dir=self.config.learning_path,
+                save_dir=learning_path,
                 validation_files=validation_set,
                 class_names=self.config.class_names,
                 height=self.config.height,
                 width=self.config.width,
                 train_colors=self.config.train_colors
             )
-            val_save_dir = os.path.join(self.config.image_path, "validation")
+
+            # Predict validation
+            if trial:
+                # result_dir/trial#/image/validation/
+                trial_image_path = self.config.image_path.split('/')
+                trial_image_path.insert(-1, f"trial{trial.number}")
+                val_save_dir = os.path.join(*trial_image_path, "validation")
+            else:
+                val_save_dir = os.path.join(self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
                 validation_files=validation_set,
@@ -103,13 +130,18 @@ class TrainTask:
             callbacks.extend([iou_history, generate_sample_result])
 
             if self.config.optuna:
+                # Trial prune for Optuna
                 callbacks.append(KerasPruningCallback(trial, 'dice'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
+                if trial:
+                    batch_model_path = os.path.join(trial_model_path, "batch_model.h5")
+                else:
+                    batch_model_path = f'{self.config.model_path}/batch_model.h5'
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
-                    self.config.learning_path,
-                    f'{self.config.model_path}/batch_model.h5',
+                    learning_path,
+                    batch_model_path,
                     token=self.config.slack_token,
                     channel=self.config.slack_channel,
                     period=self.config.batch_period
@@ -117,15 +149,14 @@ class TrainTask:
                 callbacks.append(batch_checkpoint)
 
             if self.config.optuna:
+                # Trial prune for Optuna
                 callbacks.append(KerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-                file_name = os.path.join(self.config.learning_path, "IoU.png")
+                file_name = os.path.join(learning_path, "IoU.png")
             else:
-                file_name = os.path.join(
-                    self.config.learning_path, "acc.png"
-                )
+                file_name = os.path.join(learning_path, "acc.png")
 
             slack_logging = ncc.callbacks.SlackLogger(
                 logger_file=file_name,
@@ -137,25 +168,40 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_gen, validation_gen, callbacks
+        self, model, train_gen, validation_gen, callbacks, trial
     ):
 
-        model.fit_generator(
-            train_gen,
-            steps_per_epoch=len(train_gen),
-            callbacks=callbacks,
-            epochs=self.config.epochs,
-            validation_data=validation_gen,
-            validation_steps=len(validation_gen),
-            workers=16 if self.config.multi_gpu else 1,
-            max_queue_size=32 if self.config.multi_gpu else 10,
-            use_multiprocessing=self.config.multi_gpu,
-        )
+        try:
+            model.fit_generator(
+                train_gen,
+                steps_per_epoch=len(train_gen),
+                callbacks=callbacks,
+                epochs=self.config.epochs,
+                validation_data=validation_gen,
+                validation_steps=len(validation_gen),
+                workers=16 if self.config.multi_gpu else 1,
+                max_queue_size=32 if self.config.multi_gpu else 10,
+                use_multiprocessing=self.config.multi_gpu,
+            )
+        except KeyboardInterrupt:
+            import sys
+            # When stoping by Ctrl-C, save model as last_model.h5
+            save_model = self._do_save_model_task(model, None, trial)
+            print("\nstop training. save last model:", save_model)
+            sys.exit()
 
         return model
 
-    def _do_save_model_task(self, model, base_model):
-        model_path = os.path.join(self.config.model_path, "last_model.h5")
+    def _do_save_model_task(self, model, base_model, trial):
+        last_model_name = "last_model.h5"
+        if trial:
+            # result_dir/trial#/model/
+            trial_model_path = self.config.model_path.split('/')
+            trial_model_path.insert(-1, f"trial{trial.number}")
+            model_path = os.path.join(*trial_model_path, last_model_name)
+        else:
+            model_path = os.path.join(self.config.model_path, last_model_name)
+        # Last model save
         if self.config.multi_gpu:
             base_model.save(model_path)
             return base_model

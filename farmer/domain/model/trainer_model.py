@@ -76,10 +76,12 @@ class Trainer(Config, ImageLoader, Optuna):
         self.op_learning_rate = type(self.learning_rate) == list
         self.op_optimizer = type(self.optimizer) == list
         self.op_backbone = type(self.backbone) == list
+        self.op_loss = type(self.loss) == list
 
         self.optuna = any((
             self.op_batch_size,
             self.op_learning_rate,
             self.op_optimizer,
             self.op_backbone,
+            self.op_loss,
         ))

@@ -167,6 +167,10 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
+                if self.config.op_loss:
+                    loss_func = trial.suggest_categorical(
+                        'loss', self.config.loss
+                    )
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')

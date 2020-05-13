@@ -29,6 +29,12 @@ class SetTrainEnvTask:
         # set gpu and cpu devices
         if gpu:
             os.environ["CUDA_VISIBLE_DEVICES"] = gpu
+            # GPUメモリ使用量を抑える
+            physical_devices = tf.config.experimental.list_physical_devices('GPU')
+            if len(physical_devices) > 0:
+                for k in range(len(physical_devices)):
+                    tf.config.experimental.set_memory_growth(physical_devices[k], True)
+                    print('memory growth:', tf.config.experimental.get_memory_growth(physical_devices[k]))
         else:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 

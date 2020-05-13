@@ -57,11 +57,10 @@ class TrainTask:
             # result_dir/trial#/model/
             trial_model_path = self.config.model_path.split('/')
             trial_model_path.insert(-1, f"trial{trial.number}")
-            if trial_model_path[0] == '':
-                trial_model_path[0] = '/'
             model_save_file = os.path.join(*trial_model_path, best_model_name)
         else:
-            model_save_file = os.path.join(self.config.model_path, best_model_name)
+            model_save_file = os.path.join(
+                self.config.model_path, best_model_name)
         # Save Model Checkpoint
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
@@ -90,8 +89,6 @@ class TrainTask:
             # result_dir/trial#/learning/
             trial_learning_path = self.config.learning_path.split('/')
             trial_learning_path.insert(-1, f"trial{trial.number}")
-            if trial_learning_path[0] == '':
-                trial_learning_path[0] = '/'
             learning_path = os.path.join(*trial_learning_path)
         else:
             learning_path = self.config.learning_path
@@ -119,11 +116,10 @@ class TrainTask:
                 # result_dir/trial#/image/validation/
                 trial_image_path = self.config.image_path.split('/')
                 trial_image_path.insert(-1, f"trial{trial.number}")
-                if trial_image_path[0] == '':
-                    trial_image_path[0] = '/'
                 val_save_dir = os.path.join(*trial_image_path, "validation")
             else:
-                val_save_dir = os.path.join(self.config.image_path, "validation")
+                val_save_dir = os.path.join(
+                    self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
                 validation_files=validation_set,
@@ -142,9 +138,12 @@ class TrainTask:
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 if trial:
-                    batch_model_path = os.path.join(trial_model_path, "batch_model.h5")
+                    batch_model_path = os.path.join(
+                        trial_model_path, "batch_model.h5")
                 else:
-                    batch_model_path = f'{self.config.model_path}/batch_model.h5'
+                    batch_model_path = os.path.join(
+                        self.config.model_path, "batch_model.h5")
+
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
                     learning_path,
                     batch_model_path,
@@ -204,8 +203,6 @@ class TrainTask:
             # result_dir/trial#/model/
             trial_model_path = self.config.model_path.split('/')
             trial_model_path.insert(-1, f"trial{trial.number}")
-            if trial_model_path[0] == '':
-                trial_model_path[0] = '/'
             model_path = os.path.join(*trial_model_path, last_model_name)
         else:
             model_path = os.path.join(self.config.model_path, last_model_name)

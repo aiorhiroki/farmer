@@ -31,6 +31,7 @@ learning_rate: 0.0001
 
 # Data Augmentation
 augmentation: 
+    # -(ハイフン) 入れちゃダメ
     vertical_flip: no
     horizontal_flip: yes
     zoom_range: [0.5, 1.2]  # x0.5 ~ x1.2 # min: x0.1 ~ max: x1.9

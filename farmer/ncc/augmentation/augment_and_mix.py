@@ -17,12 +17,8 @@ from .augmentation import augmentations
 import numpy as np
 from PIL import Image
 
-# CIFAR-10 constants
-MEAN = np.array([0.50963, 0.31435, 0.24342])
-STD = np.array([0.25063, 0.21935, 0.20217])
 
-
-def normalize(image, mean: np.array = MEAN, std: np.array = STD):
+def normalize(image, mean: np.array, std: np.array):
     """Normalize input image channel-wise to zero mean and unit variance."""
     image = image.transpose(2, 0, 1)  # Switch to channel-first
     image = (image - mean[:, None, None]) / std[:, None, None]
@@ -36,7 +32,7 @@ def apply_op(image, op, severity):
     return np.asarray(pil_img) / 255.
 
 
-def augment_and_mix(image, severity=3, width=3, depth=-1, alpha=1.):
+def augment_and_mix(image, mean, std, severity=3, width=3, depth=-1, alpha=1.):
     """Perform AugMix augmentations and compute mixture.
 
     Args:
@@ -62,7 +58,7 @@ def augment_and_mix(image, severity=3, width=3, depth=-1, alpha=1.):
             op = np.random.choice(augmentations)
             image_aug = apply_op(image_aug, op, severity)
         # Preprocessing commutes since all coefficients are convex
-        mix += ws[i] * normalize(image_aug)
+        mix += ws[i] * normalize(image_aug, mean, std)
 
-    mixed = (1 - m) * normalize(image) + m * mix
+    mixed = (1 - m) * normalize(image, mean, std) + m * mix
     return mixed

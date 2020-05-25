@@ -1,9 +1,8 @@
 from keras.preprocessing import image
 import numpy as np
-# from .augmentation import augment_and_mix
 
 
-def segmentation_aug(input_image, label, mean, std, augmentation_dict):
+def segmentation_aug(input_image, label, augmentation_dict):
     """apply augmentation to one image respectively
     """
     data_gen_args = augmentation_dict
@@ -35,7 +34,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     # combine generators into one which yields image and masks
     gen = zip(image_gen, mask_gen)
     img_batches, mask_batches = next(gen)
-    input_image_processed = img_batches[0]
-    label_processed = mask_batches[0][..., 0]
+    input_image_processed = img_batches.squeeze()  # batch次元を捨てる
+    label_processed = mask_batches.squeeze()  # batchとchannel次元を捨てる
 
     return input_image_processed, label_processed

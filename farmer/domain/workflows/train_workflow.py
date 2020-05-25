@@ -31,20 +31,20 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def set_env_flow(self):
         SetTrainEnvTask(self._config).command()
-        print("set env flow done")
+        print("SET ENV FLOW DONE")
 
     def read_annotation_flow(self):
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command("train")
         validation_set = read_annotation.command("validation")
         test_set = read_annotation.command("test")
-        print("read annotation flow done")
+        print("READ ANNOTATION FLOW DONE")
         return train_set, validation_set, test_set
 
     def eda_flow(self, train_set):
         EdaTask(self._config).command(train_set)
         print("MEAN:", self._config.mean, "- STD: ", self._config.std)
-        print("eda flow done")
+        print("EDA FLOW DONE")
 
     def build_model_flow(self, trial=None):
         if self._config.task == Task.OBJECT_DETECTION:
@@ -52,7 +52,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             # keras-retina command build model in model execution flow
             return None, None
         model, base_model = BuildModelTask(self._config).command(trial)
-        print("build model flow done")
+        print("BUILD MODEL FLOW DONE")
         return model, base_model
 
     def model_execution_flow(
@@ -111,14 +111,14 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 test_set, model=trained_model
             )
 
-        print("model execution flow done")
+        print("MODEL EXECUTION FLOW DONE")
         print(eval_report)
 
         return eval_report
 
     def output_flow(self, result):
         OutputResultTask(self._config).command(result)
-        print("output flow done")
+        print("OUTPUT FLOW DONE")
         return result
 
     def optuna_command(self):

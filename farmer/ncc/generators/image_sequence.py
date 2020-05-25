@@ -3,7 +3,7 @@ import cv2
 
 from tensorflow.python.keras.utils.data_utils import Sequence
 import numpy as np
-from ..augmentation import segmentation_aug
+from ..augmentation import segmentation_aug, augment_and_mix
 from ..tasks import Task
 from ..utils import ImageUtil
 
@@ -68,11 +68,21 @@ class ImageSequence(Sequence):
                     normalization=False,
                     train_colors=self.train_colors
                 )
-                if self.augmentation and len(self.augmentation) > 0:
+
+                if "augmix" in self.augmentation:
+                    """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
+                    AugMixか独自のDAかどちらかのみ
+                    TODO: ひとまずハードラベル
+                    Affine変換系が施されたらソフトラベルにした方がいい？
+                    """
+                    input_image = augment_and_mix(
+                        input_image,
+                        self.mean, self.std
+                    )
+                elif self.augmentation and len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
                         input_image,
                         label,
-                        self.mean, self.std,
                         self.augmentation
                     )
             batch_x.append(input_image)

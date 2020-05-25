@@ -31,20 +31,27 @@ class TrainTask:
                 'batch_size', *self.config.batch_size))
         else:
             batch_size = self.config.batch_size
-
+        # For training set
         sequence_args = dict(
             annotations=train_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,
             batch_size=batch_size,
+            mean=self.config.mean,
+            std=self.config.std,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
         train_gen = ncc.generators.ImageSequence(**sequence_args)
-
-        sequence_args.update(annotations=validation_set, augmentation=[])
+        # For validation set
+        sequence_args.update(
+            annotations=validation_set,
+            mean=np.zeros(3),
+            std=np.ones(3),
+            augmentation=[],
+        )
         validation_gen = ncc.generators.ImageSequence(**sequence_args)
 
         return train_gen, validation_gen

@@ -2,15 +2,18 @@ import configparser
 from farmer import ncc
 import os
 import dataclasses
+import numpy as np
+import cv2
 
 
 class EdaTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self):
+    def command(self, train_set):
         self._do_save_params_task()
         self._do_post_config_task()
+        self._do_compute_mean_std(train_set)
 
     def _do_save_params_task(self):
         parser = configparser.ConfigParser()
@@ -55,3 +58,18 @@ class EdaTask:
             route="first_config",
         )
         milk_client.close_session()
+
+    def _do_compute_mean_std(self, train_set):
+        """train set全体の平均と標準偏差をchannelごとに計算
+        """
+        bgr_images = []
+        for input_file, label in train_set:
+            x = cv2.imread(input_file)
+            x = cv2.resize(x, (self.config.width, self.config.height))
+            x = x / 255.
+            bgr_images.append(x)
+        mean = np.mean(np.array(bgr_images), axis=(0, 1, 2))
+        std = np.std(np.array(bgr_images), axis=(0, 1, 2))
+        # convert BGR to RGB
+        self.config.mean = mean[::-1]
+        self.config.std = std[::-1]

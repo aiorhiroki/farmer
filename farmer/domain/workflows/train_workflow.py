@@ -43,8 +43,8 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def eda_flow(self, train_set):
         EdaTask(self._config).command(train_set)
-        print("MEAN:", self._config.mean, "- STD: ", self._config.std)
         print("EDA FLOW DONE")
+        print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
     def build_model_flow(self, trial=None):
         if self._config.task == Task.OBJECT_DETECTION:

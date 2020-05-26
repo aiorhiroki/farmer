@@ -1,6 +1,6 @@
 from keras.preprocessing import image
 import numpy as np
-import augment_and_mix
+from .augment_and_mix import augment_and_mix
 
 
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):

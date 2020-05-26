@@ -69,7 +69,7 @@ class ImageSequence(Sequence):
                     train_colors=self.train_colors
                 )
 
-                if "augmix" in self.augmentation:
+                if self.augmentation and "augmix" in self.augmentation:
                     """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
                     AugMixか独自のDAかどちらかのみ
                     TODO: ひとまずハードラベル

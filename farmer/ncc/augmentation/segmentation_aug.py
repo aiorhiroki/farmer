@@ -54,7 +54,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     label_processed = mask_batches.squeeze()  # batchとchannel次元を捨てる
 
     # Not Keras ImageDataGenerator
-    if augmentation_dict["augmix"]:
+    if "augmix" in augmentation_dict:
         """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
         AugMixか独自のDAかどちらかのみ
         TODO: ひとまずハードラベル
@@ -62,7 +62,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
         """
         input_image_processed = augment_and_mix(
             input_image_processed,
-            mean, std
+            mean, std,
         )
 
     return input_image_processed, label_processed

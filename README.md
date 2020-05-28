@@ -79,7 +79,7 @@ dogrun COMMAND  # run command in docker
 dogin   # login docker
 ```
 
-* **dogrun** and **dogdev** needs run.yaml in the same path
+* **dogon** needs run.yaml in the same path
 
 ## Prepare Data set folder
 

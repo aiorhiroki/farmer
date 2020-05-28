@@ -6,6 +6,12 @@ from .augment_and_mix import augment_and_mix
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     """apply augmentation to one image respectively
     """
+    # Cut off black mask of left and right edge
+    if "cut_black" in augmentation_dict:
+        width = input_image.shape[1]
+        input_image = input_image[:, int(width * 0.05):int(width * 0.95), :]
+        label = label[:, int(width * 0.05):int(width * 0.95)]
+
     # For Keras ImageDataGenerator
     data_gen_args = dict()
     data_gen_args["fill_mode"] = "constant"  # cvalの値で埋める
@@ -56,7 +62,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     # Not Keras ImageDataGenerator
     if "augmix" in augmentation_dict:
         """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
-        AugMixか独自のDAかどちらかのみ
+        AugMixは最後に行う
         TODO: ひとまずハードラベル
         Affine変換系が施されたらソフトラベルにした方がいい？
         """

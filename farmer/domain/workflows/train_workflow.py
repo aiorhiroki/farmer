@@ -30,35 +30,40 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return self.output_flow(result)
 
     def set_env_flow(self):
+        print("SET ENV FLOW ... ", end="")
         SetTrainEnvTask(self._config).command()
-        print("SET ENV FLOW DONE")
+        print("DONE")
 
     def read_annotation_flow(self):
+        print("READ ANNOTATION FLOW ... ", end="")
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command("train")
         validation_set = read_annotation.command("validation")
         test_set = read_annotation.command("test")
-        print("READ ANNOTATION FLOW DONE")
+        print("DONE")
         return train_set, validation_set, test_set
 
     def eda_flow(self, train_set):
+        print("EDA FLOW ... ", end="")
         EdaTask(self._config).command(train_set)
-        print("EDA FLOW DONE")
+        print("DONE")
         print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
     def build_model_flow(self, trial=None):
+        print("BUILD MODEL FLOW ... ", end="")
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
         model, base_model = BuildModelTask(self._config).command(trial)
-        print("BUILD MODEL FLOW DONE")
+        print("DONE")
         return model, base_model
 
     def model_execution_flow(
         self,
         annotation_set, model, base_model, validation_set, test_set, trial
     ):
+        print("MODEL EXECUTION FLOW ... ", end="")
         if self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
                 from keras_retinanet.bin import train
@@ -111,14 +116,15 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 test_set, model=trained_model
             )
 
-        print("MODEL EXECUTION FLOW DONE")
+        print("DONE")
         print(eval_report)
 
         return eval_report
 
     def output_flow(self, result):
+        print("OUTPUT FLOW ... ", end="")
         OutputResultTask(self._config).command(result)
-        print("OUTPUT FLOW DONE")
+        print("DONE")
         return result
 
     def optuna_command(self):
@@ -128,21 +134,20 @@ class TrainWorkflow(AbstractImageAnalyzer):
             n_trials=self._config.n_trials,
             timeout=self._config.timeout
         )
+        # show explorization results
         pruned_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.PRUNED]
         complete_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.COMPLETE]
         print("Study statistics: ")
         print("  Number of finished trials: ", len(study.trials))
         print("  Number of pruned trials: ", len(pruned_trials))
         print("  Number of complete trials: ", len(complete_trials))
-
         print('Best trial:')
         trial = study.best_trial
-
         print('  Value: {}'.format(trial.value))
-
         print('  Params: ')
         for key, value in trial.params.items():
             print('    {}: {}'.format(key, value))
+
         return study
 
     def objective(self, trial):

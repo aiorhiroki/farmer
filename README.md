@@ -15,7 +15,7 @@ docker build -t farmer:v2 .
 ### `register env & command`
 
 ```bash
-# bash
+# for bash user
 
 # write farmer path in .bash_profile
 echo "export FARMERPATH=$PWD" >> ~/.bash_profile
@@ -23,7 +23,7 @@ echo "export FARMERPATH=$PWD" >> ~/.bash_profile
 # ...or in .bashrc
 echo "export FARMERPATH=$PWD" >> ~/.bashrc
 
-# fish
+# for fish user
 echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 ```
 
@@ -68,6 +68,11 @@ end
 function dogin
     docker exec -it -u (id -u):(id -g) farmer bash
 end
+```
+
+```
+source ~/.bashrc  # to activate bash aliases
+source ~/.config/fish/config.fish  # to activate fish aliases
 ```
 
 

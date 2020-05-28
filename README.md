@@ -36,33 +36,45 @@ docker run \
     -v /mnt/hdd2:/mnt/hdd2 \
     --name farmer \
     farmer:v2 \
+
+docker exec farmer bash -c "poetry run python setup.py develop"
 ```
 
 #### **`~/.bash_aliases`**
 ```bash
+dogon () {
+    docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer"
+}
+
 dogrun () {
-    docker exec -it farmer bash -c "cd $PWD && $1"
+    docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $1"
 }
 
 dogin () {
-    docker exec -it farmer bash
+    docker exec -it -u (id -u):(id -g) farmer bash
 }
 ```
 
 #### **`~/.config/fish/config.fish`**
 ``` bash
+function dogon
+    docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer"
+end
+
 function dogrun
-    docker exec -it farmer bash -c "cd $PWD && $argv"
+    docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $argv"
 end
 
 function dogin
-    docker exec -it farmer bash
+    docker exec -it -u (id -u):(id -g) farmer bash
 end
 ```
 
 
 ```bash
 # command list
+dogon  # run farmer
+nohup dogon > out.log &  # run farmer in the background
 dogrun COMMAND  # run command in docker
 dogin   # login docker
 ```
@@ -105,6 +117,5 @@ dogin   # login docker
 
 ```
 cd example
-dogrun Godfarmer
+dogon
 ```
-

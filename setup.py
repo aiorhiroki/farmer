@@ -10,11 +10,7 @@ setup(
     url='https://github.com/aiorhiroki/farmer.git',
     download_url='',
     license='Apache 2.0',
-    install_requires=[
-        'segmentation-models>=1.0.0',
-        'albumentations>=0.4.3',
-        'optuna>=1.0.0',
-        'keras>=2.3.0'],
+    install_requires=[],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

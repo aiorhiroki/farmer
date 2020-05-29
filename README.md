@@ -70,7 +70,7 @@ docker run \
     -v $FARMERPATH:/app \
     -v /mnt/hdd2:/mnt/hdd2 \
     --name farmer \
-    farmer:v2 \
+    farmer:v2
 
 docker exec farmer bash -c "poetry run python setup.py develop"
 ```

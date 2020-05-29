@@ -44,12 +44,12 @@ dogin () {
 
 #### **`~/.config/fish/config.fish`**
 ``` bash
-function dogon
-    docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer"
-end
-
 function dogrun
     docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $argv"
+end
+
+function dogout
+    nohup docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $argv &
 end
 
 function dogin
@@ -80,15 +80,13 @@ docker exec farmer bash -c "poetry run python setup.py develop"
 
 ## COMMAND list
 ```bash
-dogon  # run farmer
+dogout log.out  # run farmer in the background
 ```
 
 ```bash
-nohup dogon > out.log &  # run farmer in the background
-```
-
-```bash
-dogrun COMMAND  # run command in docker
+dogrun COMMAND  # run command in interactive docker
+$ dogrun Godfarmer
+$ dogrun python ~.py
 ```
 
 ```bash

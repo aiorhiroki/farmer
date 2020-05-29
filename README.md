@@ -17,10 +17,7 @@ docker build -t farmer:v1.4 .
 ```bash
 # for bash user
 
-# write farmer path in .bash_profile
-echo "export FARMERPATH=$PWD" >> ~/.bash_profile
-
-# ...or in .bashrc
+# write farmer path in .bashrc
 echo "export FARMERPATH=$PWD" >> ~/.bashrc
 
 # for fish user
@@ -29,12 +26,12 @@ echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 
 #### **`~/.bash_aliases`**
 ```bash
-dogon () {
-    docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer"
-}
-
 dogrun () {
     docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $1"
+}
+
+dogout () {
+    nohup docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
 }
 
 dogin () {
@@ -86,7 +83,7 @@ dogout log.out  # run farmer in the background
 ```bash
 dogrun COMMAND  # run command in interactive docker
 $ dogrun Godfarmer
-$ dogrun python ~.py
+$ dogrun python
 ```
 
 ```bash
@@ -131,5 +128,5 @@ dogin   # login docker
 
 ```
 cd example
-dogon
+dogrun Godfarmer
 ```

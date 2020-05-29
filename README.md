@@ -9,7 +9,7 @@ You can train Classification and Segmentation tasks semi-automatically
 
 ### `build docker`
 ```bash
-docker build -t farmer:v2 .
+docker build -t farmer:v1.4 .
 ```
 
 ### `register env & command`
@@ -70,8 +70,10 @@ docker run \
     -v $FARMERPATH:/app \
     -v /mnt/hdd2:/mnt/hdd2 \
     --name farmer \
-    farmer:v2
+    farmer:v1.4
+```
 
+```
 docker exec farmer bash -c "poetry run python setup.py develop"
 ```
 

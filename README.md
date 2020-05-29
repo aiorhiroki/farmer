@@ -62,7 +62,7 @@ source ~/.bashrc  # to activate bash aliases
 source ~/.config/fish/config.fish  # to activate fish aliases
 ```
 
-# run docker container
+## Run docker container
 ```bash
 docker run \
     --gpus all \
@@ -73,16 +73,25 @@ docker run \
     farmer:v1.4
 ```
 
-```
+```bash
 docker exec farmer bash -c "poetry run python setup.py develop"
 ```
 
 
+## COMMAND list
 ```bash
-# command list
 dogon  # run farmer
+```
+
+```bash
 nohup dogon > out.log &  # run farmer in the background
+```
+
+```bash
 dogrun COMMAND  # run command in docker
+```
+
+```bash
 dogin   # login docker
 ```
 

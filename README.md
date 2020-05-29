@@ -27,19 +27,6 @@ echo "export FARMERPATH=$PWD" >> ~/.bashrc
 echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 ```
 
-# run docker container
-```bash
-docker run \
-    --gpus all \
-    -itd \
-    -v $FARMERPATH:/app \
-    -v /mnt/hdd2:/mnt/hdd2 \
-    --name farmer \
-    farmer:v2 \
-
-docker exec farmer bash -c "poetry run python setup.py develop"
-```
-
 #### **`~/.bash_aliases`**
 ```bash
 dogon () {
@@ -73,6 +60,19 @@ end
 ```
 source ~/.bashrc  # to activate bash aliases
 source ~/.config/fish/config.fish  # to activate fish aliases
+```
+
+# run docker container
+```bash
+docker run \
+    --gpus all \
+    -itd \
+    -v $FARMERPATH:/app \
+    -v /mnt/hdd2:/mnt/hdd2 \
+    --name farmer \
+    farmer:v2 \
+
+docker exec farmer bash -c "poetry run python setup.py develop"
 ```
 
 

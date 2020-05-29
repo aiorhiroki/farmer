@@ -3,18 +3,14 @@ from setuptools import find_packages
 
 setup(
     name='farmer',
-    version='1.3.5',
-    description='Auto Machine Learning for Doctor',
+    version='1.4.0',
+    description='Auto Machine Learning',
     author='Hiroki Matsuzaki',
     author_email='1234defgsigeru@gmail.com',
     url='https://github.com/aiorhiroki/farmer.git',
     download_url='',
     license='Apache 2.0',
-    install_requires=[
-        'segmentation-models>=1.0.0',
-        'albumentations>=0.4.3',
-        'optuna>=1.0.0',
-        'keras>=2.3.0'],
+    install_requires=[],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

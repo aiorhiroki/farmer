@@ -50,7 +50,7 @@ def calc_iou_from_confusion(confusion):
             (true_positive + false_positive + false_negative)
 
     iou[np.isnan(iou)] = 0
-    return iou
+    return [float(i) for i in iou]
 
 
 def calc_dice_from_confusion(confusion):
@@ -63,7 +63,7 @@ def calc_dice_from_confusion(confusion):
             (2 * true_positive + false_positive + false_negative)
 
     dice[np.isnan(dice)] = 0
-    return dice
+    return [float(d) for d in dice]
 
 
 def detection_rate_confusions(pred_labels, gt_labels, nb_classes):

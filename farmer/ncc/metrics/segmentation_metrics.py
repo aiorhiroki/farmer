@@ -23,8 +23,10 @@ def iou_dice_val(
 
     iou = calc_iou_from_confusion(confusion)
     dice = calc_dice_from_confusion(confusion)
+    precision = calc_precision_from_confusion(confusion)
+    recall = calc_recall_from_confusion(confusion)
 
-    return {'iou': iou, 'dice': dice}
+    return {'iou': iou, 'dice': dice, 'precision': precision, 'recall': recall}
 
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
@@ -51,6 +53,28 @@ def calc_iou_from_confusion(confusion):
 
     iou[np.isnan(iou)] = 0
     return [float(i) for i in iou]
+
+
+def calc_precision_from_confusion(confusion):
+    true_positive = np.diag(confusion)
+    false_positive = np.sum(confusion, 0) - true_positive
+    # Just in case we get a division by 0, set the value to 0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        precision = true_positive / (true_positive + false_positive)
+
+    precision[np.isnan(precision)] = 0
+    return [float(p) for p in precision]
+
+
+def calc_recall_from_confusion(confusion):
+    true_positive = np.diag(confusion)
+    false_negative = np.sum(confusion, 1) - true_positive
+    # Just in case we get a division by 0, set the value to 0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        recall = true_positive / (true_positive + false_negative)
+
+    recall[np.isnan(recall)] = 0
+    return [float(r) for r in recall]
 
 
 def calc_dice_from_confusion(confusion):

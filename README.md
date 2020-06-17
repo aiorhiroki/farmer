@@ -27,15 +27,15 @@ echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 #### **`~/.bash_aliases`**
 ```bash
 dogrun () {
-    docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $1"
+    docker exec -it -u $(id -u):$(id -g) farmer bash -c "cd $PWD && $1"
 }
 
 dogout () {
-    nohup docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
+    nohup docker exec -u $(id -u):$(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
 }
 
 dogin () {
-    docker exec -it -u (id -u):(id -g) farmer bash
+    docker exec -it -u $(id -u):$(id -g) farmer bash
 }
 ```
 

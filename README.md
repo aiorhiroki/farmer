@@ -12,6 +12,18 @@ You can train Classification and Segmentation tasks semi-automatically
 docker build -t farmer:v1.4 .
 ```
 
+### add docker group
+```bash
+# dockerグループがなければ作る
+sudo groupadd docker
+
+# 現行ユーザをdockerグループに所属させる
+sudo gpasswd -a $USER docker
+
+# exitして再ログインすると反映される
+exit
+```
+
 ### `register env & command`
 
 ```bash

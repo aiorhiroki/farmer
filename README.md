@@ -6,13 +6,6 @@ You can train Classification and Segmentation tasks semi-automatically
 
 ### `install docker`
 - Docker >= 19.03
-
-### `build docker`
-```bash
-docker build -t farmer:v1.4 .
-```
-
-### add docker group
 ```bash
 # dockerグループがなければ作る
 sudo groupadd docker
@@ -22,6 +15,11 @@ sudo gpasswd -a $USER docker
 
 # exitして再ログインすると反映される
 exit
+```
+
+### `build docker`
+```bash
+docker build -t farmer:v1.4 .
 ```
 
 ### `register env & command`

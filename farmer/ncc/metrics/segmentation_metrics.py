@@ -27,8 +27,8 @@ def iou_dice_val(
 
     iou = calc_iou_from_confusion(tp, fp, fn)
     dice = calc_dice_from_confusion(tp, fp, fn)
-    precision = calc_precision_from_confusion(tp, fp, fn)
-    recall = calc_recall_from_confusion(tp, fp, fn)
+    precision = calc_precision_from_confusion(tp, fp)
+    recall = calc_recall_from_confusion(tp, fn)
 
     return {'iou': iou, 'dice': dice, 'precision': precision, 'recall': recall}
 

@@ -27,7 +27,7 @@ class EdaTask:
                     fw.write(f"{class_name},{cls_id},{color_id}\n")
             else:
                 fw.write("class_name,class_id\n")
-                for class_id, class_name in enumerate(self.config.class_names):
+                for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
 
     def _do_post_config_task(self):

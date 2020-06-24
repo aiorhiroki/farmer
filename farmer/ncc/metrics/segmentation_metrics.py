@@ -21,10 +21,16 @@ def iou_dice_val(
         confusion += calc_segmentation_confusion(
             predicted, target, nb_classes)
 
-    iou = calc_iou_from_confusion(confusion)
-    dice = calc_dice_from_confusion(confusion)
+    tp = np.diag(confusion)
+    fp = np.sum(confusion, 0) - tp
+    fn = np.sum(confusion, 1) - tp
 
-    return {'iou': iou, 'dice': dice}
+    iou = calc_iou_from_confusion(tp, fp, fn)
+    dice = calc_dice_from_confusion(tp, fp, fn)
+    precision = calc_precision_from_confusion(tp, fp)
+    recall = calc_recall_from_confusion(tp, fn)
+
+    return {'iou': iou, 'dice': dice, 'precision': precision, 'recall': recall}
 
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
@@ -40,30 +46,36 @@ def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     return confusion
 
 
-def calc_iou_from_confusion(confusion):
-    true_positive = np.diag(confusion)
-    false_positive = np.sum(confusion, 0) - true_positive
-    false_negative = np.sum(confusion, 1) - true_positive
-    # Just in case we get a division by 0, set the value to 0
+def calc_iou_from_confusion(tp, fp, fn):
     with np.errstate(divide='ignore', invalid='ignore'):
-        iou = true_positive / \
-            (true_positive + false_positive + false_negative)
+        iou = tp / (tp + fp + fn)
 
     iou[np.isnan(iou)] = 0
     return [float(i) for i in iou]
 
 
-def calc_dice_from_confusion(confusion):
-    true_positive = np.diag(confusion)
-    false_positive = np.sum(confusion, 0) - true_positive
-    false_negative = np.sum(confusion, 1) - true_positive
-    # Just in case we get a division by 0, set the value to 0
+def calc_dice_from_confusion(tp, fp, fn):
     with np.errstate(divide='ignore', invalid='ignore'):
-        dice = 2 * true_positive / \
-            (2 * true_positive + false_positive + false_negative)
+        dice = 2 * tp / (2 * tp + fp + fn)
 
     dice[np.isnan(dice)] = 0
     return [float(d) for d in dice]
+
+
+def calc_precision_from_confusion(tp, fp):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        precision = tp / (tp + fp)
+
+    precision[np.isnan(precision)] = 0
+    return [float(p) for p in precision]
+
+
+def calc_recall_from_confusion(tp, fn):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        recall = tp / (tp + fn)
+
+    recall[np.isnan(recall)] = 0
+    return [float(r) for r in recall]
 
 
 def detection_rate_confusions(pred_labels, gt_labels, nb_classes):
@@ -147,7 +159,10 @@ def generate_segmentation_result(
 
         output = model.predict(np.expand_dims(sample_image, axis=0))[0]
         confusion = calc_segmentation_confusion(output, segmented, nb_classes)
-        dice = calc_dice_from_confusion(confusion)
+        tp = np.diag(confusion)
+        fp = np.sum(confusion, 0) - tp
+        fn = np.sum(confusion, 1) - tp
+        dice = calc_dice_from_confusion(tp, fp, fn)
         segmented = image_util.cast_to_onehot(segmented)
         result_image = get_imageset(
             sample_image, output, segmented, put_text=f'dice: {dice}')

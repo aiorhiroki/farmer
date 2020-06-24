@@ -1,4 +1,4 @@
-import configparser
+import shutil
 from farmer import ncc
 import os
 import dataclasses
@@ -13,28 +13,22 @@ class EdaTask:
         self._do_post_config_task()
 
     def _do_save_params_task(self):
-        parser = configparser.ConfigParser()
-        config_dict = dataclasses.asdict(self.config)
-        config_dict = {k: v for (k, v) in config_dict.items() if v}
-        parser["project_settings"] = config_dict
-        param_path = os.path.join(self.config.info_path, "parameter.txt")
-        with open(param_path, mode="w") as configfile:
-            parser.write(configfile)
+        shutil.copy(self.config.config_path, self.config.info_path)
         with open(f"{self.config.info_path}/classes.csv", "w") as fw:
             if self.config.train_colors:
                 fw.write("class_name,class_id,color_id\n")
-                for class_id, class_data in enumerate(self.config.train_colors):
-                    if type(class_data) == int:
+                for cls_id, cls_data in enumerate(self.config.train_colors):
+                    if type(cls_data) == int:
+                        class_name = self.config.class_names[cls_id]
+                        color_id = cls_data
+                    elif type(cls_data) == dict:
+                        color_id, class_id = list(cls_data.items())[0]
                         class_name = self.config.class_names[class_id]
-                        color_id = class_data
-                    elif type(class_data) == dict:
-                        color_id, class_id = list(class_data.items())[0]
-                        class_name = self.config.class_names[class_id]
-                    fw.write(f"{class_name},{class_id},{color_id}\n")
+                    fw.write(f"{class_name},{cls_id},{color_id}\n")
             else:
                 fw.write("class_name,class_id\n")
-                for class_id, class_name in enumerate(self.config.class_names):
-                    fw.write(f"{class_name},{class_id}\n")
+                for cls_id, class_name in enumerate(self.config.class_names):
+                    fw.write(f"{class_name},{cls_id}\n")
 
     def _do_post_config_task(self):
         # milk側にconfigを送る

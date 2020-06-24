@@ -6,6 +6,8 @@ from segmentation_models.losses import (
 )
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
+# from farmer.ncc.losses.custom_loss import tversky_loss
+from farmer.ncc.losses.custom_loss import tversky_loss
 from ..model.task_model import Task
 
 from tensorflow import keras
@@ -174,7 +176,7 @@ class BuildModelTask:
                     optimizer=optimizer,
                     loss=globals()[loss_func],
                     metrics=[metrics.iou_score,
-                             categorical_crossentropy],
+                            categorical_crossentropy],
                 )
             else:
                 raise NotImplementedError

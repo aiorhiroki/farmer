@@ -22,18 +22,6 @@ exit
 docker build -t farmer:v1.4 .
 ```
 
-### `register env & command`
-
-```bash
-# for bash user
-
-# write farmer path in .bashrc
-echo "export FARMERPATH=$PWD" >> ~/.bashrc
-
-# for fish user
-echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
-```
-
 #### **`~/.bash_aliases`**
 ```bash
 dogrun () {
@@ -41,7 +29,7 @@ dogrun () {
 }
 
 dogout () {
-    nohup docker exec -u $(id -u):$(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
+    nohup docker exec farmer bash -c "cd $PWD && Godfarmer" > $1 &
 }
 
 dogin () {
@@ -56,7 +44,7 @@ function dogrun
 end
 
 function dogout
-    nohup docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $argv &
+    nohup docker exec farmer bash -c "cd $PWD && Godfarmer" > $argv &
 end
 
 function dogin
@@ -74,14 +62,17 @@ source ~/.config/fish/config.fish  # to activate fish aliases
 docker run \
     --gpus all \
     -itd \
-    -v $FARMERPATH:/app \
     -v /mnt/hdd2:/mnt/hdd2 \
     --name farmer \
     farmer:v1.4
-```
 
-```bash
-docker exec farmer bash -c "poetry run python setup.py develop"
+docker exec -it farmer bash -c \
+    "cd $PWD && \
+    poetry run python setup.py develop && \
+    echo $PWD >> /farmerpath"
+
+# show farmer path history
+docker exec -it farmer bash -c "cat /farmerpath"
 ```
 
 

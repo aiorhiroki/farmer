@@ -18,7 +18,6 @@ cce_dice_loss = categorical_crossentropy + dice_loss
 cce_jaccard_loss = categorical_crossentropy + jaccard_loss
 categorical_focal_dice_loss = categorical_focal_loss + dice_loss
 categorical_focal_jaccard_loss = categorical_focal_loss + jaccard_loss
-tversky_loss = tversky_loss()
 
 
 class BuildModelTask:
@@ -178,12 +177,21 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                model.compile(
-                    optimizer=optimizer,
-                    loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                            categorical_crossentropy],
-                )
+                if loss_func == 'tversky_loss':
+                    loss = tversky_loss(self.config.tversky_alpha, self.config.tversky_beta)
+                    model.compile(
+                        optimizer=optimizer,
+                        loss=loss,
+                        metrics=[metrics.iou_score,
+                                categorical_crossentropy],
+                    )
+                else:
+                    model.compile(
+                        optimizer=optimizer,
+                        loss=globals()[loss_func],
+                        metrics=[metrics.iou_score,
+                                categorical_crossentropy],
+                    )
             else:
                 raise NotImplementedError
 

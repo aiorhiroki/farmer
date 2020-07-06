@@ -11,12 +11,6 @@ def _tversky_index(y_true, y_pred, alpha, beta):
     fn = backend.sum(y_true, axis=reduce_axes) - tp
     return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
 
-def tversky_loss(alpha=0.45, beta=0.55, **kwargs):
-    def loss(y_true, y_pred):
-        index =_tversky_index(y_true, y_pred, alpha, beta)
-        return 1.0 - backend.mean(index)
-    return loss
-
 def focal_tversky_loss(alpha=0.45, beta=0.55, gamma=2., **kwargs):
     gamma = tf.clip_by_value(gamma, 1.0, 3.0)
     def loss(y_true, y_pred):

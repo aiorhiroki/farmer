@@ -7,6 +7,7 @@ from segmentation_models.losses import (
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
+from farmer.ncc.losses import loss_functions
 
 from tensorflow import keras
 
@@ -170,12 +171,23 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                model.compile(
-                    optimizer=optimizer,
-                    loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                             categorical_crossentropy],
-                )
+                if loss_func == "focal_tversky_loss":
+                    loss = getattr(loss_functions, loss_func)(
+                        **self.config.loss_params
+                    ) 
+                    model.compile(
+                        optimizer=optimizer,
+                        loss=loss,
+                        metrics=[metrics.iou_score,
+                                 categorical_crossentropy],
+                    )
+                else:
+                    model.compile(
+                        optimizer=optimizer,
+                        loss=globals()[loss_func],
+                        metrics=[metrics.iou_score,
+                                 categorical_crossentropy],
+                    )
             else:
                 raise NotImplementedError
 

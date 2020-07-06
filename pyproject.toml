@@ -16,6 +16,7 @@ segmentation-models = "1.0.0"
 albumentations = "0.4.3"
 optuna = "1.4.0"
 keras = "2.3.0"
+keras-adabound = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 

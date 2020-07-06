@@ -9,6 +9,8 @@ from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from ..model.task_model import Task
 
 from tensorflow import keras
+from keras_adabound import AdaBound
+
 
 segmentation_models.set_framework('tf.keras')
 
@@ -154,6 +156,10 @@ class BuildModelTask:
             elif optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                )
+            elif optimizer == "adabound":
+                optimizer = AdaBound(
+                    lr=learning_rate, final_lr=0.1
                 )
             else:
                 optimizer = keras.optimizers.SGD(

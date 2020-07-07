@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import os
 from datetime import datetime
 from dataclasses import field
-from typing import List
+from typing import List, Dict
 from .config_model import Config
 from .image_loader_model import ImageLoader
 from .optuna_model import Optuna
@@ -22,6 +22,7 @@ class Trainer(Config, ImageLoader, Optuna):
     nb_gpu: int = None
     multi_gpu: bool = None
     loss: str = None
+    loss_params: Dict[str, float] = field(default_factory=dict)
     trained_path: str = None
     trained_model_path: str = None
     model_name: str = None

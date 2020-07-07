@@ -3,13 +3,10 @@ from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
-from ..model.task_model import Task
 from farmer.ncc.losses import loss_functions 
+from ..model.task_model import Task
 
 from tensorflow import keras
-
-
-segmentation_models.set_framework('tf.keras')
 
 
 class BuildModelTask:

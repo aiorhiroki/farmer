@@ -4,6 +4,9 @@ from segmentation_models.losses import (
     DiceLoss, JaccardLoss, CategoricalFocalLoss, CategoricalCELoss
 )
 
+from keras import backend as K
+import tensorflow as tf
+
 
 segmentation_models.set_framework('tf.keras')
 
@@ -89,3 +92,18 @@ def categorical_focal_jaccard_loss(alpha=0.25, gamma=2., class_weights=None,
         per_image=per_image
     )
     return cfl + jl
+
+def _tversky_index(y_true, y_pred, alpha, beta):
+    eps = tf.keras.backend.epsilon()
+    y_pred = tf.clip_by_value(y_pred, eps, 1 - eps)
+    reduce_axes = [0, 1, 2]
+    tp = K.sum(y_true * y_pred, axis=reduce_axes)
+    fp = K.sum(y_pred, axis=reduce_axes) - tp
+    fn = K.sum(y_true, axis=reduce_axes) - tp
+    return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
+
+def tversky_loss(alpha=0.45, beta=0.55, **kwargs):
+    def loss(y_true, y_pred):
+        index =_tversky_index(y_true, y_pred, alpha, beta)
+        return 1.0 - K.mean(index)
+    return loss

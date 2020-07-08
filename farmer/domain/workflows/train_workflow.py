@@ -18,16 +18,22 @@ class TrainWorkflow(AbstractImageAnalyzer):
         super().__init__(config)
         if trial:
             # init
-            self._config.model_path = os.path.join(self._config.result_path, self._config.model_dir)
-            self._config.learning_path = os.path.join(self._config.result_path, self._config.learning_dir)
-            self._config.image_path = os.path.join(self._config.result_path, self._config.image_dir)
+            self._config.model_path = os.path.join(
+                self._config.result_path, self._config.model_dir)
+            self._config.learning_path = os.path.join(
+                self._config.result_path, self._config.learning_dir)
+            self._config.image_path = os.path.join(
+                self._config.result_path, self._config.image_dir)
 
             # result_dir/trial#/learning/
-            self._config.learning_path = self._config.learning_path.replace("/learning", f"/trial{trial.number}/learning")
+            self._config.learning_path = self._config.learning_path.replace(
+                "/learning", f"/trial{trial.number}/learning")
             # result_dir/trial#/model/
-            self._config.model_path = self._config.model_path.replace("/model", f"/trial{trial.number}/model")
+            self._config.model_path = self._config.model_path.replace(
+                "/model", f"/trial{trial.number}/model")
             # result_dir/trial#/image/
-            self._config.image_path = self._config.image_path.replace("/image", f"/trial{trial.number}/image")
+            self._config.image_path = self._config.image_path.replace(
+                "/image", f"/trial{trial.number}/image")
 
             self._config.trial_number = trial.number
             self._config.trial_params = trial.params
@@ -53,15 +59,19 @@ class TrainWorkflow(AbstractImageAnalyzer):
                                 param_val = trial.suggest_discrete_uniform(
                                     key, *val
                                 )
-                                params[key] = int(param_val) if key == 'batch_size' else param_val
+                                if key == 'batch_size':
+                                    params[key] = int(param_val)
+                                else:
+                                    params[key] = param_val
                     if isinstance(val, dict):
                         params[key] = set_train_params(val)
                 return params
-        
+
             # set train params to params setted by optuna
-            self._config.train_params = set_train_params(self._config.optuna_params)
+            self._config.train_params = set_train_params(
+                self._config.optuna_params)
             print("self._config.train_params: ", self._config.train_params)
-        
+
     def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()

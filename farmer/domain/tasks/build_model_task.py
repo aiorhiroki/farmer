@@ -126,7 +126,9 @@ class BuildModelTask:
 
     def _do_load_model_task(self, model, trained_model_path):
         if trained_model_path:
+            print(f"LOADING MODEL `{trained_model_path}` ... ", end="")
             model.load_weights(trained_model_path)
+            print("DONE")
         return model
 
     def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):

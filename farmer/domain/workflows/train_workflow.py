@@ -35,7 +35,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("DONE")
 
     def read_annotation_flow(self):
-        print("READ ANNOTATION FLOW ... ", end="")
+        print("READ ANNOTATION FLOW ... ")
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command("train")
         validation_set = read_annotation.command("validation")
@@ -49,20 +49,20 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("DONE")
 
     def build_model_flow(self, trial=None):
-        print("BUILD MODEL FLOW ... ", end="")
+        print("BUILD MODEL FLOW ... ")
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
         model, base_model = BuildModelTask(self._config).command(trial)
-        print("DONE")
+        print("DONE\n")
         return model, base_model
 
     def model_execution_flow(
         self,
         annotation_set, model, base_model, validation_set, test_set, trial
     ):
-        print("MODEL EXECUTION FLOW ... ", end="")
+        print("MODEL EXECUTION FLOW ... ")
         if self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
                 from keras_retinanet.bin import train
@@ -120,7 +120,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
         return eval_report
 
     def output_flow(self, result):
-        print("OUTPUT FLOW ...", end="")
+        print("OUTPUT FLOW ... ", end="")
         OutputResultTask(self._config).command(result)
         print("DONE")
         return result

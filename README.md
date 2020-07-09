@@ -4,30 +4,107 @@ You can train Classification and Segmentation tasks semi-automatically
 
 ## Prerequisite
 
-Docker >= 19.03
-
-(python library) jinja2
-
-build docker
+### `install docker`
+- Docker >= 19.03
 ```bash
-docker build -t tensorflow:v2 .
+# dockerグループがなければ作る
+sudo groupadd docker
+
+# 現行ユーザをdockerグループに所属させる
+sudo gpasswd -a $USER docker
+
+# exitして再ログインすると反映される
+exit
 ```
 
-run container
-```
-sh docker-start.sh farmer 5000
+### `build docker`
+```bash
+docker build -t farmer:v1.4 .
 ```
 
-exec container
+### `register env & command`
+
+```bash
+# for bash user
+
+# write farmer path in .bashrc
+echo "export FARMERPATH=$PWD" >> ~/.bashrc
+
+# for fish user
+echo "set -x FARMERPATH $PWD" >> ~/.config/fish/config.fish
 ```
-docker exec -it --user $USER farmer-dev bash --login
+
+#### **`~/.bash_aliases`**
+```bash
+dogrun () {
+    docker exec -it -u $(id -u):$(id -g) farmer bash -c "cd $PWD && $1"
+}
+
+dogout () {
+    nohup docker exec -u $(id -u):$(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
+}
+
+dogin () {
+    docker exec -it -u $(id -u):$(id -g) farmer bash
+}
 ```
+
+#### **`~/.config/fish/config.fish`**
+``` bash
+function dogrun
+    docker exec -it -u (id -u):(id -g) farmer bash -c "cd $PWD && $argv"
+end
+
+function dogout
+    nohup docker exec -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $argv &
+end
+
+function dogin
+    docker exec -it -u (id -u):(id -g) farmer bash
+end
+```
+
+```
+source ~/.bashrc  # to activate bash aliases
+source ~/.config/fish/config.fish  # to activate fish aliases
+```
+
+## Run docker container
+```bash
+docker run \
+    --gpus all \
+    -itd \
+    -v $FARMERPATH:/app \
+    -v /mnt/hdd2:/mnt/hdd2 \
+    --name farmer \
+    farmer:v1.4
+```
+
+```bash
+docker exec farmer bash -c "poetry run python setup.py develop"
+```
+
+
+## COMMAND list
+```bash
+dogout log.out  # run farmer in the background
+```
+
+```bash
+dogrun COMMAND  # run command in interactive docker
+$ dogrun Godfarmer
+$ dogrun python
+```
+
+```bash
+dogin   # login docker
+```
+
+* **dogon** needs run.yaml in the same path
 
 ## Prepare Data set folder
 
-classification folder tree
-
-e.g.)
+#### **`classification folder tree`**
 
 ```yaml
 - target_directory
@@ -37,9 +114,7 @@ e.g.)
   - data_case_directory(dataB)
 ```
 
-segmentation folder tree
-
-e.g.)
+#### **`segmentation folder tree`**
 
 ```yaml
 - target_directory
@@ -48,13 +123,6 @@ e.g.)
     - mask_image_directory
   - data_case_directory(dataB)
 ```
-
-## Training
-
-1. start docker `$ docker exec -it farmer bash`
-1. set param in `~.yaml` and `run.yaml`
-1. set param in `secret.yaml` (optional for slack logger)
-1. run `$ Godfarmer`
 
 ## Result
 
@@ -66,15 +134,9 @@ e.g.)
   - model (best model and last model)
 ```
 
-### Integration Test
+## Integration Test
 
-```bash
-cd example
-Godfarmer
 ```
-
-## For Developer
-If you change files, run following command before *Godfarmer*
-```bash
-python setup.py develop --user
+cd example
+dogrun Godfarmer
 ```

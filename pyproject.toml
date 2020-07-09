@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "farmer"
+version = "1.4.0"
+description = "Auto Machine Learning"
+authors = ["Hiroki Matsuzaki"]
+
+[tool.poetry.dependencies]
+python = "3.6.9"
+tensorflow = "2.1.0"
+tensorflow-estimator = "2.1.0"
+scikit-learn = "0.22.2"
+dataclasses = "0.7"
+opencv-python = "4.2.0.34"
+pretrainedmodels = "0.7.4"
+segmentation-models = "1.0.0"
+albumentations = "0.4.3"
+optuna = "1.4.0"
+keras = "2.3.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

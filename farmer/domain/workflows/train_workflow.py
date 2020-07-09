@@ -10,10 +10,6 @@ from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
-import optuna
-import numpy as np
-from keras.backend import clear_session
-
 
 class TrainWorkflow(AbstractImageAnalyzer):
     def __init__(self, config):
@@ -119,37 +115,3 @@ class TrainWorkflow(AbstractImageAnalyzer):
         OutputResultTask(self._config).command(result)
         print("output flow done")
         return result
-
-    def optuna_command(self):
-        study = optuna.create_study(direction='maximize')
-        study.optimize(
-            self.objective,
-            n_trials=self._config.n_trials,
-            timeout=self._config.timeout
-        )
-        pruned_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.PRUNED]
-        complete_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.COMPLETE]
-        print("Study statistics: ")
-        print("  Number of finished trials: ", len(study.trials))
-        print("  Number of pruned trials: ", len(pruned_trials))
-        print("  Number of complete trials: ", len(complete_trials))
-
-        print('Best trial:')
-        trial = study.best_trial
-
-        print('  Value: {}'.format(trial.value))
-
-        print('  Params: ')
-        for key, value in trial.params.items():
-            print('    {}: {}'.format(key, value))
-        return study
-
-    def objective(self, trial):
-        clear_session()
-        result = self.command(trial)
-        if self._config.task == Task.CLASSIFICATION:
-            return result["accuracy"]
-        elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            return np.mean(result["dice"][1:])
-        else:
-            raise NotImplementedError

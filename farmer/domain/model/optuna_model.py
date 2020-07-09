@@ -8,4 +8,4 @@ class Optuna:
     op_optimizer: bool = False
     op_backbone: bool = False
     n_trials: int = 3
-    timeout: int = 3 * 60 * 60
+    timeout: int = None

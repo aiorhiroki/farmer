@@ -131,3 +131,8 @@ dogin   # login docker
 cd example
 dogrun Godfarmer
 ```
+
+## add package
+```
+docker exec -it farmer bash -c "cd $PWD && poetry add pandas"
+```

@@ -78,7 +78,7 @@ class TrainTask:
 
         plot_history = ncc.callbacks.PlotHistory(
             self.config.learning_path,
-            ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+            ['loss', 'acc', 'iou_score']
         )
         callbacks = [checkpoint, scheduler, plot_history]
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
@@ -140,7 +140,7 @@ class TrainTask:
         self, model, train_gen, validation_gen, callbacks
     ):
 
-        model.fit_generator(
+        model.fit(
             train_gen,
             steps_per_epoch=len(train_gen),
             callbacks=callbacks,

@@ -125,7 +125,8 @@ class ImageUtil:
         file_path: str,
         normalization=True,
         anti_alias=False,
-        train_colors=None
+        train_colors=None,
+        one_hot=False
     ):
         image = Image.open(file_path)
         self.current_raw_frame = image
@@ -141,21 +142,23 @@ class ImageUtil:
             image = image / 255.0
         if train_colors:
             image = self._convert_colors(image, train_colors)
+        if one_hot:
+            image = self.cast_to_onehot(image)
 
         return image
 
     def cast_to_onehot(
         self,
-        labels: list
+        label: np.ndarray
     ):
-        labels = np.asarray(labels, dtype=np.uint8)
+        label = np.asarray(label, dtype=np.uint8)
         # Classification
-        if len(labels.shape) == 1:
+        if len(label.shape) == 1:
             one_hot = np.eye(self.nb_classes)
         # Segmentation
         else:
             one_hot = np.identity(self.nb_classes)
-        return one_hot[labels]
+        return one_hot[label]
 
     def _cast_to_frame(
         self,

@@ -62,7 +62,8 @@ class ImageSequence(Sequence):
                 label = self.image_util.read_image(
                     label,
                     normalization=False,
-                    train_colors=self.train_colors
+                    train_colors=self.train_colors,
+                    one_hot=True
                 )
                 if self.augmentation and len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
@@ -71,11 +72,14 @@ class ImageSequence(Sequence):
                         self.input_shape,
                         self.augmentation
                     )
+                    print(label.shape)
+            else:
+                label = self.image_util.cast_to_onehot(label)
             batch_x.append(input_image)
             batch_y.append(label)
 
         batch_x = np.array(batch_x, dtype=np.float32)
-        batch_y = self.image_util.cast_to_onehot(batch_y)
+        batch_y = np.array(batch_y, dtype=np.float32)
 
         return batch_x, batch_y
 

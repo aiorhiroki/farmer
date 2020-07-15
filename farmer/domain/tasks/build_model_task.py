@@ -173,8 +173,7 @@ class BuildModelTask:
                 model.compile(
                     optimizer=optimizer,
                     loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                             categorical_crossentropy],
+                    metrics=[metrics.iou_score],
                 )
             else:
                 raise NotImplementedError

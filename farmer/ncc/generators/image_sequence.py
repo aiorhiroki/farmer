@@ -72,7 +72,6 @@ class ImageSequence(Sequence):
                         self.input_shape,
                         self.augmentation
                     )
-                    print(label.shape)
             else:
                 label = self.image_util.cast_to_onehot(label)
             batch_x.append(input_image)

@@ -4,11 +4,10 @@ from segmentation_models import metrics
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from farmer.ncc.losses import loss_functions 
+from farmer.ncc.optimizers.adabound import AdaBound
 from ..model.task_model import Task
 
 from tensorflow import keras
-from keras_adabound import AdaBound
-
 
 
 class BuildModelTask:
@@ -149,7 +148,7 @@ class BuildModelTask:
                 )
             elif optimizer == "adabound":
                 optimizer = AdaBound(
-                    lr=learning_rate, final_lr=0.1
+                    learning_rate=learning_rate, final_lr=0.1
                 )
             else:
                 optimizer = keras.optimizers.SGD(

@@ -102,7 +102,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
             PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model
+                test_set, model=trained_model, trial=trial
             )
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model

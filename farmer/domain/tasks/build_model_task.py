@@ -4,7 +4,7 @@ from segmentation_models import metrics
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from farmer.ncc.losses import loss_functions 
-from farmer.ncc.optimizers.adabound import AdaBound
+from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 
 from tensorflow import keras

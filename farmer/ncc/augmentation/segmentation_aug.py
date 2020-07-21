@@ -36,6 +36,8 @@ from albumentations import (
     VerticalFlip,
     Blur,
     MotionBlur,
+    MedianBlur,
+    GaussianBlur,
 )
 
 
@@ -48,10 +50,14 @@ def segmentation_aug(input_image, label, size, augmentation_list):
     if "blur" in augmentation_list:
         transforms.append(Blur(blur_limit=3,p=0.5))
     #newly added
-    if "motion_blur"in augmentation_list:
+    if "motion_blur" in augmentation_list:
         transforms.append(MotionBlur(blur_limit=3,p=0.5))
+    if "median_blur" in augmentation_list:
+        transforms.append(MedianBlur(blur_limit=3,p=0.5))
+    if "gaussian_blur" in augmentation_list:
+        transforms.append(GaussianBlur(blur_limit=3,p=0.5))
     
-
+   
     if len(transforms) > 0:
         print('augmentation!!!')
         aug = Compose(transforms, p=1)

@@ -66,7 +66,7 @@ class ImageSequence(Sequence):
                     one_hot=True
                 )
                 if self.augmentation and len(self.augmentation) > 0:
-                    print('augmentation_inputshape')
+                    # print('augmentation_inputshape')
                     input_image, label = segmentation_aug(
                         input_image,
                         label,

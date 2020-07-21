@@ -1,14 +1,14 @@
 import math
 import cv2
 
-from tensorflow.python.keras.utils.data_utils import Sequence
+import tensorflow
 import numpy as np
 from ..augmentation import segmentation_aug
 from ..tasks import Task
 from ..utils import ImageUtil
 
 
-class ImageSequence(Sequence):
+class ImageSequence(tensorflow.keras.utils.Sequence):
     def __init__(
         self,
         annotations: list,

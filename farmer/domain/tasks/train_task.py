@@ -37,17 +37,20 @@ class TrainTask:
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,
-            batch_size=batch_size,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        train_gen = ncc.generators.ImageSequence(**sequence_args)
-
+        train_dataset = ncc.generators.Dataset(**sequence_args)
         sequence_args.update(annotations=validation_set, augmentation=[])
-        validation_gen = ncc.generators.ImageSequence(**sequence_args)
+        validation_dataset = ncc.generators.Dataset(**sequence_args)
 
-        return train_gen, validation_gen
+        train_dataloader = ncc.generators.Dataloder(
+            train_dataset, batch_size=batch_size, shuffle=True)
+        validation_dataloader = ncc.generators.Dataloder(
+            validation_dataset, batch_size=batch_size, shuffle=False)
+
+        return train_dataloader, validation_dataloader
 
     def _do_set_callbacks_task(
             self, base_model, train_set, validation_set, trial):

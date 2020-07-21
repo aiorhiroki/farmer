@@ -39,6 +39,7 @@ class Trainer(Config, ImageLoader, Optuna):
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001
     optuna: bool = False
+    weights: str = "pascal_voc"
 
     def __post_init__(self):
         self.task = self.get_task()

@@ -4,6 +4,7 @@ from segmentation_models import metrics
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from farmer.ncc.losses import loss_functions 
+# from farmer.ncc.encoder_layer import Xception
 from ..model.task_model import Task
 
 from tensorflow import keras
@@ -59,7 +60,12 @@ class BuildModelTask:
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(nb_classes, height, width)
+                # model = xception(nb_classes, height, width)
+                model = Xception(
+                    nb_classes=nb_classes,
+                    input_shape=(height, width, 3),
+                    weights=self.config.weights
+                    )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(nb_classes, height, width)
             else:
@@ -83,6 +89,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
+                    weights=self.config.weights,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,

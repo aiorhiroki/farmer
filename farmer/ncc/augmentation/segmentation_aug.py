@@ -36,8 +36,13 @@ from albumentations import (
     VerticalFlip,
     Blur,
     MotionBlur,
-    MedianBlur,
+    # MedianBlur,
     GaussianBlur,
+    # GlassBlur,
+    # CLAHE,
+    # HueSaturationValue,
+    GaussNoise,
+    Normalize,
 )
 
 
@@ -56,8 +61,17 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(MedianBlur(blur_limit=3,p=0.5))
     if "gaussian_blur" in augmentation_list:
         transforms.append(GaussianBlur(blur_limit=3,p=0.5))
-    
-   
+    # if "glass_blur" in augmentation_list:
+    #     transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2,p=0.5))
+    # if "clahe" in augmentation_list:
+    #     transforms.append(CLAHE(p=0.5))
+    # if "hsv" in augmentation_list:
+    #     transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,p=0.5))
+    if "gauss_noise" in augmentation_list:
+        transforms.append(GaussNoise(p=0.5))
+    if "normalize" in augmentation_list:
+        transforms.append(Normalize(p=0.5))
+
     if len(transforms) > 0:
         print('augmentation!!!')
         aug = Compose(transforms, p=1)

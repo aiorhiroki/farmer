@@ -15,7 +15,7 @@ description = "Fast image augmentation library and easy to use wrapper around ot
 name = "albumentations"
 optional = false
 python-versions = "*"
-version = "0.4.3"
+version = "0.4.6"
 
 [package.dependencies]
 PyYAML = "*"

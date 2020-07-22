@@ -46,6 +46,7 @@ from albumentations import (
     GridDistortion,
     RandomContrast,
     MultiplicativeNoise,
+    GridDropout,
 )
 
 
@@ -82,7 +83,8 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(RandomContrast(limit=0.2, p=0.5))   
     if "multiplicative_noise" in augmentation_list:
         transforms.append(MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=False, elementwise=False, p=0.5))   
-             
+    if "grid_dropout" in augmentation_list:
+        transforms.append(GridDropout(p=0.5))            
         
     if len(transforms) > 0:
         print('augmentation!!!')

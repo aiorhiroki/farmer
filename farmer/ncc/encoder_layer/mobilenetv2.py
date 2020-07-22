@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from tensorflow.python.keras.models import Model
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.layers import Activation
@@ -8,7 +9,13 @@ from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Conv2D
 from tensorflow.python.keras.layers import DepthwiseConv2D
 from tensorflow.python.keras.activations import relu
+from tensorflow.python.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.python.keras.utils import layer_utils
+from tensorflow.python.keras.utils import data_utils
 
+
+BASE_WEIGHT_PATH = ('https://storage.googleapis.com/tensorflow/'
+                    'keras-applications/mobilenet_v2/')
 
 def relu6(x):
     return relu(x, max_value=6)
@@ -66,7 +73,7 @@ def _inverted_res_block(inputs, expansion, stride, alpha, filters, block_id, ski
     return x
 
 
-def MobileNetV2(img_input, OS=16, alpha=1.):
+def MobileNetV2(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, alpha=1., include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
@@ -88,6 +95,11 @@ def MobileNetV2(img_input, OS=16, alpha=1.):
         A Keras model instance.
 
     """
+
+    if input_tensor is None:
+        img_input = Input(shape=input_shape)
+    else:
+        img_input = input_tensor
 
     OS = 8
     first_block_filters = _make_divisible(32 * alpha, 8)
@@ -140,5 +152,38 @@ def MobileNetV2(img_input, OS=16, alpha=1.):
 
     x = _inverted_res_block(x, filters=320, alpha=alpha, stride=1, rate=4,
                             expansion=6, block_id=16, skip_connection=False)
-    return x
+    
+    if include_top:
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(nb_classes, activation='softmax')(x)
+    
+    # Ensure that the model takes into account
+    # any potential predecessors of `input_tensor`.
+    if input_tensor is not None:
+        inputs = layer_utils.get_source_inputs(input_tensor)
+    else:
+        inputs = img_input
+    
+    # Create model.
+    model = Model(inputs, x, name='mobilenetv2')
+
+    # Load weights.
+    if weights == 'imagenet':
+        if include_top:
+            model_name = ('mobilenet_v2_weights_tf_dim_ordering_tf_kernels_' +
+                            str(alpha) + '_' + str(rows) + '.h5')
+            weight_path = BASE_WEIGHT_PATH + model_name
+            weights_path = data_utils.get_file(
+                model_name, weight_path, cache_subdir='models')
+        else:
+            model_name = ('mobilenet_v2_weights_tf_dim_ordering_tf_kernels_' +
+                            str(alpha) + '_' + str(rows) + '_no_top' + '.h5')
+            weight_path = BASE_WEIGHT_PATH + model_name
+            weights_path = data_utils.get_file(
+                model_name, weight_path, cache_subdir='models')
+        model.load_weights(weights_path)
+    elif not (weights in {'pascal_voc', 'cityscapes', None}):
+        model.load_weights(weights)
+
+    return model
 

@@ -90,11 +90,6 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
 
     """
 
-    # if not (weights in {'pascal_voc', 'cityscapes', None}):
-    #     raise ValueError('The `weights` argument should be either '
-    #                      '`None` (random initialization), `pascal_voc`, or `cityscapes` '
-    #                      '(pre-trained on PASCAL VOC)')
-
     if not (backbone in {'xception', 'mobilenetv2'}):
         raise ValueError('The `backbone` argument should be either '
                          '`xception`  or `mobilenetv2` ')
@@ -110,10 +105,22 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
 
     if backbone == 'xception':
         base_model, skip1 = Xception(
-            img_input, input_shape, weights, OS, return_skip=True, include_top=False)
+            input_tensor=img_input, 
+            input_shape=input_shape, 
+            weights=weights, 
+            OS=OS, 
+            return_skip=True, 
+            include_top=False
+        )
 
     else:
-        base_model = MobileNetV2(img_input, OS, alpha)
+        base_model = MobileNetV2(
+            input_tensor=img_input, 
+            input_shape=input_shape, 
+            weights=weights, 
+            OS=OS, 
+            include_top=False
+        )
     
     x = base_model.output
 

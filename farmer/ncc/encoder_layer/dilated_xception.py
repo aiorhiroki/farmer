@@ -11,6 +11,7 @@ from tensorflow.python.keras.layers import DepthwiseConv2D
 from tensorflow.python.keras.layers import ZeroPadding2D
 from tensorflow.python.keras.utils import layer_utils
 from tensorflow.python.keras.utils import data_utils
+from tensorflow.python.keras.layers import Dense, GlobalAveragePooling2D
 
 
 TF_WEIGHTS_PATH = (
@@ -127,7 +128,7 @@ def _xception_block(inputs, depth_list, prefix, skip_connection_type, stride,
 
     return outputs, skip
 
-def Xception(nb_classes, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
+def Xception(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
@@ -193,6 +194,8 @@ def Xception(nb_classes, input_tensor=None, input_shape=(512, 512, 3), weights='
         x = GlobalAveragePooling2D()(x)
         x = Dense(nb_classes, activation='softmax')(x)
     
+    # Ensure that the model takes into account
+    # any potential predecessors of `input_tensor`.
     if input_tensor is not None:
         inputs = layer_utils.get_source_inputs(input_tensor)
     else:

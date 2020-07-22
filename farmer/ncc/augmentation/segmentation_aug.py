@@ -43,6 +43,8 @@ from albumentations import (
     # HueSaturationValue,
     GaussNoise,
     Normalize,
+    GridDistortion,
+    RandomContrast,
 )
 
 
@@ -71,7 +73,13 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(GaussNoise(p=0.5))
     if "normalize" in augmentation_list:
         transforms.append(Normalize(p=0.5))
-
+    if "grid_distortion" in augmentation_list:
+        transforms.append(GridDistortion
+            (num_steps=5, distort_limit=0.3, interpolation=1, border_mode=4, p=0.5)
+            )
+    if "random_contrast" in augmentation_list:
+        transforms.append(RandomContrast(limit=0.2, p=0.5))        
+        
     if len(transforms) > 0:
         print('augmentation!!!')
         aug = Compose(transforms, p=1)

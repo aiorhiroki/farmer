@@ -13,6 +13,8 @@ from tensorflow.python.keras.utils import layer_utils
 from tensorflow.python.keras.utils import data_utils
 from tensorflow.python.keras.layers import Dense, GlobalAveragePooling2D
 
+from .functional import SepConv_BN
+
 
 TF_WEIGHTS_PATH = (
     'https://storage.googleapis.com/tensorflow/keras-applications/'
@@ -21,45 +23,6 @@ TF_WEIGHTS_PATH_NO_TOP = (
     'https://storage.googleapis.com/tensorflow/keras-applications/'
     'xception/xception_weights_tf_dim_ordering_tf_kernels_notop.h5')
 
-
-def SepConv_BN(x, filters, prefix, stride=1, kernel_size=3, rate=1, depth_activation=False, epsilon=1e-3):
-    """ SepConv with BN between depthwise & pointwise. Optionally add activation after BN
-        Implements right "same" padding for even kernel sizes
-        Args:
-            x: input tensor
-            filters: num of filters in pointwise convolution
-            prefix: prefix before name
-            stride: stride at depthwise conv
-            kernel_size: kernel size for depthwise convolution
-            rate: atrous rate for depthwise convolution
-            depth_activation: flag to use activation between depthwise & poinwise convs
-            epsilon: epsilon to use in BN layer
-    """
-
-    if stride == 1:
-        depth_padding = 'same'
-    else:
-        kernel_size_effective = kernel_size + (kernel_size - 1) * (rate - 1)
-        pad_total = kernel_size_effective - 1
-        pad_beg = pad_total // 2
-        pad_end = pad_total - pad_beg
-        x = ZeroPadding2D((pad_beg, pad_end))(x)
-        depth_padding = 'valid'
-
-    if not depth_activation:
-        x = Activation('relu')(x)
-    x = DepthwiseConv2D((kernel_size, kernel_size), strides=(stride, stride), dilation_rate=(rate, rate),
-                        padding=depth_padding, use_bias=False, name=prefix + '_depthwise')(x)
-    x = BatchNormalization(name=prefix + '_depthwise_BN', epsilon=epsilon)(x)
-    if depth_activation:
-        x = Activation('relu')(x)
-    x = Conv2D(filters, (1, 1), padding='same',
-               use_bias=False, name=prefix + '_pointwise')(x)
-    x = BatchNormalization(name=prefix + '_pointwise_BN', epsilon=epsilon)(x)
-    if depth_activation:
-        x = Activation('relu')(x)
-
-    return x
 
 def _conv2d_same(x, filters, prefix, stride=1, kernel_size=3, rate=1):
     """Implements right 'same' padding for even kernel sizes
@@ -128,22 +91,30 @@ def _xception_block(inputs, depth_list, prefix, skip_connection_type, stride,
 
     return outputs, skip
 
-def Xception(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
+
+def Xception(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
     on PASCAL VOC or Cityscapes. This model is available for TensorFlow only.
     # Arguments
+        classes: Integer, optional number of classes to classify images
+            into, only to be specified if `include_top` is True, and
+            if no `weights` argument is specified.
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: shape of input image. format HxWxC
             PASCAL VOC model was trained on (512,512,3) images. None is allowed as shape/width
+        weights: one of 'imagenet' (pre-training on ImageNet),
+            original weights path (pre-training on original data) or None (random initialization)
         OS: determines input_shape/feature_extractor_output ratio. One of {8,16}.
             Used only for xception backbone.
         return_skip: flag to return additional tensor after 2 SepConvs for decoder
+        include_top: Boolean, whether to include the fully-connected
+            layer at the top of the network. Defaults to `True`.
 
     # Returns
-        A Keras model instance.
+        A Keras model instance. if return_skip is true, return additional tensor too
     """
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -192,7 +163,7 @@ def Xception(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), weig
 
     if include_top:
         x = GlobalAveragePooling2D()(x)
-        x = Dense(nb_classes, activation='softmax')(x)
+        x = Dense(classes, activation='softmax')(x)
     
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.

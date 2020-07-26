@@ -8,17 +8,15 @@ from tensorflow.python.keras.layers import Add
 from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Conv2D
 from tensorflow.python.keras.layers import DepthwiseConv2D
-from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.python.keras.utils import layer_utils
 from tensorflow.python.keras.utils import data_utils
 
+from .functional import relu6
+
 
 BASE_WEIGHT_PATH = ('https://storage.googleapis.com/tensorflow/'
                     'keras-applications/mobilenet_v2/')
-
-def relu6(x):
-    return relu(x, max_value=6)
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -73,12 +71,21 @@ def _inverted_res_block(inputs, expansion, stride, alpha, filters, block_id, ski
     return x
 
 
-def MobileNetV2(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, alpha=1., include_top=True):
+def MobileNetV2(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, alpha=1., include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
     on PASCAL VOC or Cityscapes. This model is available for TensorFlow only.
     # Arguments
+        classes: Integer, optional number of classes to classify images
+            into, only to be specified if `include_top` is True, and
+            if no `weights` argument is specified.
+        input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
+            to use as image input for the model.
+        input_shape: shape of input image. format HxWxC
+            PASCAL VOC model was trained on (512,512,3) images. None is allowed as shape/width
+        weights: one of 'imagenet' (pre-training on ImageNet),
+            original weights path (pre-training on original data) or None (random initialization)
         OS: determines input_shape/feature_extractor_output ratio. One of {8,16}.
             Used only for xception backbone.
         alpha: controls the width of the MobileNetV2 network. This is known as the
@@ -90,6 +97,8 @@ def MobileNetV2(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), w
                 - If `alpha` = 1, default number of filters from the paper
                     are used at each layer.
             Used only for mobilenetv2 backbone. Pretrained is only available for alpha=1.
+        include_top: Boolean, whether to include the fully-connected
+            layer at the top of the network. Defaults to `True`.
 
     # Returns
         A Keras model instance.
@@ -155,7 +164,7 @@ def MobileNetV2(nb_classes=None, input_tensor=None, input_shape=(512, 512, 3), w
     
     if include_top:
         x = GlobalAveragePooling2D()(x)
-        x = Dense(nb_classes, activation='softmax')(x)
+        x = Dense(classes, activation='softmax')(x)
     
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.

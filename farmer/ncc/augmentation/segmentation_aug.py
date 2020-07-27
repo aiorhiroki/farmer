@@ -1,6 +1,6 @@
 # from keras.preprocessing import image
-# import numpy as np
-
+import numpy as np
+from skimage import img_as_ubyte
 
 # def segmentation_aug(input_image, label, size, augmentation_list):
 #     data_gen_args = dict()
@@ -48,11 +48,14 @@ from albumentations import (
     MultiplicativeNoise,
     GridDropout,
     ElasticTransform,
+    ISONoise,
 )
 
 
 def segmentation_aug(input_image, label, size, augmentation_list):
     transforms = list()
+    
+    label = img_as_ubyte(label)
     if "vertical_flip" in augmentation_list:
         transforms.append(VerticalFlip(p=0.5))
     if "horizontal_flip" in augmentation_list:
@@ -68,10 +71,6 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(GaussianBlur(blur_limit=3,p=0.5))
     if "glass_blur" in augmentation_list:
         transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2,p=0.5))
-    # if "clahe" in augmentation_list:
-    #     transforms.append(CLAHE(p=0.5))
-    # if "hsv" in augmentation_list:
-    #     transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,p=0.5))
     if "gauss_noise" in augmentation_list:
         transforms.append(GaussNoise(p=0.5))
     if "normalize" in augmentation_list:
@@ -88,6 +87,12 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(GridDropout(p=0.5))            
     if "elastic_transform" in augmentation_list:
         transforms.append(ElasticTransform(alpha=1, sigma=50, alpha_affine=50, interpolation=1, border_mode=4, p=0.5))
+    if "isonoise" in augmentation_list:
+        transforms.append(ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.5))    
+   # if "clahe" in augmentation_list:
+    #     transforms.append(CLAHE(p=0.5))
+    # if "hsv" in augmentation_list:
+    #     transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,p=0.5))
 
     if len(transforms) > 0:
         print('augmentation!!!')

@@ -138,6 +138,7 @@ class ImageUtil:
         if image.mode == "RGBA":
             image = image.convert("RGB")
         image = np.asarray(image)
+        # print(image.dtype)#uint8
         if normalization:
             image = image / 255.0
         if train_colors:
@@ -146,6 +147,12 @@ class ImageUtil:
             image = self.cast_to_onehot(image)
 
         return image
+
+    # def cast_to_normalize(
+    #     self,
+    #     input_image: np.ndarray
+    # ):
+    #     input_image = input_image / 255.0
 
     def cast_to_onehot(
         self,
@@ -158,6 +165,7 @@ class ImageUtil:
         # Segmentation
         else:
             one_hot = np.identity(self.nb_classes)
+            one_hot = one_hot.astype(np.uint8)
         return one_hot[label]
 
     def _cast_to_frame(

@@ -56,8 +56,11 @@ class ImageSequence(Sequence):
                     )
             else:
                 input_image = self.image_util.read_image(
-                    input_file[0], anti_alias=True
+                    input_file[0], 
+                    anti_alias=True, 
+                    normalization=False
                 )
+                input_image = input_image.astype(np.uint8)
             if self.task == Task.SEMANTIC_SEGMENTATION:
                 label = self.image_util.read_image(
                     label,
@@ -65,6 +68,7 @@ class ImageSequence(Sequence):
                     train_colors=self.train_colors,
                     one_hot=True
                 )
+                # print(label.dtype)#float64
                 if self.augmentation and len(self.augmentation) > 0:
                     # print('augmentation_inputshape')
                     input_image, label = segmentation_aug(
@@ -73,6 +77,7 @@ class ImageSequence(Sequence):
                         self.input_shape,
                         self.augmentation
                     )
+                    input_image = input_image / 255.0
             # else:
             #     label = self.image_util.cast_to_onehot(label)
             batch_x.append(input_image)

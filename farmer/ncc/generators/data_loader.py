@@ -31,10 +31,7 @@ class Dataloder(tensorflow.keras.utils.Sequence):
         # transpose list of lists
         batch = [np.stack(samples, axis=0) for samples in zip(*data)]
 
-        print("batch label :", batch[0].shape)
-        print("batch mask :", batch[1].shape)
-
-        return batch
+        return batch[0], batch[1]
 
     def __len__(self):
         """Denotes the number of batches per epoch"""

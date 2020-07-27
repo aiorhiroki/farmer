@@ -178,7 +178,7 @@ class BuildModelTask:
                     optimizer=optimizer,
                     loss=loss,
                     metrics=[metrics.iou_score,
-                             loss_functions.categorical_crossentropy()],
+                             loss_functions.categorical_crossentropy_loss()],
                 )
             else:
                 raise NotImplementedError

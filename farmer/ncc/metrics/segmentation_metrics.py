@@ -33,8 +33,9 @@ def iou_dice_val(
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     # Convert predictions and target from categorical to integer format
+    # y_pred: onehot, y_true: onehot
     y_pred = np.argmax(y_pred, axis=-1).ravel()
-    y_true = y_true.ravel()
+    y_true = np.argmax(y_true, axis=-1).ravel()
     x = y_pred + nb_classes * y_true
     bincount_2d = np.bincount(
         x.astype(np.int32), minlength=nb_classes**2)
@@ -144,7 +145,7 @@ def generate_segmentation_result(
     model,
     save_dir,
 ):
-    print('\save validation image...')
+    print('\nsave predicted image...')
     for i, (image, mask) in tqdm(enumerate(dataset)):
         output = model.predict(np.expand_dims(image, axis=0))[0]
         confusion = calc_segmentation_confusion(output, mask, nb_classes)
@@ -157,6 +158,6 @@ def generate_segmentation_result(
         result_image = get_imageset(
             image, output, mask, put_text=f'dice: {dice}')
 
-        *input_file, _ = dataset.annoataions[i]
+        *input_file, _ = dataset.annotations[i]
         save_image_name = os.path.basename(input_file[0])
         result_image.save(f"{save_dir}/{save_image_name}")

@@ -16,15 +16,15 @@ class PredictClassificationTask:
         return prediction
 
     def _do_generate_batch_task(self, annotation_set):
-        test_gen = ncc.generators.ImageSequence(
+        dataset = ncc.generators.ClassificationDataset(
             annotations=annotation_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
-            task=self.config.task,
-            batch_size=4,
+            augmentation=[],
+            train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        return test_gen
+        return ncc.generators.Dataloder(dataset, batch_size=4, shuffle=False)
 
     def _do_classification_predict_task(
         self, model, annotation_gen

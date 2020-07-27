@@ -1,3 +1,4 @@
+from typing import Tuple
 import os
 import cv2
 from ..tasks import Task
@@ -14,7 +15,7 @@ class Dataset:
     def __init__(
             self,
             annotations: list,
-            input_shape: (int, int),
+            input_shape: Tuple[int, int],
             nb_classes: int,
             task: str,
             augmentation=list(),
@@ -33,16 +34,17 @@ class Dataset:
     def __getitem__(self, i):
 
         *input_file, label = self.annotations[i]
-
         # input_file is [image_path] or [video_path, frame_id]
         # label is mask_image_path or class_id
+
         if self.input_data_type == "video":
+            # video data
             video_path, frame_id = input_file
             video = cv2.VideoCapture(video_path)
             video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
             ret, input_image = video.read()
-            input_image = input_image/255.0
-            # (with,height) for cv2.resize
+            input_image = input_image / 255.0
+            # (width, height) for cv2.resize
             resize_shape = self.input_shape[::-1]
             if input_image.shape[:2] != resize_shape:
                 input_image = cv2.resize(
@@ -51,6 +53,7 @@ class Dataset:
                     interpolation=cv2.INTER_LANCZOS4
                 )
         else:
+            # image data
             input_image = self.image_util.read_image(
                 input_file[0], anti_alias=True
             )
@@ -60,6 +63,7 @@ class Dataset:
                 normalization=False,
                 train_colors=self.train_colors
             )
+            # apply augmentations
             if self.augmentation and len(self.augmentation) > 0:
                 input_image, label = segmentation_aug(
                     input_image,
@@ -67,7 +71,7 @@ class Dataset:
                     self.input_shape,
                     self.augmentation
                 )
-
+        # apply preprocessing
         label = self.image_util.cast_to_onehot(label)
 
         return input_image, label

@@ -1,10 +1,7 @@
 from typing import Tuple
-import os
 import cv2
-from ..tasks import Task
 from ..utils import ImageUtil
 from ..augmentation import segmentation_aug
-import numpy as np
 
 
 class SegmentationDataset:

@@ -55,27 +55,20 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                         interpolation=cv2.INTER_LANCZOS4
                     )
             else:
-                input_image = self.image_util.read_image(
-                    input_file[0], anti_alias=True
-                )
+                input_image = self.image_util.read_image(input_file[0])
+                input_image = self.image_util.resize(input_image, anti_alias=True)
             if self.task == Task.SEMANTIC_SEGMENTATION:
-                label = self.image_util.read_image(
-                    label,
-                    normalization=False,
-                    train_colors=self.train_colors
-                )
+                label = self.image_util.read_image(label, self.train_colors)
                 if self.augmentation and len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
-                        input_image,
-                        label,
-                        self.input_shape,
+                        input_image, label,
                         self.augmentation
                     )
-            batch_x.append(input_image)
-            batch_y.append(label)
+            batch_x.append(self.image_util.normalization(input_image))
+            batch_y.append(self.image_util.cast_to_onehot(label))
 
         batch_x = np.array(batch_x, dtype=np.float32)
-        batch_y = self.image_util.cast_to_onehot(batch_y)
+        batch_y = np.array(batch_y)
 
         return batch_x, batch_y
 

@@ -11,30 +11,24 @@ class TrainTask:
         self.config = config
 
     def command(
-            self, model, base_model, train_set, validation_set, trial):
+            self, model, base_model, training_set, validation_set, trial):
 
-        train_gen, validation_gen = self._do_generate_batch_task(
-            train_set, validation_set, trial
+        train_dataset, valid_dataset = self._do_generate_batch_task(
+            training_set, validation_set
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_set, validation_set, trial
+            base_model, train_dataset, valid_dataset, trial
         )
         trained_model = self._do_model_optimization_task(
-            model, train_gen, validation_gen, callbacks, trial
+            model, train_dataset, valid_dataset, callbacks, trial
         )
         save_model = self._do_save_model_task(trained_model, base_model, trial)
 
         return save_model
 
-    def _do_generate_batch_task(self, train_set, validation_set, trial):
-        if self.config.op_batch_size:
-            batch_size = int(trial.suggest_discrete_uniform(
-                'batch_size', *self.config.batch_size))
-        else:
-            batch_size = self.config.batch_size
-
+    def _do_generate_batch_task(self, training_set, validation_set):
         sequence_args = dict(
-            annotations=train_set,
+            annotations=training_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             task=self.config.task,
@@ -55,15 +49,10 @@ class TrainTask:
             sequence_args.update(annotations=validation_set, augmentation=[])
             validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
 
-        train_dataloader = ncc.generators.Dataloder(
-            train_dataset, batch_size=batch_size, shuffle=True)
-        validation_dataloader = ncc.generators.Dataloder(
-            validation_dataset, batch_size=batch_size, shuffle=False)
-
-        return train_dataloader, validation_dataloader
+        return train_dataset, validation_dataset
 
     def _do_set_callbacks_task(
-            self, base_model, train_set, validation_set, trial):
+            self, base_model, train_dataset, valid_dataset, trial):
 
         best_model_name = "best_model.h5"
         if trial:
@@ -76,6 +65,7 @@ class TrainTask:
         else:
             model_save_file = os.path.join(
                 self.config.model_path, best_model_name)
+
         # Save Model Checkpoint
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
@@ -87,6 +77,7 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
+
         # Learning Rate Schedule
         if self.config.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
@@ -99,6 +90,7 @@ class TrainTask:
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
+
         # Plot History
         if trial:
             # result_dir/trial#/learning/
@@ -121,11 +113,8 @@ class TrainTask:
             # Plot IoU History
             iou_history = ncc.callbacks.IouHistory(
                 save_dir=learning_path,
-                validation_files=validation_set,
+                valid_dataset=valid_dataset,
                 class_names=self.config.class_names,
-                height=self.config.height,
-                width=self.config.width,
-                train_colors=self.config.train_colors
             )
 
             # Predict validation
@@ -141,11 +130,8 @@ class TrainTask:
                     self.config.image_path, "validation")
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
-                validation_files=validation_set,
+                valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                train_colors=self.config.train_colors,
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
@@ -192,8 +178,19 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_gen, validation_gen, callbacks, trial
+        self, model, train_dataset, validation_dataset, callbacks, trial
     ):
+
+        if self.config.op_batch_size:
+            batch_size = int(trial.suggest_discrete_uniform(
+                'batch_size', *self.config.batch_size))
+        else:
+            batch_size = self.config.batch_size
+
+        train_gen = ncc.generators.Dataloder(
+            train_dataset, batch_size=batch_size, shuffle=True)
+        valid_gen = ncc.generators.Dataloder(
+            validation_dataset, batch_size=batch_size, shuffle=False)
 
         try:
             model.fit_generator(
@@ -201,8 +198,8 @@ class TrainTask:
                 steps_per_epoch=len(train_gen),
                 callbacks=callbacks,
                 epochs=self.config.epochs,
-                validation_data=validation_gen,
-                validation_steps=len(validation_gen),
+                validation_data=valid_gen,
+                validation_steps=len(valid_gen),
                 workers=16 if self.config.multi_gpu else 1,
                 max_queue_size=32 if self.config.multi_gpu else 10,
                 use_multiprocessing=self.config.multi_gpu,

@@ -17,8 +17,8 @@ class SegmentationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
-            augmentation=list(),
-            train_colors=list(),
+            augmentation: list = list(),
+            train_colors: list = list(),
             **kwargs
     ):
 
@@ -68,8 +68,8 @@ class ClassificationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
-            augmentation=list(),
-            input_data_type="image",
+            augmentation: list = list(),
+            input_data_type: str = "image",
             **kwargs
     ):
 

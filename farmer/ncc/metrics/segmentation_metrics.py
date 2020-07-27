@@ -7,17 +7,15 @@ import matplotlib.pyplot as plt
 
 
 def iou_dice_val(
-        nb_classes, height, width, data_set, model, train_colors=None):
-    image_util = ImageUtil(nb_classes, (height, width))
+        nb_classes,
+        dataset,
+        model,
+):
     confusion = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-    print('validation...')
-    for image_file, seg_file in tqdm(data_set):
+    print('\nvalidation...')
+    for sample, target in tqdm(dataset):
         # Get a training sample and make a prediction using current model
-        sample = image_util.read_image(image_file, anti_alias=True)
-        target = image_util.read_image(
-            seg_file, normalization=False, train_colors=train_colors)
-        predicted = np.asarray(
-            model.predict(np.expand_dims(sample, axis=0)))[0]
+        predicted = model.predict(np.expand_dims(sample, axis=0))[0]
         confusion += calc_segmentation_confusion(
             predicted, target, nb_classes)
 
@@ -142,29 +140,23 @@ def plot_confusion_matrix(cm, classes,
 
 def generate_segmentation_result(
     nb_classes,
-    height,
-    width,
-    annotations,
+    dataset,
     model,
     save_dir,
-    train_colors=None,
 ):
-    image_util = ImageUtil(nb_classes, (height, width))
-    for sample_image_path in annotations:
-        input_image_path, mask_image_path = sample_image_path
-        sample_image = image_util.read_image(
-            input_image_path, anti_alias=True)
-        segmented = image_util.read_image(
-            mask_image_path, normalization=False, train_colors=train_colors)
+    print('\save validation image...')
+    for i, (image, mask) in tqdm(enumerate(dataset)):
+        output = model.predict(np.expand_dims(image, axis=0))[0]
+        confusion = calc_segmentation_confusion(output, mask, nb_classes)
 
-        output = model.predict(np.expand_dims(sample_image, axis=0))[0]
-        confusion = calc_segmentation_confusion(output, segmented, nb_classes)
         tp = np.diag(confusion)
         fp = np.sum(confusion, 0) - tp
         fn = np.sum(confusion, 1) - tp
         dice = calc_dice_from_confusion(tp, fp, fn)
-        segmented = image_util.cast_to_onehot(segmented)
+
         result_image = get_imageset(
-            sample_image, output, segmented, put_text=f'dice: {dice}')
-        save_image_name = os.path.basename(input_image_path)
+            image, output, mask, put_text=f'dice: {dice}')
+
+        *input_file, _ = dataset.annoataions[i]
+        save_image_name = os.path.basename(input_file[0])
         result_image.save(f"{save_dir}/{save_image_name}")

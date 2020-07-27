@@ -38,7 +38,7 @@ from albumentations import (
     MotionBlur,
     # MedianBlur,
     GaussianBlur,
-    # GlassBlur,
+    GlassBlur,
     # CLAHE,
     # HueSaturationValue,
     GaussNoise,
@@ -47,6 +47,7 @@ from albumentations import (
     RandomContrast,
     MultiplicativeNoise,
     GridDropout,
+    ElasticTransform,
 )
 
 
@@ -65,8 +66,8 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(MedianBlur(blur_limit=3,p=0.5))
     if "gaussian_blur" in augmentation_list:
         transforms.append(GaussianBlur(blur_limit=3,p=0.5))
-    # if "glass_blur" in augmentation_list:
-    #     transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2,p=0.5))
+    if "glass_blur" in augmentation_list:
+        transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2,p=0.5))
     # if "clahe" in augmentation_list:
     #     transforms.append(CLAHE(p=0.5))
     # if "hsv" in augmentation_list:
@@ -85,7 +86,9 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=False, elementwise=False, p=0.5))   
     if "grid_dropout" in augmentation_list:
         transforms.append(GridDropout(p=0.5))            
-        
+    if "elastic_transform" in augmentation_list:
+        transforms.append(ElasticTransform(alpha=1, sigma=50, alpha_affine=50, interpolation=1, border_mode=4, p=0.5))
+
     if len(transforms) > 0:
         print('augmentation!!!')
         aug = Compose(transforms, p=1)

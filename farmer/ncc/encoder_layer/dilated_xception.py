@@ -92,7 +92,7 @@ def _xception_block(inputs, depth_list, prefix, skip_connection_type, stride,
     return outputs, skip
 
 
-def Xception(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
+def dilated_xception(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained

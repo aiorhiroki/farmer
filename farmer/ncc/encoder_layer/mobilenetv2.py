@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from tensorflow.python.keras import backend
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.layers import Input
@@ -71,7 +72,7 @@ def _inverted_res_block(inputs, expansion, stride, alpha, filters, block_id, ski
     return x
 
 
-def MobileNetV2(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, alpha=1., include_top=True):
+def MobileNetV2(classes=1000, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, alpha=1., include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
@@ -104,11 +105,42 @@ def MobileNetV2(classes=None, input_tensor=None, input_shape=(512, 512, 3), weig
         A Keras model instance.
 
     """
+    if not (weights in {'imagenet', 'pascal_voc', 'cityscapes', None} or os.path.exists(weights)):
+        raise ValueError('The `weights` argument should be either '
+                        '`None` (random initialization), `imagenet` , `pascal_voc`, `cityscapes`, '
+                        '(pre-training on ImageNet), '
+                        'or the path to the weights file to be loaded.')
+
+    if weights == 'imagenet' and include_top and classes != 1000:
+        raise ValueError('If using `weights` as `"imagenet"` with `include_top` '
+                        'as true, `classes` should be 1000')
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
         img_input = input_tensor
+    
+    # If input_shape is None, infer shape from input_tensor
+    if backend.image_data_format() == 'channels_first':
+        rows = input_shape[1]
+        cols = input_shape[2]
+    else:
+        rows = input_shape[0]
+        cols = input_shape[1]
+
+    if rows == cols and rows in [96, 128, 160, 192, 224]:
+        default_size = rows
+    else:
+        default_size = 224
+    
+    if weights == 'imagenet':
+        if alpha not in [0.35, 0.50, 0.75, 1.0, 1.3, 1.4]:
+            raise ValueError('If imagenet weights are being loaded, '
+                            'alpha can be one of `0.35`, `0.50`, `0.75`, '
+                            '`1.0`, `1.3` or `1.4` only.')
+
+        if rows != cols or rows not in [96, 128, 160, 192, 224]:
+            rows = 224
 
     OS = 8
     first_block_filters = _make_divisible(32 * alpha, 8)
@@ -162,6 +194,17 @@ def MobileNetV2(classes=None, input_tensor=None, input_shape=(512, 512, 3), weig
     x = _inverted_res_block(x, filters=320, alpha=alpha, stride=1, rate=4,
                             expansion=6, block_id=16, skip_connection=False)
     
+    if alpha > 1.0:
+        last_block_filters = _make_divisible(1280 * alpha, 8)
+    else:
+        last_block_filters = 1280
+
+    x = Conv2D(
+        last_block_filters, kernel_size=1, use_bias=False, name='Conv_1')(x)
+    x = BatchNormalization(
+        epsilon=1e-3, momentum=0.999, name='Conv_1_bn')(x)
+    x = Activation(relu6, name='out_relu')(x)
+
     if include_top:
         x = GlobalAveragePooling2D()(x)
         x = Dense(classes, activation='softmax')(x)

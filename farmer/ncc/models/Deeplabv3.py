@@ -42,7 +42,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
-from farmer.ncc.encoder_layer import Xception, MobileNetV2, SepConv_BN
+from farmer.ncc.encoder_layer import dilated_xception, MobileNetV2, SepConv_BN
 
 WEIGHTS_PATH_X = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5"
 WEIGHTS_PATH_MOBILE = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5"
@@ -104,7 +104,7 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
         atrous_rates = (6, 12, 18)
 
     if backbone == 'xception':
-        base_model, skip1 = Xception(
+        base_model, skip1 = dilated_xception(
             input_tensor=img_input, 
             input_shape=input_shape, 
             weights=weights, 

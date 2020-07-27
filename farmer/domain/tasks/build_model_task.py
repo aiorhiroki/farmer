@@ -2,9 +2,9 @@ import segmentation_models
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 
-from farmer.ncc.models import mobilenet, Deeplabv3, Model2D
+from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from farmer.ncc.losses import loss_functions 
-from farmer.ncc.encoder_layer import Xception, MobileNetV2
+from farmer.ncc.encoder_layer import dilated_xception, MobileNetV2
 from ..model.task_model import Task
 
 from tensorflow import keras

@@ -33,7 +33,7 @@ class EvaluationTask:
     def _do_evaluation_task(self, annotation_dataset, model, prediction):
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
             prediction_cls = np.argmax(prediction, axis=1)
-            true_cls = [class_id for _, class_id in annotation_dataset]
+            true_cls = np.argmax([class_id for _, class_id in annotation_dataset], axis=1)
             eval_report = classification_report(
                 true_cls, prediction_cls, output_dict=True
             )

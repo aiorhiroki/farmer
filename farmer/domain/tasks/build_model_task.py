@@ -1,22 +1,13 @@
 import segmentation_models
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
-from segmentation_models.losses import (
-    dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
-)
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
+from farmer.ncc.losses import loss_functions 
+from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 
 from tensorflow import keras
-
-segmentation_models.set_framework('tf.keras')
-
-# loss functions
-cce_dice_loss = categorical_crossentropy + dice_loss
-cce_jaccard_loss = categorical_crossentropy + jaccard_loss
-categorical_focal_dice_loss = categorical_focal_loss + dice_loss
-categorical_focal_jaccard_loss = categorical_focal_loss + jaccard_loss
 
 
 class BuildModelTask:
@@ -155,6 +146,10 @@ class BuildModelTask:
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
                 )
+            elif optimizer == "adabound":
+                optimizer = AdaBound(
+                    learning_rate=learning_rate, final_lr=0.1
+                )
             else:
                 optimizer = keras.optimizers.SGD(
                     lr=learning_rate, momentum=0.9, decay=0.001
@@ -170,9 +165,12 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
+                loss = getattr(loss_functions, loss_func)(
+                    **self.config.loss_params
+                )
                 model.compile(
                     optimizer=optimizer,
-                    loss=globals()[loss_func],
+                    loss=loss,
                     metrics=[metrics.iou_score],
                 )
             else:

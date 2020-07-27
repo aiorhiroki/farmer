@@ -16,7 +16,8 @@ class SetTrainEnvTask:
         self._do_set_cpu_gpu_devices_task(self.config.gpu)
         self._do_create_dirs_task(result_path=self.config.result_path)
 
-    def _do_set_random_seed_task(self, seed=1):
+    def _do_set_random_seed_task(self):
+        seed = self.config.seed
         # set random_seed
         os.environ["PYTHONHASHSEED"] = str(seed)
         np.random.seed(seed)

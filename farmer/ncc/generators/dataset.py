@@ -92,6 +92,8 @@ class ClassificationDataset:
             video = cv2.VideoCapture(video_path)
             video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
             ret, input_image = video.read()
+            # BGR -> RGB
+            input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
 
         elif self.input_data_type == "image":
             # image data [image_path]

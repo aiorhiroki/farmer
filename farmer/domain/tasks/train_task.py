@@ -1,8 +1,9 @@
 import os
 import numpy as np
-from farmer import ncc
 from tensorflow.python import keras
 from optuna.integration import KerasPruningCallback
+from farmer import ncc
+from ..model.task_model import Task
 
 
 class TrainTask:
@@ -41,9 +42,18 @@ class TrainTask:
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        train_dataset = ncc.generators.Dataset(**sequence_args)
-        sequence_args.update(annotations=validation_set, augmentation=[])
-        validation_dataset = ncc.generators.Dataset(**sequence_args)
+
+        if self.config.task == Task.CLASSIFICATION:
+            train_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+
+            sequence_args.update(annotations=validation_set, augmentation=[])
+            validation_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+
+        elif self.config.task == Task.SEMANTIC_SEGMENTATION:
+            train_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+
+            sequence_args.update(annotations=validation_set, augmentation=[])
+            validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
 
         train_dataloader = ncc.generators.Dataloder(
             train_dataset, batch_size=batch_size, shuffle=True)

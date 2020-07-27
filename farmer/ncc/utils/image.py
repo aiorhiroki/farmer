@@ -146,8 +146,10 @@ class ImageUtil:
         image: np.ndarray,
         anti_alias=False
     ):
+        image = Image.fromarray(np.uint8(image))
         resample = Image.LANCZOS if anti_alias else Image.NEAREST
-        return image.resize(self.size, resample)
+        image = image.resize(self.size, resample)
+        return np.asarray(image)
 
     def normalization(
         self,

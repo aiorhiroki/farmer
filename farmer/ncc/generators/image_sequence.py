@@ -77,7 +77,7 @@ class ImageSequence(Sequence):
                         self.input_shape,
                         self.augmentation
                     )
-                    input_image = input_image / 255.0
+            input_image = input_image / 255.0
             # else:
             #     label = self.image_util.cast_to_onehot(label)
             batch_x.append(input_image)

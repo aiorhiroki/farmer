@@ -18,7 +18,7 @@ class ImageSequence(Sequence):
         batch_size: int,
         mean=np.zeros(3),
         std=np.ones(3),
-        augmentation=list(),
+        augmentation=dict(),
         train_colors=list(),
         input_data_type="image"
     ):

@@ -18,7 +18,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def command(self, trial=None):
         self.set_env_flow(trial)
         train_set, validation_set, test_set = self.read_annotation_flow()
-        self.eda_flow()
+        self.eda_flow(train_set)
         model, base_model = self.build_model_flow(trial)
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
@@ -39,10 +39,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("DONE")
         return train_set, validation_set, test_set
 
-    def eda_flow(self):
+    def eda_flow(self, train_set):
         print("EDA FLOW ... ", end="")
-        EdaTask(self._config).command()
+        EdaTask(self._config).command(train_set)
         print("DONE")
+        print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
     def build_model_flow(self, trial=None):
         print("BUILD MODEL FLOW ... ")

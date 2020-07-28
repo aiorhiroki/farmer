@@ -3,7 +3,7 @@ import cv2
 
 import tensorflow
 import numpy as np
-from ..augmentation import segmentation_aug
+from ..augmentation import segmentation_aug, augment_and_mix
 from ..tasks import Task
 from ..utils import ImageUtil
 
@@ -16,11 +16,15 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
         nb_classes: int,
         task: str,
         batch_size: int,
-        augmentation=list(),
+        mean=np.zeros(3),
+        std=np.ones(3),
+        augmentation=dict(),
         train_colors=list(),
         input_data_type="image"
     ):
         self.annotations = annotations
+        self.mean = mean
+        self.std = std
         self.batch_size = batch_size
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
@@ -61,7 +65,9 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                 label = self.image_util.read_image(label, self.train_colors)
                 if self.augmentation and len(self.augmentation) > 0:
                     input_image, label = segmentation_aug(
-                        input_image, label,
+                        input_image,
+                        label,
+                        self.mean, self.std,
                         self.augmentation
                     )
             batch_x.append(self.image_util.normalization(input_image))

@@ -1,4 +1,5 @@
 from typing import Tuple
+import numpy as np
 import cv2
 from ..utils import ImageUtil
 from ..augmentation import segmentation_aug
@@ -14,6 +15,8 @@ class SegmentationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
+            mean: np.ndarray = np.zeros(3),
+            std: np.ndarray = np.ones(3),
             augmentation: list = list(),
             train_colors: list = list(),
             **kwargs
@@ -22,6 +25,8 @@ class SegmentationDataset:
         self.annotations = annotations
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
+        self.mean = mean
+        self.std = std
         self.augmentation = augmentation
         self.train_colors = train_colors
 

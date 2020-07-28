@@ -9,6 +9,7 @@ config_paths:
     - yamls/segmentation.yaml
     # - yamls/segmentation-optuna.yaml
     # backbone is random with optuna
+    - yamls/segmentation_aug.yaml
     # - yamls/segmentation-eval.yaml
     # detection #bug 
     # - yamls/detection.yaml

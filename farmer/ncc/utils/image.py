@@ -166,8 +166,7 @@ class ImageUtil:
 
     def _cast_to_frame(
         self,
-        prediction,
-        size
+        prediction
     ):
         res = np.argmax(prediction, axis=2)
         image = Image.fromarray(np.uint8(res), mode="P")
@@ -178,11 +177,10 @@ class ImageUtil:
 
     def blend_image(
         self,
-        output_image,
-        size
+        output_image
     ):
         input_frame = np.array(self.current_raw_frame, dtype=np.uint8)
-        output_frame = self._cast_to_frame(output_image, size)
+        output_frame = self._cast_to_frame(output_image)
         blended = cv2.addWeighted(
             src1=input_frame,
             src2=output_frame,

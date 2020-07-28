@@ -43,6 +43,7 @@ class SegmentationDataset:
         if self.augmentation and len(self.augmentation) > 0:
             input_image, label = segmentation_aug(
                 input_image, label,
+                self.mean, self.std,
                 self.augmentation
             )
 

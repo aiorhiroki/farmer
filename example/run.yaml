@@ -6,7 +6,7 @@ config_paths:
     # classification video frames
     # - yamls/classification-video.yaml
     # segmentation
-    - yamls/segmentation.yaml
+    # - yamls/segmentation.yaml
     # - yamls/segmentation-optuna.yaml
     # backbone is random with optuna
     - yamls/segmentation_aug.yaml

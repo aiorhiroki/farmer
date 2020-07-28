@@ -39,6 +39,8 @@ augmentation:
     width_shift_range: 0.3  # -30% ~ 30%
     height_shift_range: 0.1  # -10% ~ 10%
     shear_range: 30  # -30 ~ 30 degree
+    augmix: yes
+    cut_black: yes
 
 input_dir: image
 label_dir: label

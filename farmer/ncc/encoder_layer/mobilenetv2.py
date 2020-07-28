@@ -239,3 +239,16 @@ def MobileNetV2(classes=1000, input_tensor=None, input_shape=(512, 512, 3), weig
 
     return model
 
+
+def mobilenet_v2(nb_classes, height=244, width=244):
+    base_model = MobileNetV2(
+        input_shape=(height, width, 3),
+        weights='imagenet',
+        include_top=False
+    )
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    predictions = Dense(nb_classes, activation='softmax')(x)
+    model = Model(base_model.input, predictions)
+
+    return model

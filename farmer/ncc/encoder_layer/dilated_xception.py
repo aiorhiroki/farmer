@@ -92,7 +92,7 @@ def _xception_block(inputs, depth_list, prefix, skip_connection_type, stride,
     return outputs, skip
 
 
-def dilated_xception(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights='imagenet', OS=16, return_skip=False, include_top=True):
+def dilated_xception(classes=None, input_tensor=None, input_shape=(512, 512, 3), weights=None, OS=16, return_skip=False, include_top=True):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
@@ -176,22 +176,7 @@ def dilated_xception(classes=None, input_tensor=None, input_shape=(512, 512, 3),
     model = Model(inputs, x, name='xception')
 
     # Load weights.
-    # print("weights at dilated_xception: ", weights)
-    if weights == 'imagenet':
-        if include_top:
-            weights_path = data_utils.get_file(
-                'xception_weights_tf_dim_ordering_tf_kernels.h5',
-                TF_WEIGHTS_PATH,
-                cache_subdir='models',
-                file_hash='0a58e3b7378bc2990ea3b43d5981f1f6')
-        else:
-            weights_path = data_utils.get_file(
-                'xception_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                TF_WEIGHTS_PATH_NO_TOP,
-                cache_subdir='models',
-                file_hash='b0042744bf5b25fce3cb969f33bebb97')
-        model.load_weights(weights_path)
-    elif not (weights in {'pascal_voc', 'cityscapes', None}):
+    if not (weights in {'pascal_voc', 'cityscapes', None}):
         model.load_weights(weights)
 
     if return_skip:

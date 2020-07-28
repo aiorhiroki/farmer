@@ -62,8 +62,8 @@ class EdaTask:
             x = cv2.resize(x, (self.config.width, self.config.height))
             x = x / 255.
             bgr_images.append(x)
-        mean = np.mean(np.array(bgr_images), axis=(0, 1, 2))
-        std = np.std(np.array(bgr_images), axis=(0, 1, 2))
+        mean = np.mean(bgr_images, axis=(0, 1, 2))
+        std = np.std(bgr_images, axis=(0, 1, 2))
         # convert BGR to RGB
         self.config.mean = mean[::-1]
         self.config.std = std[::-1]

@@ -7,7 +7,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     """apply augmentation to one image respectively
     """
     # Cut off black mask of left and right edge
-    if "cut_black" in augmentation_dict:
+    if "cut_black" in augmentation_dict and augmentation_dict["cut_black"] is True:
         width = input_image.shape[1]
         input_image = input_image[:, int(width * 0.05):int(width * 0.95), :]
         label = label[:, int(width * 0.05):int(width * 0.95)]
@@ -60,7 +60,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     label_processed = mask_batches.squeeze()  # batchとchannel次元を捨てる
 
     # Not Keras ImageDataGenerator
-    if "augmix" in augmentation_dict:
+    if "augmix" in augmentation_dict and augmentation_dict["augmix"] is True:
         """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
         AugMixは最後に行う
         TODO: ひとまずハードラベル

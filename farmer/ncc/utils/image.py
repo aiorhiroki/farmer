@@ -161,9 +161,8 @@ class ImageUtil:
         self,
         label: np.ndarray
     ):
-        label = np.asarray(label, dtype=np.uint8)
         one_hot = np.identity(self.nb_classes)
-        return one_hot[label]
+        return one_hot[label.astype(np.uint8)]
 
     def _cast_to_frame(
         self,

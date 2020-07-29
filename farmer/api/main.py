@@ -13,7 +13,6 @@ from keras.backend import clear_session
 
 
 def fit():
-    print('this container is running with hiroki_s farmer image')
     with open("run.yaml") as yamlfile:
         run_config = yaml.safe_load(yamlfile)
     config_paths = run_config.get("config_paths")

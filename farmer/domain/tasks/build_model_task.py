@@ -126,13 +126,13 @@ class BuildModelTask:
             # logスケールで変化
             if len(self.config.learning_rate) == 2:
                 # learning_rate = [10^m(min), 10^M(max)]
-                learning_rate = int(trial.suggest_loguniform(
-                    'learning_rate', *self.config.learning_rate))
+                learning_rate = trial.suggest_loguniform(
+                    'learning_rate', *self.config.learning_rate)
             # 線形スケールで変化
             elif len(self.config.learning_rate) == 3:
                 # learning_rate = [min, max, step]
-                learning_rate = int(trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.learning_rate))
+                learning_rate = trial.suggest_discrete_uniform(
+                    'learning_rate', *self.config.learning_rate)
         else:
             learning_rate = self.config.learning_rate
 

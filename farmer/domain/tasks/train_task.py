@@ -64,19 +64,13 @@ class TrainTask:
     def _do_set_callbacks_task(
             self, base_model, train_dataset, valid_dataset, trial):
 
-        best_model_name = "best_model.h5"
+        # Save Model Checkpoint
+        # result_dir/model/
+        model_save_file = os.path.join(self.config.model_path, "best_model.h5")
         if trial:
             # result_dir/trial#/model/
-            trial_model_path = self.config.model_path.split('/')
-            trial_model_path.insert(-1, f"trial{trial.number}")
-            if trial_model_path[0] == '':
-                trial_model_path[0] = '/'
-            model_save_file = os.path.join(*trial_model_path, best_model_name)
-        else:
-            model_save_file = os.path.join(
-                self.config.model_path, best_model_name)
+            model_save_file = model_save_file.replace("/model/", f"/trial{trial.number}/model/")
 
-        # Save Model Checkpoint
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
                 filepath=model_save_file,
@@ -102,15 +96,11 @@ class TrainTask:
                 factor=0.5, patience=10, verbose=1)
 
         # Plot History
+        # result_dir/learning/
+        learning_path = self.config.learning_path
         if trial:
             # result_dir/trial#/learning/
-            trial_learning_path = self.config.learning_path.split('/')
-            trial_learning_path.insert(-1, f"trial{trial.number}")
-            if trial_learning_path[0] == '':
-                trial_learning_path[0] = '/'
-            learning_path = os.path.join(*trial_learning_path)
-        else:
-            learning_path = self.config.learning_path
+            learning_path = learning_path.replace("/learning/", f"/trial{trial.number}/learning/")
 
         plot_history = ncc.callbacks.PlotHistory(
             learning_path,
@@ -128,16 +118,12 @@ class TrainTask:
             )
 
             # Predict validation
+            # result_dir/image/validation/
+            val_save_dir = os.path.join(self.config.image_path, "validation")
             if trial:
                 # result_dir/trial#/image/validation/
-                trial_image_path = self.config.image_path.split('/')
-                trial_image_path.insert(-1, f"trial{trial.number}")
-                if trial_image_path[0] == '':
-                    trial_image_path[0] = '/'
-                val_save_dir = os.path.join(*trial_image_path, "validation")
-            else:
-                val_save_dir = os.path.join(
-                    self.config.image_path, "validation")
+                val_save_dir = val_save_dir.replace("/image/", f"/trial{trial.number}/image/")
+
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
                 valid_dataset=valid_dataset,
@@ -152,12 +138,11 @@ class TrainTask:
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
+                # result_dir/model/
+                batch_model_path = os.path.join(self.config.model_path, "batch_model.h5")
                 if trial:
-                    batch_model_path = os.path.join(
-                        trial_model_path, "batch_model.h5")
-                else:
-                    batch_model_path = os.path.join(
-                        self.config.model_path, "batch_model.h5")
+                    # result_dir/trial#/model/
+                    batch_model_path = batch_model_path.replace("/model/", f"/trial{trial.number}/model/")
 
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
                     learning_path,
@@ -224,16 +209,12 @@ class TrainTask:
         return model
 
     def _do_save_model_task(self, model, base_model, trial):
-        last_model_name = "last_model.h5"
+        # result_dir/model/
+        model_path = os.path.join(self.config.model_path, "last_model.h5")
         if trial:
             # result_dir/trial#/model/
-            trial_model_path = self.config.model_path.split('/')
-            trial_model_path.insert(-1, f"trial{trial.number}")
-            if trial_model_path[0] == '':
-                trial_model_path[0] = '/'
-            model_path = os.path.join(*trial_model_path, last_model_name)
-        else:
-            model_path = os.path.join(self.config.model_path, last_model_name)
+            model_path = model_path.replace("/model/", f"/trial{trial.number}/model/")
+
         # Last model save
         if self.config.multi_gpu:
             base_model.save(model_path)

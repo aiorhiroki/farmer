@@ -13,7 +13,8 @@ class EdaTask:
     def command(self, train_set):
         self._do_save_params_task()
         self._do_post_config_task()
-        self._do_compute_mean_std(train_set)
+        if self.config.input_data_type == 'image':
+            self._do_compute_mean_std(train_set)
 
     def _do_save_params_task(self):
         shutil.copy(self.config.config_path, self.config.info_path)
@@ -60,7 +61,7 @@ class EdaTask:
         for input_file, label in train_set:
             x = cv2.imread(input_file)
             x = cv2.resize(x, (self.config.width, self.config.height))
-            x = x / 255.
+            x = x / 255.  # 正規化してからmean,stdを計算する
             bgr_images.append(x)
         mean = np.mean(bgr_images, axis=(0, 1, 2))
         std = np.std(bgr_images, axis=(0, 1, 2))

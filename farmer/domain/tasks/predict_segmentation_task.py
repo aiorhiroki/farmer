@@ -32,15 +32,12 @@ class PredictSegmentationTask:
     def _do_segmentation_predict_task(
         self, test_dataset, model, return_result=False, trial=None
     ):
+
+        # result_dir/image/test
+        save_dir = os.path.join(self.config.image_path, "test")
         if trial:
-            # result_dir/trial#/image
-            trial_image_path = self.config.image_path.split('/')
-            trial_image_path.insert(-1, f"trial{trial.number}")
-            if trial_image_path[0] == '':
-                trial_image_path[0] = '/'
-            save_dir = os.path.join(*trial_image_path, "test")
-        else:
-            save_dir = os.path.join(self.config.image_path, "test")
+            # result_dir/trial#/image/test
+            save_dir = save_dir.replace("/image/", f"/trial{trial.number}/image/")
 
         ncc.segmentation_metrics.generate_segmentation_result(
             nb_classes=self.config.nb_classes,

@@ -42,7 +42,9 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
-from farmer.ncc.encoder_layer import dilated_xception, MobileNetV2, SepConv_BN
+from .functional import SepConv_BN
+from .dilated_xception import DilatedXception
+from .mobilenetv2 import MobileNetV2
 
 WEIGHTS_PATH_X = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5"
 WEIGHTS_PATH_MOBILE = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5"
@@ -50,15 +52,17 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
     Optionally loads weights pre-trained
     on PASCAL VOC or Cityscapes. This model is available for TensorFlow only.
     # Arguments
-        weights: one of 'pascal_voc' (pre-trained on pascal voc),
-            'cityscapes' (pre-trained on cityscape) or None (random initialization)
+        weights_info: this dict is consisted of `classes` and `weghts`.
+            `classes` is number of `weights` output units.
+            `weights` is one of 'imagenet' (pre-training on ImageNet), 'pascal_voc', 'cityscapes',
+            original weights path (pre-training on original data) or None (random initialization)
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: shape of input image. format HxWxC
@@ -93,6 +97,12 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
     if not (backbone in {'xception', 'mobilenetv2'}):
         raise ValueError('The `backbone` argument should be either '
                          '`xception`  or `mobilenetv2` ')
+    
+    if weights_info.get("weights") is None:
+        weights = 'pascal_voc'
+    else:
+        weights = weights_info["weights"]
+    
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
@@ -104,10 +114,10 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
         atrous_rates = (6, 12, 18)
 
     if backbone == 'xception':
-        base_model, skip1 = dilated_xception(
+        base_model, skip1 = DilatedXception(
             input_tensor=img_input, 
             input_shape=input_shape, 
-            weights=weights, 
+            weights_info=weights_info, 
             OS=OS, 
             return_skip=True, 
             include_top=False
@@ -117,7 +127,7 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
         base_model = MobileNetV2(
             input_tensor=img_input, 
             input_shape=input_shape, 
-            weights=weights, 
+            weights_info=weights_info, 
             OS=OS, 
             include_top=False
         )
@@ -216,7 +226,6 @@ def Deeplabv3(weights='pascal_voc', input_tensor=None, input_shape=(512, 512, 3)
     model = Model(inputs, x, name='deeplabv3plus')
 
     # load weights
-
     if weights == 'pascal_voc':
         if backbone == 'xception':
             weights_path = get_file('deeplabv3_xception_tf_dim_ordering_tf_kernels.h5',

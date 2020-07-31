@@ -2,9 +2,10 @@ import segmentation_models
 from segmentation_models import Unet, PSPNet
 from segmentation_models import metrics
 
-from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
+from farmer.ncc.models import (
+    xception, mobilenet, DilatedXception, mobilenet_v2, Deeplabv3, Model2D
+)
 from farmer.ncc.losses import loss_functions 
-from farmer.ncc.encoder_layer import dilated_xception, MobileNetV2
 from ..model.task_model import Task
 
 from tensorflow import keras
@@ -60,20 +61,29 @@ class BuildModelTask:
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = Xception(
+                model = xception(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
+                )
+            elif model_name == "dilated_xception" and mobilenet_shape_condition:
+                model = DilatedXception(
                     nb_classes=nb_classes,
                     input_shape=(height, width, 3),
-                    weights=self.config.weights
+                    weights_info=self.config.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(
-                    nb_classes, height, width
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
                 )
             elif model_name == "mobilenetv2" and mobilenet_shape_condition:
-                model = MobileNetV2(
+                model = mobilenet_v2(
                     nb_classes=nb_classes,
-                    input_shape=(height, width, 3),
-                    weights=self.config.weights
+                    height=height,
+                    width=width,
+                    weights_info=self.config.weights_info
                 )
             else:
                 model = Model2D(nb_classes, height, width)
@@ -96,7 +106,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
-                    weights=self.config.weights,
+                    weights_info=self.config.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,

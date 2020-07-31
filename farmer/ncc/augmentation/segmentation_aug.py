@@ -1,79 +1,134 @@
 # from keras.preprocessing import image
 import numpy as np
-
+# import albumentations as albu
 from albumentations import (
     Compose,
     HorizontalFlip,
     VerticalFlip,
+
     Blur,
     CLAHE,
+    ElasticTransform,
     GaussianBlur,
     GaussNoise,
     GlassBlur,
+    GridDistortion,
+    GridDropout,
+    HueSaturationValue,
+    Lambda,
     MotionBlur,
     MedianBlur,
-    Normalize,
-    GridDistortion,
-    RandomContrast,
     MultiplicativeNoise,
-    GridDropout,
-    ElasticTransform,
-    PadIfNeeded,
+    Normalize,
+    RandomBrightness,
     RandomCrop,
+    RandomContrast,
+    RandomGamma,
+    MultiplicativeNoise,
+    ShiftScaleRotate,
+    IAAAdditiveGaussianNoise,
+    IAASharpen,
+    IAAPerspective,
+    PadIfNeeded,
+
+    #used in modules
+    OneOf,
+    DualTransform,
     # ISONoise,
-    # HueSaturationValue,
 )
+
+def round_clip_0_1(x, **kwargs):
+    return x.round().clip(0, 1)
 
 def segmentation_aug(input_image, label, size, augmentation_list):
     transforms = list()
-    
+
+    for augmentation_command in augmentation_list:
+        if type(augmentation_command) == list:
+            augmentation_command = f"OneOf({augmentation_command},p=0.9)"
+        else:
+            augmentation_command = augmentation_command    
+    # print(size)
+    height, width = size
+    # print(height)
+    # print(width)
+    # transforms.append(
+    #     getattr(albu,augmentation_command)(
+    #     **self.config.augmentation_command
+    #     )
+    # )
+    # print(transforms)
+
     # label = img_as_ubyte(label)
-    if "vertical_flip" in augmentation_list:
+    if "vertical_flip" in augmentation_command:
         transforms.append(VerticalFlip(p=0.5))
-    if "horizontal_flip" in augmentation_list:
+    if "HorizontalFlip" in augmentation_command:
         transforms.append(HorizontalFlip(p=0.5))
-    if "blur" in augmentation_list:
-        transforms.append(Blur(blur_limit=3,p=0.5))
+    # if "blur" in augmentation_command:
+    #     transforms.append(Blur(blur_limit=3,p=0.5))
     #newly added
-    if "motion_blur" in augmentation_list:
+    if "motion_blur" in augmentation_command:
         transforms.append(MotionBlur(blur_limit=3,p=0.5))
-    if "median_blur" in augmentation_list:
+    if "median_blur" in augmentation_command:
         transforms.append(MedianBlur(blur_limit=3,p=0.5))
-    if "gaussian_blur" in augmentation_list:
+    if "gaussian_blur" in augmentation_command:
         transforms.append(GaussianBlur(blur_limit=3,p=0.5))
-    if "glass_blur" in augmentation_list:
+    if "glass_blur" in augmentation_command:
         transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2,p=0.5))
-    if "gauss_noise" in augmentation_list:
+    if "gauss_noise" in augmentation_command:
         transforms.append(GaussNoise(p=0.5))
-    if "normalize" in augmentation_list:
+    if "normalize" in augmentation_command:
         transforms.append(Normalize(p=0.5))
-    if "grid_distortion" in augmentation_list:
+    if "grid_distortion" in augmentation_command:
         transforms.append(GridDistortion
             (num_steps=5, distort_limit=0.3, interpolation=1, border_mode=4, p=0.5)
             )
-    if "random_contrast" in augmentation_list:
+    if "RandomContrast" in augmentation_command:
         transforms.append(RandomContrast(limit=0.2, p=0.5))   
-    if "multiplicative_noise" in augmentation_list:
+    if "multiplicative_noise" in augmentation_command:
         transforms.append(MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=False, elementwise=False, p=0.5))   
-    if "grid_dropout" in augmentation_list:
+    if "grid_dropout" in augmentation_command:
         transforms.append(GridDropout(p=0.5))            
-    if "elastic_transform" in augmentation_list:
+    if "elastic_transform" in augmentation_command:
         transforms.append(ElasticTransform(alpha=1, sigma=50, alpha_affine=50, interpolation=1, border_mode=4, p=0.5))
-    if "isonoise" in augmentation_list:
+    if "isonoise" in augmentation_command:
         transforms.append(ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.5))    
-    if "clahe" in augmentation_list:
-        transforms.append(CLAHE(p=0.5))
-    if "glass_blur" in augmentation_list:
+    if "CLAHE" in augmentation_command:
+        transforms.append(CLAHE(p=1))
+    if "glass_blur" in augmentation_command:
         transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2, p=0.5))
-#for compose augmentation
-    # if "shift_scale_rotate" in augmentation_list:
-    #     transforms.append(ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0))
-    # if "pad_if_needed" in augmentation_list:
-    #     transforms.append(PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0))
-    # if "random_crop" in augmentation_list:
-    #     transforms.append(RandomCrop(height=320, width=320, always_apply=True))
-    # if "hsv" in augmentation_list:
-    #     transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,p=0.5))
+    
+    #Module:happy-set
+    if "ShiftScaleRotate" in augmentation_command:
+        transforms.append(ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, border_mode=0, p=1))
+    
+    if "PadIfNeeded" in augmentation_command:
+        transforms.append(PadIfNeeded(min_height=256, min_width=512, always_apply=True, border_mode=0))
+    if "RandomCrop" in augmentation_command:
+        transforms.append(RandomCrop(min_height=256, min_width=512, always_apply=True))
+    
+    if "IAAAdditiveGaussianNoise" in augmentation_command:
+        transforms.append(IAAAdditiveGaussianNoise(p=0.2))
+    if "IAAPerspective" in augmentation_command:
+        transforms.append(IAAPerspective(p=0.5))
+
+    if "RandomBrightness" in augmentation_command:
+        transforms.append(RandomBrightness(p=1))
+    if "RandomGamma" in augmentation_command:
+        transforms.append(RandomGamma(p=1))
+    if "IAASharpen" in augmentation_command:
+        transforms.append(IAASharpen(p=1))
+    if "Blur" in augmentation_command:
+        transforms.append(Blur(blur_limit=3,p=1))
+    if "MotionBlur" in augmentation_command:
+        transforms.append(MotionBlur(blur_limit=3,p=1))
+
+    if "RandomContrast" in augmentation_command:
+        transforms.append(RandomContrast(limit=0.2, p=1))   
+    if "HueSaturationValue" in augmentation_command:
+        transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=1))
+    if "Lambda" in augmentation_command:
+        transforms.append(Lambda(mask=round_clip_0_1))
 
     if len(transforms) > 0:
         # print('augmentation!!!')

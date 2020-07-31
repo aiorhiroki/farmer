@@ -18,6 +18,8 @@ from albumentations import (
     MultiplicativeNoise,
     GridDropout,
     ElasticTransform,
+    PadIfNeeded,
+    RandomCrop,
     # ISONoise,
     # HueSaturationValue,
 )
@@ -25,7 +27,7 @@ from albumentations import (
 def segmentation_aug(input_image, label, size, augmentation_list):
     transforms = list()
     
-    label = img_as_ubyte(label)
+    # label = img_as_ubyte(label)
     if "vertical_flip" in augmentation_list:
         transforms.append(VerticalFlip(p=0.5))
     if "horizontal_flip" in augmentation_list:
@@ -63,6 +65,13 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         transforms.append(CLAHE(p=0.5))
     if "glass_blur" in augmentation_list:
         transforms.append(GlassBlur(sigma=0.7, max_delta=4, iterations=2, p=0.5))
+#for compose augmentation
+    # if "shift_scale_rotate" in augmentation_list:
+    #     transforms.append(ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0))
+    # if "pad_if_needed" in augmentation_list:
+    #     transforms.append(PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0))
+    # if "random_crop" in augmentation_list:
+    #     transforms.append(RandomCrop(height=320, width=320, always_apply=True))
     # if "hsv" in augmentation_list:
     #     transforms.append(HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,p=0.5))
 

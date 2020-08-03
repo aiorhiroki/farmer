@@ -6,6 +6,7 @@ from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
 from farmer.ncc.losses import loss_functions
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
+from farmer.ncc.losses import loss_functions
 
 from tensorflow import keras
 

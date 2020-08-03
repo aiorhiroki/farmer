@@ -100,6 +100,7 @@ def categorical_focal_jaccard_loss(alpha=0.25, gamma=2., class_weights=None,
     )
     return cfl + jl
 
+
 def _tversky_index(y_true, y_pred, alpha, beta):
     eps = tf.keras.backend.epsilon()
     y_pred = tf.clip_by_value(y_pred, eps, 1 - eps)
@@ -108,6 +109,15 @@ def _tversky_index(y_true, y_pred, alpha, beta):
     fp = tf.reduce_sum(y_pred, axis=reduce_axes) - tp
     fn = tf.reduce_sum(y_true, axis=reduce_axes) - tp
     return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
+
+def focal_tversky_loss(alpha=0.45, beta=0.55, gamma=2.5, **kwargs):
+    gamma = tf.clip_by_value(gamma, 1.0, 3.0)
+    def loss(y_true, y_pred):
+        index =_tversky_index(y_true, y_pred, alpha, beta)
+        loss = backend.pow((1.0 - index), (1.0 / gamma))
+        return backend.mean(loss)
+    return loss
+
 
 def tversky_loss(alpha=0.45, beta=0.55, **kwargs):
     def loss(y_true, y_pred):

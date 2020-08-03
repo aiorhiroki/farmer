@@ -1,5 +1,5 @@
 import segmentation_models
-from segmentation_models import Unet, PSPNet
+from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
@@ -91,6 +91,12 @@ class BuildModelTask:
                 )
             elif model_name == "pspnet":
                 model = PSPNet(
+                    backbone_name=backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
+            elif model_name == "fpn":
+                model = FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,

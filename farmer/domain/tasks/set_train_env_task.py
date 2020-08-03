@@ -29,11 +29,9 @@ class SetTrainEnvTask:
     def _do_set_cpu_gpu_devices_task(self, gpu: str):
         # set gpu and cpu devices
         if gpu:
-            print(gpu)
             os.environ["CUDA_VISIBLE_DEVICES"] = gpu
             # GPUメモリ使用量を抑える
             physical_devices = tf.config.experimental.list_physical_devices('GPU')
-            print(physical_devices)
             if len(physical_devices) > 0:
                 for k in range(len(physical_devices)):
                     tf.config.experimental.set_memory_growth(physical_devices[k], True)

@@ -188,7 +188,7 @@ class TrainTask:
             validation_dataset, batch_size=batch_size, shuffle=False)
 
         try:
-            model.fit_generator(
+            model.fit(
                 train_gen,
                 steps_per_epoch=len(train_gen),
                 callbacks=callbacks,

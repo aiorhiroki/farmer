@@ -86,24 +86,9 @@ def fit():
                         n_trials=trainer.n_trials,
                         timeout=trainer.timeout
                     )
-                    pruned = optuna.structs.TrialState.PRUNED
-                    complete = optuna.structs.TrialState.COMPLETE
-                    pruned_trials = [
-                        t for t in study.trials if t.state == pruned]
-                    complete_trials = [
-                        t for t in study.trials if t.state == complete]
 
-                    print("Study statistics: ")
-                    print(" Number of finished trials: ", len(study.trials))
-                    print(" Number of pruned trials: ", len(pruned_trials))
-                    print(" Number of complete trials: ", len(complete_trials))
+                    optuna_report(study)
 
-                    print('Best trial:')
-                    trial = study.best_trial
-                    print('  Value: {}'.format(trial.value))
-                    print('  Params: ')
-                    for key, value in trial.params.items():
-                        print('    {}: {}'.format(key, value))
                 else:
                     train_workflow = TrainWorkflow(trainer)
                     train_workflow.command()
@@ -122,24 +107,9 @@ def fit():
                     n_trials=trainer.n_trials,
                     timeout=trainer.timeout
                 )
-                pruned = optuna.structs.TrialState.PRUNED
-                complete = optuna.structs.TrialState.COMPLETE
-                pruned_trials = [
-                    t for t in study.trials if t.state == pruned]
-                complete_trials = [
-                    t for t in study.trials if t.state == complete]
 
-                print("Study statistics: ")
-                print(" Number of finished trials: ", len(study.trials))
-                print(" Number of pruned trials: ", len(pruned_trials))
-                print(" Number of complete trials: ", len(complete_trials))
+                optuna_report(study)
 
-                print('Best trial:')
-                trial = study.best_trial
-                print('  Value: {}'.format(trial.value))
-                print('  Params: ')
-                for key, value in trial.params.items():
-                    print('    {}: {}'.format(key, value))
             else:
                 train_workflow = TrainWorkflow(trainer)
                 train_workflow.command()
@@ -159,3 +129,24 @@ class Objective(object):
             return np.mean(result["dice"][1:])
         else:
             raise NotImplementedError
+
+
+def optuna_report(study):
+    pruned = optuna.structs.TrialState.PRUNED
+    complete = optuna.structs.TrialState.COMPLETE
+    pruned_trials = [
+        t for t in study.trials if t.state == pruned]
+    complete_trials = [
+        t for t in study.trials if t.state == complete]
+
+    print("Study statistics: ")
+    print(" Number of finished trials: ", len(study.trials))
+    print(" Number of pruned trials: ", len(pruned_trials))
+    print(" Number of complete trials: ", len(complete_trials))
+
+    print('Best trial:')
+    trial = study.best_trial
+    print('  Value: {}'.format(trial.value))
+    print('  Params: ')
+    for key, value in trial.params.items():
+        print('    {}: {}'.format(key, value))

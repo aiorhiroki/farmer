@@ -1,3 +1,5 @@
+import os
+
 from ..workflows.abstract_workflow import AbstractImageAnalyzer
 from ..tasks.build_model_task import BuildModelTask
 from ..tasks.set_train_env_task import SetTrainEnvTask
@@ -14,52 +16,69 @@ from ..model.task_model import Task
 class TrainWorkflow(AbstractImageAnalyzer):
     def __init__(self, config, trial):
         super().__init__(config)
-        if self.config.op_backbone is not None:
-            self.config.backbone = trial.suggest_categorical(
-                'backbone', self.config.op_backbone
+        if self._config.op_backbone is not None:
+            self._config.backbone = trial.suggest_categorical(
+                'backbone', self._config.op_backbone
             )
-        if self.config.op_learning_rate is not None:
+
+        if self._config.op_learning_rate is not None:
             # logスケールで変化
-            if len(self.config.op_learning_rate) == 2:
-                self.config.learning_rate = trial.suggest_loguniform(
-                    'learning_rate', *self.config.op_learning_rate
+            if len(self._config.op_learning_rate) == 2:
+                self._config.learning_rate = trial.suggest_loguniform(
+                    'learning_rate', *self._config.op_learning_rate
                 )
             # 線形スケールで変化
-            elif len(self.config.op_learning_rate) == 3:
-                self.config.learning_rate = trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.op_learning_rate
+            elif len(self._config.op_learning_rate) == 3:
+                self._config.learning_rate = trial.suggest_discrete_uniform(
+                    'learning_rate', *self._config.op_learning_rate
                 )
-        if self.config.op_optimizer is not None:
-            self.config.optimizer = trial.suggest_categorical(
-                'optimizer', self.config.op_optimizer
+
+        if self._config.op_optimizer is not None:
+            self._config.optimizer = trial.suggest_categorical(
+                'optimizer', self._config.op_optimizer
             )
-        if self.config.op_backbone is not None:
-            self.config.backbone = trial.suggest_categorical(
-                'backbone', self.config.op_backbone
+
+        if self._config.op_loss is not None:
+            self._config.loss = trial.suggest_categorical(
+                'loss', self._config.op_loss
             )
-        if self.config.op_loss is not None:
-            self.config.loss = trial.suggest_categorical(
-                'loss', self.config.op_loss
+
+        if self._config.op_batch_size is not None:
+            self._config.batch_size = int(trial.suggest_discrete_uniform(
+                'batch_size', *self._config.op_batch_size)
             )
-        if self.config.op_batch_size is not None:
-            self.config.batch_size = int(trial.suggest_discrete_uniform(
-                'batch_size', *self.config.op_batch_size)
-            )
+
+        if trial:
+            # init
+            self._config.model_path = os.path.join(self._config.result_path, self._config.model_dir)
+            self._config.learning_path = os.path.join(self._config.result_path, self._config.learning_dir)
+            self._config.image_path = os.path.join(self._config.result_path, self._config.image_dir)
+
+            # result_dir/trial#/learning/
+            self._config.learning_path = self._config.learning_path.replace("/learning", f"/trial{trial.number}/learning")
+            # result_dir/trial#/model/
+            self._config.model_path = self._config.model_path.replace("/model", f"/trial{trial.number}/model")
+            # result_dir/trial#/image/
+            self._config.image_path = self._config.image_path.replace("/image", f"/trial{trial.number}/image")
+
+            self._config.trial_number = trial.number
+            self._config.trial_params = trial.params
+
         
 
     def command(self, trial=None):
-        self.set_env_flow(trial)
+        self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow(train_set)
-        model, base_model = self.build_model_flow(trial)
+        model, base_model = self.build_model_flow()
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
         )
         return self.output_flow(result)
 
-    def set_env_flow(self, trial=None):
+    def set_env_flow(self):
         print("SET ENV FLOW ... ", end="")
-        SetTrainEnvTask(self._config).command(trial)
+        SetTrainEnvTask(self._config).command()
         print("DONE")
 
     def read_annotation_flow(self):
@@ -77,13 +96,13 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("DONE")
         print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
-    def build_model_flow(self, trial=None):
+    def build_model_flow(self):
         print("BUILD MODEL FLOW ... ")
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model, base_model = BuildModelTask(self._config).command(trial)
+        model, base_model = BuildModelTask(self._config).command()
         print("DONE\n")
         return model, base_model
 
@@ -134,7 +153,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
             PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model, trial=trial
+                test_set, model=trained_model
             )
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model

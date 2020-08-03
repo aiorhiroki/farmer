@@ -104,7 +104,7 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
-            elif model_name == "FPN":
+            elif model_name == "fpn":
                 model = FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),

@@ -152,8 +152,8 @@ class Objective(object):
 
     def __call__(self, trial):
         clear_session()
-        train_workflow = TrainWorkflow(self.trainer)
-        result = train_workflow.command(trial)
+        train_workflow = TrainWorkflow(self.trainer, trial)
+        result = train_workflow.command()
         if self.trainer.task == Task.CLASSIFICATION:
             return result["accuracy"]
         elif self.trainer.task == Task.SEMANTIC_SEGMENTATION:

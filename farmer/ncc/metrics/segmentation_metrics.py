@@ -7,30 +7,35 @@ import matplotlib.pyplot as plt
 
 
 def iou_dice_val(
-        nb_classes, height, width, data_set, model, train_colors=None):
-    image_util = ImageUtil(nb_classes, (height, width))
+        nb_classes,
+        dataset,
+        model,
+):
     confusion = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-    print('validation...')
-    for image_file, seg_file in tqdm(data_set):
+    print('\nvalidation...')
+    for sample, target in tqdm(dataset):
         # Get a training sample and make a prediction using current model
-        sample = image_util.read_image(image_file, anti_alias=True)
-        target = image_util.read_image(
-            seg_file, normalization=False, train_colors=train_colors)
-        predicted = np.asarray(
-            model.predict(np.expand_dims(sample, axis=0)))[0]
+        predicted = model.predict(np.expand_dims(sample, axis=0))[0]
         confusion += calc_segmentation_confusion(
             predicted, target, nb_classes)
 
-    iou = calc_iou_from_confusion(confusion)
-    dice = calc_dice_from_confusion(confusion)
+    tp = np.diag(confusion)
+    fp = np.sum(confusion, 0) - tp
+    fn = np.sum(confusion, 1) - tp
 
-    return {'iou': iou, 'dice': dice}
+    iou = calc_iou_from_confusion(tp, fp, fn)
+    dice = calc_dice_from_confusion(tp, fp, fn)
+    precision = calc_precision_from_confusion(tp, fp)
+    recall = calc_recall_from_confusion(tp, fn)
+
+    return {'iou': iou, 'dice': dice, 'precision': precision, 'recall': recall}
 
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     # Convert predictions and target from categorical to integer format
+    # y_pred: onehot, y_true: onehot
     y_pred = np.argmax(y_pred, axis=-1).ravel()
-    y_true = y_true.ravel()
+    y_true = np.argmax(y_true, axis=-1).ravel()
     x = y_pred + nb_classes * y_true
     bincount_2d = np.bincount(
         x.astype(np.int32), minlength=nb_classes**2)
@@ -40,30 +45,36 @@ def calc_segmentation_confusion(y_pred, y_true, nb_classes):
     return confusion
 
 
-def calc_iou_from_confusion(confusion):
-    true_positive = np.diag(confusion)
-    false_positive = np.sum(confusion, 0) - true_positive
-    false_negative = np.sum(confusion, 1) - true_positive
-    # Just in case we get a division by 0, set the value to 0
+def calc_iou_from_confusion(tp, fp, fn):
     with np.errstate(divide='ignore', invalid='ignore'):
-        iou = true_positive / \
-            (true_positive + false_positive + false_negative)
+        iou = tp / (tp + fp + fn)
 
     iou[np.isnan(iou)] = 0
     return [float(i) for i in iou]
 
 
-def calc_dice_from_confusion(confusion):
-    true_positive = np.diag(confusion)
-    false_positive = np.sum(confusion, 0) - true_positive
-    false_negative = np.sum(confusion, 1) - true_positive
-    # Just in case we get a division by 0, set the value to 0
+def calc_dice_from_confusion(tp, fp, fn):
     with np.errstate(divide='ignore', invalid='ignore'):
-        dice = 2 * true_positive / \
-            (2 * true_positive + false_positive + false_negative)
+        dice = 2 * tp / (2 * tp + fp + fn)
 
     dice[np.isnan(dice)] = 0
     return [float(d) for d in dice]
+
+
+def calc_precision_from_confusion(tp, fp):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        precision = tp / (tp + fp)
+
+    precision[np.isnan(precision)] = 0
+    return [float(p) for p in precision]
+
+
+def calc_recall_from_confusion(tp, fn):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        recall = tp / (tp + fn)
+
+    recall[np.isnan(recall)] = 0
+    return [float(r) for r in recall]
 
 
 def detection_rate_confusions(pred_labels, gt_labels, nb_classes):
@@ -130,26 +141,23 @@ def plot_confusion_matrix(cm, classes,
 
 def generate_segmentation_result(
     nb_classes,
-    height,
-    width,
-    annotations,
+    dataset,
     model,
     save_dir,
-    train_colors=None,
 ):
-    image_util = ImageUtil(nb_classes, (height, width))
-    for sample_image_path in annotations:
-        input_image_path, mask_image_path = sample_image_path
-        sample_image = image_util.read_image(
-            input_image_path, anti_alias=True)
-        segmented = image_util.read_image(
-            mask_image_path, normalization=False, train_colors=train_colors)
+    print('\nsave predicted image...')
+    for i, (image, mask) in tqdm(enumerate(dataset)):
+        output = model.predict(np.expand_dims(image, axis=0))[0]
+        confusion = calc_segmentation_confusion(output, mask, nb_classes)
 
-        output = model.predict(np.expand_dims(sample_image, axis=0))[0]
-        confusion = calc_segmentation_confusion(output, segmented, nb_classes)
-        dice = calc_dice_from_confusion(confusion)
-        segmented = image_util.cast_to_onehot(segmented)
+        tp = np.diag(confusion)
+        fp = np.sum(confusion, 0) - tp
+        fn = np.sum(confusion, 1) - tp
+        dice = calc_dice_from_confusion(tp, fp, fn)
+
         result_image = get_imageset(
-            sample_image, output, segmented, put_text=f'dice: {dice}')
-        save_image_name = os.path.basename(input_image_path)
+            image, output, mask, put_text=f'dice: {dice}')
+
+        *input_file, _ = dataset.annotations[i]
+        save_image_name = os.path.basename(input_file[0])
         result_image.save(f"{save_dir}/{save_image_name}")

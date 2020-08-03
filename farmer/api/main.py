@@ -7,6 +7,10 @@ from farmer.domain.model.task_model import Task
 from farmer.domain.model.trainer_model import Trainer
 from farmer.domain.workflows.train_workflow import TrainWorkflow
 
+import optuna
+import numpy as np
+from keras.backend import clear_session
+
 
 def fit():
     with open("run.yaml") as yamlfile:
@@ -68,14 +72,81 @@ def fit():
                 trainer.learning_path = f"{k_result}/{trainer.learning_dir}"
                 trainer.image_path = f"{k_result}/{trainer.image_dir}"
 
-                train_workflow = TrainWorkflow(trainer)
                 if trainer.optuna:
-                    train_workflow.optuna_command()
+                    study = optuna.create_study(
+                        direction='maximize',
+                        pruner=optuna.pruners.MedianPruner(
+                            n_startup_trials=3,
+                            n_warmup_steps=10,
+                            interval_steps=1
+                        )
+                    )
+                    study.optimize(
+                        Objective(trainer),
+                        n_trials=trainer.n_trials,
+                        timeout=trainer.timeout
+                    )
+
+                    optuna_report(study)
+
                 else:
+                    train_workflow = TrainWorkflow(trainer)
                     train_workflow.command()
         else:
-            train_workflow = TrainWorkflow(trainer)
             if trainer.optuna:
-                train_workflow.optuna_command()
+                study = optuna.create_study(
+                    direction='maximize',
+                    pruner=optuna.pruners.MedianPruner(
+                        n_startup_trials=3,
+                        n_warmup_steps=10,
+                        interval_steps=1
+                    )
+                )
+                study.optimize(
+                    Objective(trainer),
+                    n_trials=trainer.n_trials,
+                    timeout=trainer.timeout
+                )
+
+                optuna_report(study)
+
             else:
+                train_workflow = TrainWorkflow(trainer)
                 train_workflow.command()
+
+
+class Objective(object):
+    def __init__(self, trainer):
+        self.trainer = trainer
+
+    def __call__(self, trial):
+        clear_session()
+        train_workflow = TrainWorkflow(self.trainer)
+        result = train_workflow.command(trial)
+        if self.trainer.task == Task.CLASSIFICATION:
+            return result["accuracy"]
+        elif self.trainer.task == Task.SEMANTIC_SEGMENTATION:
+            return np.mean(result["dice"][1:])
+        else:
+            raise NotImplementedError
+
+
+def optuna_report(study):
+    pruned = optuna.structs.TrialState.PRUNED
+    complete = optuna.structs.TrialState.COMPLETE
+    pruned_trials = [
+        t for t in study.trials if t.state == pruned]
+    complete_trials = [
+        t for t in study.trials if t.state == complete]
+
+    print("Study statistics: ")
+    print(" Number of finished trials: ", len(study.trials))
+    print(" Number of pruned trials: ", len(pruned_trials))
+    print(" Number of complete trials: ", len(complete_trials))
+
+    print('Best trial:')
+    trial = study.best_trial
+    print('  Value: {}'.format(trial.value))
+    print('  Params: ')
+    for key, value in trial.params.items():
+        print('    {}: {}'.format(key, value))

@@ -39,7 +39,6 @@ class Trainer(Config, ImageLoader):
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001
     optuna: bool = False
-    loss_params: Dict[str, float] = field(default_factory=dict)
     seed: int = 1
     op_batch_size: int = None
     op_learning_rate: float = None

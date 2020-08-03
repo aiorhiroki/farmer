@@ -63,7 +63,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
             self._config.trial_number = trial.number
             self._config.trial_params = trial.params
-
         
 
     def command(self, trial=None):

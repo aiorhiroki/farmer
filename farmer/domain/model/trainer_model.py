@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import copy
 import os
 from datetime import datetime
 from dataclasses import field
@@ -9,7 +10,7 @@ from .optuna_model import Optuna
 
 
 @dataclass
-class Trainer(Config, ImageLoader, Optuna):
+class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
     epochs: int = None
@@ -40,10 +41,14 @@ class Trainer(Config, ImageLoader, Optuna):
     cosine_lr_min: int = 0.001
     optuna: bool = False
     loss_params: Dict[str, float] = field(default_factory=dict)
-    tversky_alpha: float = 0.3
-    tversky_beta: float = 0.7
     seed: int = 1
-
+    op_batch_size: int = None
+    op_learning_rate: float = None
+    op_optimizer: str = None
+    op_backbone: str = None
+    op_loss: str = None
+    n_trials: int = 3
+    timeout: int = 3 * 60 * 60
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -79,16 +84,28 @@ class Trainer(Config, ImageLoader, Optuna):
         self.mean, self.std = None, None
 
         # For optuna analysis hyperparameter
-        self.op_batch_size = type(self.batch_size) == list
-        self.op_learning_rate = type(self.learning_rate) == list
-        self.op_optimizer = type(self.optimizer) == list
-        self.op_backbone = type(self.backbone) == list
-        self.op_loss = type(self.loss) == list
+        batch_size_is_list = type(self.batch_size) == list
+        learning_rate_is_list = type(self.learning_rate) == list
+        optimizer_is_list = type(self.optimizer) == list
+        backbone_is_list = type(self.backbone) == list
+        loss_is_list = type(self.loss) == list
+        
+        if batch_size_is_list:
+            self.op_batch_size = copy.deepcopy(self.batch_size)
+        if learning_rate_is_list:
+            self.op_learning_rate = copy.deepcopy(self.learning_rate)
+        if optimizer_is_list:
+            self.op_optimizer = copy.deepcopy(self.optimizer)
+        if backbone_is_list:
+            self.op_backbone = copy.deepcopy(self.backbone)
+        if loss_is_list:
+            self.op_loss = copy.deepcopy(self.loss)
 
         self.optuna = any((
-            self.op_batch_size,
-            self.op_learning_rate,
-            self.op_optimizer,
-            self.op_backbone,
-            self.op_loss,
+            batch_size_is_list,
+            learning_rate_is_list,
+            optimizer_is_list,
+            backbone_is_list,
+            loss_is_list
         ))
+

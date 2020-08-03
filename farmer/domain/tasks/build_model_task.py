@@ -68,10 +68,6 @@ class BuildModelTask:
                 model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            if self.config.op_backbone:
-                backbone = trial.suggest_categorical(
-                    'backbone', self.config.backbone
-                )
             print('------------------')
             print('Model:', model_name)
             print('Backbone:', backbone)
@@ -129,25 +125,7 @@ class BuildModelTask:
         loss_func,
         trial
     ):
-        if self.config.op_learning_rate:
-            # logスケールで変化
-            if len(self.config.learning_rate) == 2:
-                # learning_rate = [10^m(min), 10^M(max)]
-                learning_rate = trial.suggest_loguniform(
-                    'learning_rate', *self.config.learning_rate)
-            # 線形スケールで変化
-            elif len(self.config.learning_rate) == 3:
-                # learning_rate = [min, max, step]
-                learning_rate = trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.learning_rate)
-        else:
-            learning_rate = self.config.learning_rate
-
         if self.config.framework == "tensorflow":
-            if self.config.op_optimizer:
-                optimizer = trial.suggest_categorical(
-                    'optimizer', self.config.optimizer
-                )
                 print('------------------')
                 print('Optimizer:', optimizer)
                 print('------------------')
@@ -171,10 +149,6 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
-                if self.config.op_loss:
-                    loss_func = trial.suggest_categorical(
-                        'loss', self.config.loss
-                    )
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')

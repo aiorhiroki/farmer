@@ -1,3 +1,4 @@
+from typing import Tuple
 import colorsys
 from .palette import palettes
 import numpy as np
@@ -13,7 +14,7 @@ def random_colors(N, bright=True, scale=True, shuffle=False):
     hsv = [(i / N, 1, brightness) for i in range(N)]
     colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
     if scale:
-        colors = tuple(np.array(colors)*255)
+        colors = tuple(np.array(colors) * 255)
     if shuffle:
         random.shuffle(colors)
     return colors
@@ -113,66 +114,72 @@ class ImageUtil:
     def __init__(
         self,
         nb_classes: int,
-        size: (int, int)
+        size: Tuple[int, int]
     ):
         self.nb_classes = nb_classes
-        self.size = size[::-1]
+        self.size = size[::-1]  # width, height
         self.current_raw_size = None
         self.current_raw_frame = None
 
     def read_image(
         self,
         file_path: str,
-        normalization=True,
-        anti_alias=False,
         train_colors=None
     ):
         image = Image.open(file_path)
         self.current_raw_frame = image
         self.current_raw_size = image.size
-        if self.size != self.current_raw_size:
-            resample = Image.LANCZOS if anti_alias else Image.NEAREST
-            image = image.resize(self.size, resample)
+
         # delete alpha channel
         if image.mode == "RGBA":
             image = image.convert("RGB")
         image = np.asarray(image)
-        if normalization:
-            image = image / 255.0
+
+        # re-mapping class index
         if train_colors:
             image = self._convert_colors(image, train_colors)
 
         return image
 
+    def resize(
+        self,
+        image: np.ndarray,
+        anti_alias=False
+    ):
+        image = Image.fromarray(np.uint8(image))
+        resample = Image.LANCZOS if anti_alias else Image.NEAREST
+        image = image.resize(self.size, resample)
+        return np.asarray(image)
+
+    def normalization(
+        self,
+        image: np.ndarray,
+    ):
+        return image / 255.0
+
     def cast_to_onehot(
         self,
-        labels: list
+        label: np.ndarray
     ):
-        labels = np.asarray(labels, dtype=np.uint8)
-        # Classification
-        if len(labels.shape) == 1:
-            one_hot = np.eye(self.nb_classes)
-        # Segmentation
-        else:
-            one_hot = np.identity(self.nb_classes)
-        return one_hot[labels]
+        one_hot = np.identity(self.nb_classes)
+        return one_hot[label]
 
     def _cast_to_frame(
         self,
         prediction,
-        size
+        size,
     ):
         res = np.argmax(prediction, axis=2)
         image = Image.fromarray(np.uint8(res), mode="P")
         image.putpalette(palettes)
-        image = image.resize(self.current_raw_size, Image.LANCZOS)
+        image = image.resize(size, Image.LANCZOS)
         image = image.convert("RGB")
-        return np.asarray(np.asarray(image)*255, dtype=np.uint8)
+        return np.asarray(np.asarray(image) * 255, dtype=np.uint8)
 
     def blend_image(
         self,
         output_image,
-        size
+        size,
     ):
         input_frame = np.array(self.current_raw_frame, dtype=np.uint8)
         output_frame = self._cast_to_frame(output_image, size)

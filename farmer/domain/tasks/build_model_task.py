@@ -1,12 +1,14 @@
 import segmentation_models
-from segmentation_models import Unet, PSPNet
+from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, DilatedXception, mobilenet_v2, Deeplabv3, Model2D
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
 )
-from farmer.ncc.losses import loss_functions 
+from farmer.ncc.losses import loss_functions
+from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
+from farmer.ncc.losses import loss_functions
 
 from tensorflow import keras
 
@@ -67,9 +69,10 @@ class BuildModelTask:
                     width=width
                 )
             elif model_name == "dilated_xception" and mobilenet_shape_condition:
-                model = DilatedXception(
+                model = dilated_xception(
                     nb_classes=nb_classes,
-                    input_shape=(height, width, 3),
+                    height=height,
+                    width=width,
                     weights_info=self.config.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
@@ -118,6 +121,12 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
+            elif model_name == "fpn":
+                model = FPN(
+                    backbone_name=backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
         else:
             raise NotImplementedError
 
@@ -146,14 +155,16 @@ class BuildModelTask:
         trial
     ):
         if self.config.op_learning_rate:
+            # logスケールで変化
             if len(self.config.learning_rate) == 2:
-                # learning_rate = [10^(min), 10^(max)]
-                learning_rate = int(trial.suggest_loguniform(
-                    'learning_rate', *self.config.learning_rate))
+                # learning_rate = [10^m(min), 10^M(max)]
+                learning_rate = trial.suggest_loguniform(
+                    'learning_rate', *self.config.learning_rate)
+            # 線形スケールで変化
             elif len(self.config.learning_rate) == 3:
                 # learning_rate = [min, max, step]
-                learning_rate = int(trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.learning_rate))
+                learning_rate = trial.suggest_discrete_uniform(
+                    'learning_rate', *self.config.learning_rate)
         else:
             learning_rate = self.config.learning_rate
 
@@ -169,6 +180,10 @@ class BuildModelTask:
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
                 )
+            elif optimizer == "adabound":
+                optimizer = AdaBound(
+                    learning_rate=learning_rate, final_lr=0.1
+                )
             else:
                 optimizer = keras.optimizers.SGD(
                     lr=learning_rate, momentum=0.9, decay=0.001
@@ -181,6 +196,10 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
+                if self.config.op_loss:
+                    loss_func = trial.suggest_categorical(
+                        'loss', self.config.loss
+                    )
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
@@ -191,7 +210,7 @@ class BuildModelTask:
                     optimizer=optimizer,
                     loss=loss,
                     metrics=[metrics.iou_score,
-                             loss_functions.categorical_crossentropy()],
+                             loss_functions.categorical_crossentropy_loss()],
                 )
             else:
                 raise NotImplementedError

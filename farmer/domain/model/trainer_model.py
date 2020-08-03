@@ -39,8 +39,12 @@ class Trainer(Config, ImageLoader, Optuna):
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001
     optuna: bool = False
+    loss_params: Dict[str, float] = field(default_factory=dict)
+    tversky_alpha: float = 0.3
+    tversky_beta: float = 0.7
+    seed: int = 1
     weights_info: Dict[str, str] = field(default_factory=dict)
-
+      
     def __post_init__(self):
         self.task = self.get_task()
         self.gpu = str(self.gpu)
@@ -72,16 +76,19 @@ class Trainer(Config, ImageLoader, Optuna):
         self.class_names = self.get_class_names()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
+        self.mean, self.std = None, None
 
         # For optuna analysis hyperparameter
         self.op_batch_size = type(self.batch_size) == list
         self.op_learning_rate = type(self.learning_rate) == list
         self.op_optimizer = type(self.optimizer) == list
         self.op_backbone = type(self.backbone) == list
+        self.op_loss = type(self.loss) == list
 
         self.optuna = any((
             self.op_batch_size,
             self.op_learning_rate,
             self.op_optimizer,
             self.op_backbone,
+            self.op_loss,
         ))

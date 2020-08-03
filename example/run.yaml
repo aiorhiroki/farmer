@@ -1,14 +1,15 @@
 gpu: 0
 config_paths:
     #  classification images
-    - yamls/classification.yaml
-    - yamls/classification-eval.yaml
+    # - yamls/classification.yaml
+    # - yamls/classification-eval.yaml
     # classification video frames
-    - yamls/classification-video.yaml
+    # - yamls/classification-video.yaml
     # segmentation
-    - yamls/segmentation.yaml
-    # backbone is random with optuna
+    # - yamls/segmentation.yaml
     # - yamls/segmentation-eval.yaml
+    # - yamls/segmentation-aug.yaml
+    - yamls/segmentation-optuna.yaml
     # detection #bug 
     # - yamls/detection.yaml
     # - yamls/detection-eval.yaml

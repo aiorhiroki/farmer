@@ -63,11 +63,10 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
             self._config.trial_number = trial.number
             self._config.trial_params = trial.params
-
         
 
     def command(self, trial=None):
-        self.set_env_flow()
+        self.set_env_flow(trial)
         train_set, validation_set, test_set = self.read_annotation_flow()
         self.eda_flow(train_set)
         model, base_model = self.build_model_flow()
@@ -76,9 +75,9 @@ class TrainWorkflow(AbstractImageAnalyzer):
         )
         return self.output_flow(result)
 
-    def set_env_flow(self):
+    def set_env_flow(self, trial=None):
         print("SET ENV FLOW ... ", end="")
-        SetTrainEnvTask(self._config).command()
+        SetTrainEnvTask(self._config).command(trial)
         print("DONE")
 
     def read_annotation_flow(self):
@@ -153,7 +152,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
             PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model
+                test_set, model=trained_model, trial=trial
             )
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model

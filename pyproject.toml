@@ -16,6 +16,7 @@ segmentation-models = "1.0.0"
 albumentations = "0.4.3"
 optuna = "1.4.0"
 keras = "2.3.0"
+pandas = "^1.0.5"
 
 [tool.poetry.dev-dependencies]
 

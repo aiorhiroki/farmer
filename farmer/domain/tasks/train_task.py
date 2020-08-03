@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from farmer import ncc
 from tensorflow.python import keras
 from optuna.integration import KerasPruningCallback
+from farmer import ncc
 
 
 class TrainTask:
@@ -10,50 +10,67 @@ class TrainTask:
         self.config = config
 
     def command(
-            self, model, base_model, train_set, validation_set, trial):
+            self, model, base_model, training_set, validation_set, trial):
 
-        train_gen, validation_gen = self._do_generate_batch_task(
-            train_set, validation_set, trial
+        train_dataset, valid_dataset = self._do_generate_batch_task(
+            training_set, validation_set
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_set, validation_set, trial
+            base_model, train_dataset, valid_dataset, trial
         )
         trained_model = self._do_model_optimization_task(
-            model, train_gen, validation_gen, callbacks
+            model, train_dataset, valid_dataset, callbacks, trial
         )
-        save_model = self._do_save_model_task(trained_model, base_model)
+        save_model = self._do_save_model_task(trained_model, base_model, trial)
 
         return save_model
 
-    def _do_generate_batch_task(self, train_set, validation_set, trial):
-        if self.config.op_batch_size:
-            batch_size = int(trial.suggest_discrete_uniform(
-                'batch_size', *self.config.batch_size))
-        else:
-            batch_size = self.config.batch_size
-
+    def _do_generate_batch_task(self, training_set, validation_set):
         sequence_args = dict(
-            annotations=train_set,
+            annotations=training_set,
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
-            task=self.config.task,
-            batch_size=batch_size,
+            mean=self.config.mean,
+            std=self.config.std,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        train_gen = ncc.generators.ImageSequence(**sequence_args)
 
-        sequence_args.update(annotations=validation_set, augmentation=[])
-        validation_gen = ncc.generators.ImageSequence(**sequence_args)
+        if self.config.task == ncc.tasks.Task.CLASSIFICATION:
+            train_dataset = ncc.generators.ClassificationDataset(**sequence_args)
 
-        return train_gen, validation_gen
+            sequence_args.update(
+                annotations=validation_set,
+                mean=np.zeros(3),
+                std=np.ones(3),
+                augmentation=[]
+            )
+            validation_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+
+        elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            train_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+
+            sequence_args.update(
+                annotations=validation_set,
+                mean=np.zeros(3),
+                std=np.ones(3),
+                augmentation=[]
+            )
+            validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+
+        return train_dataset, validation_dataset
 
     def _do_set_callbacks_task(
-            self, base_model, train_set, validation_set, trial):
+            self, base_model, train_dataset, valid_dataset, trial):
 
-        best_model_name = "best_model.h5"
-        model_save_file = os.path.join(self.config.model_path, best_model_name)
+        # Save Model Checkpoint
+        # result_dir/model/
+        model_save_file = os.path.join(self.config.model_path, "best_model.h5")
+        if trial:
+            # result_dir/trial#/model/
+            model_save_file = model_save_file.replace("/model/", f"/trial{trial.number}/model/")
+
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
                 filepath=model_save_file,
@@ -64,6 +81,8 @@ class TrainTask:
             checkpoint = keras.callbacks.ModelCheckpoint(
                 filepath=model_save_file, save_best_only=True
             )
+
+        # Learning Rate Schedule
         if self.config.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
                 self.config.cosine_lr_max,
@@ -76,40 +95,58 @@ class TrainTask:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
 
+        # Plot History
+        # result_dir/learning/
+        learning_path = self.config.learning_path
+        if trial:
+            # result_dir/trial#/learning/
+            learning_path = learning_path.replace("/learning/", f"/trial{trial.number}/learning/")
+
         plot_history = ncc.callbacks.PlotHistory(
-            self.config.learning_path,
+            learning_path,
             ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
         )
+
         callbacks = [checkpoint, scheduler, plot_history]
+
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            # Plot IoU History
             iou_history = ncc.callbacks.IouHistory(
-                save_dir=self.config.learning_path,
-                validation_files=validation_set,
+                save_dir=learning_path,
+                valid_dataset=valid_dataset,
                 class_names=self.config.class_names,
-                height=self.config.height,
-                width=self.config.width,
-                train_colors=self.config.train_colors
             )
+
+            # Predict validation
+            # result_dir/image/validation/
             val_save_dir = os.path.join(self.config.image_path, "validation")
+            if trial:
+                # result_dir/trial#/image/validation/
+                val_save_dir = val_save_dir.replace("/image/", f"/trial{trial.number}/image/")
+
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
-                validation_files=validation_set,
+                valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                train_colors=self.config.train_colors,
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
 
             if self.config.optuna:
+                # Trial prune for Optuna
                 callbacks.append(KerasPruningCallback(trial, 'dice'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
+                # result_dir/model/
+                batch_model_path = os.path.join(self.config.model_path, "batch_model.h5")
+                if trial:
+                    # result_dir/trial#/model/
+                    batch_model_path = batch_model_path.replace("/model/", f"/trial{trial.number}/model/")
+
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
-                    self.config.learning_path,
-                    f'{self.config.model_path}/batch_model.h5',
+                    learning_path,
+                    batch_model_path,
                     token=self.config.slack_token,
                     channel=self.config.slack_channel,
                     period=self.config.batch_period
@@ -117,15 +154,14 @@ class TrainTask:
                 callbacks.append(batch_checkpoint)
 
             if self.config.optuna:
+                # Trial prune for Optuna
                 callbacks.append(KerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-                file_name = os.path.join(self.config.learning_path, "IoU.png")
+                file_name = os.path.join(learning_path, "IoU.png")
             else:
-                file_name = os.path.join(
-                    self.config.learning_path, "acc.png"
-                )
+                file_name = os.path.join(learning_path, "acc.png")
 
             slack_logging = ncc.callbacks.SlackLogger(
                 logger_file=file_name,
@@ -137,25 +173,49 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_gen, validation_gen, callbacks
+        self, model, train_dataset, validation_dataset, callbacks, trial
     ):
 
-        model.fit_generator(
-            train_gen,
-            steps_per_epoch=len(train_gen),
-            callbacks=callbacks,
-            epochs=self.config.epochs,
-            validation_data=validation_gen,
-            validation_steps=len(validation_gen),
-            workers=16 if self.config.multi_gpu else 1,
-            max_queue_size=32 if self.config.multi_gpu else 10,
-            use_multiprocessing=self.config.multi_gpu,
-        )
+        if self.config.op_batch_size:
+            batch_size = int(trial.suggest_discrete_uniform(
+                'batch_size', *self.config.batch_size))
+        else:
+            batch_size = self.config.batch_size
+
+        train_gen = ncc.generators.Dataloder(
+            train_dataset, batch_size=batch_size, shuffle=True)
+        valid_gen = ncc.generators.Dataloder(
+            validation_dataset, batch_size=batch_size, shuffle=False)
+
+        try:
+            model.fit(
+                train_gen,
+                steps_per_epoch=len(train_gen),
+                callbacks=callbacks,
+                epochs=self.config.epochs,
+                validation_data=valid_gen,
+                validation_steps=len(valid_gen),
+                workers=16 if self.config.multi_gpu else 1,
+                max_queue_size=32 if self.config.multi_gpu else 10,
+                use_multiprocessing=self.config.multi_gpu,
+            )
+        except KeyboardInterrupt:
+            import sys
+            # When stoping by Ctrl-C, save model as last_model.h5
+            save_model = self._do_save_model_task(model, None, trial)
+            print("\nstop training. save last model:", save_model)
+            sys.exit()
 
         return model
 
-    def _do_save_model_task(self, model, base_model):
+    def _do_save_model_task(self, model, base_model, trial):
+        # result_dir/model/
         model_path = os.path.join(self.config.model_path, "last_model.h5")
+        if trial:
+            # result_dir/trial#/model/
+            model_path = model_path.replace("/model/", f"/trial{trial.number}/model/")
+
+        # Last model save
         if self.config.multi_gpu:
             base_model.save(model_path)
             return base_model

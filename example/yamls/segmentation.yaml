@@ -17,9 +17,6 @@ segmentation_val_step: 2
 batch_size: 4
 n_trials: 3
 optimizer: adam
-augmentation:
-    - horizontal_flip
-    # - zoom
 learning_rate: 0.001
 width: 512
 height: 256

@@ -12,8 +12,40 @@ from ..model.task_model import Task
 
 
 class TrainWorkflow(AbstractImageAnalyzer):
-    def __init__(self, config):
+    def __init__(self, config, trial):
         super().__init__(config)
+        if self.config.op_backbone is not None:
+            self.config.backbone = trial.suggest_categorical(
+                'backbone', self.config.op_backbone
+            )
+        if self.config.op_learning_rate is not None:
+            # logスケールで変化
+            if len(self.config.op_learning_rate) == 2:
+                self.config.learning_rate = trial.suggest_loguniform(
+                    'learning_rate', *self.config.op_learning_rate
+                )
+            # 線形スケールで変化
+            elif len(self.config.op_learning_rate) == 3:
+                self.config.learning_rate = trial.suggest_discrete_uniform(
+                    'learning_rate', *self.config.op_learning_rate
+                )
+        if self.config.op_optimizer is not None:
+            self.config.optimizer = trial.suggest_categorical(
+                'optimizer', self.config.op_optimizer
+            )
+        if self.config.op_backbone is not None:
+            self.config.backbone = trial.suggest_categorical(
+                'backbone', self.config.op_backbone
+            )
+        if self.config.op_loss is not None:
+            self.config.loss = trial.suggest_categorical(
+                'loss', self.config.op_loss
+            )
+        if self.config.op_batch_size is not None:
+            self.config.batch_size = int(trial.suggest_discrete_uniform(
+                'batch_size', *self.config.op_batch_size)
+            )
+        
 
     def command(self, trial=None):
         self.set_env_flow(trial)

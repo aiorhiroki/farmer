@@ -6,7 +6,6 @@ from dataclasses import field
 from typing import List, Dict
 from .config_model import Config
 from .image_loader_model import ImageLoader
-from .optuna_model import Optuna
 
 
 @dataclass
@@ -49,6 +48,8 @@ class Trainer(Config, ImageLoader):
     op_loss: str = None
     n_trials: int = 3
     timeout: int = 3 * 60 * 60
+    trial_number: int = None
+    trial_params: dict = None
 
     def __post_init__(self):
         self.task = self.get_task()

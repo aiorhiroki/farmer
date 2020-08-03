@@ -15,7 +15,7 @@ class BuildModelTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, trial=None):
+    def command(self):
         # return: base_model is saved when training on multi gpu
 
         base_model = self._do_make_model_task(
@@ -25,8 +25,7 @@ class BuildModelTask:
             height=self.config.height,
             width=self.config.width,
             backbone=self.config.backbone,
-            activation=self.config.activation,
-            trial=trial
+            activation=self.config.activation
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -39,8 +38,7 @@ class BuildModelTask:
             self.config.optimizer,
             self.config.learning_rate,
             self.config.task,
-            self.config.loss,
-            trial
+            self.config.loss
         )
 
         return compiled_model, base_model
@@ -53,8 +51,7 @@ class BuildModelTask:
         width=299,
         height=299,
         backbone="resnet50",
-        activation="softmax",
-        trial=None
+        activation="softmax"
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
@@ -122,14 +119,13 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func,
-        trial
+        loss_func
     ):
         if self.config.framework == "tensorflow":
-                print('------------------')
-                print('Optimizer:', optimizer)
-                print('------------------')
-            elif optimizer == "adam":
+            print('------------------')
+            print('Optimizer:', optimizer)
+            print('------------------')
+            if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
                 )

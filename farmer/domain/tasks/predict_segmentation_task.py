@@ -6,10 +6,10 @@ class PredictSegmentationTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, test_set, model, trial=None):
+    def command(self, test_set, model):
         test_dataset = self._do_generate_batch_task(test_set)
         prediction = self._do_segmentation_predict_task(
-            test_dataset, model, self.config.return_result, trial
+            test_dataset, model, self.config.return_result
         )
         return prediction
 
@@ -30,14 +30,11 @@ class PredictSegmentationTask:
             return ncc.generators.SegmentationDataset(**sequence_args)
 
     def _do_segmentation_predict_task(
-        self, test_dataset, model, return_result=False, trial=None
+        self, test_dataset, model, return_result=False
     ):
 
         # result_dir/image/test
         save_dir = os.path.join(self.config.image_path, "test")
-        if trial:
-            # result_dir/trial#/image/test
-            save_dir = save_dir.replace("/image/", f"/trial{trial.number}/image/")
 
         ncc.segmentation_metrics.generate_segmentation_result(
             nb_classes=self.config.nb_classes,

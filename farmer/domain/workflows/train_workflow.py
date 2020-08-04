@@ -47,6 +47,23 @@ class TrainWorkflow(AbstractImageAnalyzer):
             self._config.batch_size = int(trial.suggest_discrete_uniform(
                 'batch_size', *self._config.op_batch_size)
             )
+        if self._config.op_loss_params is not None:
+            print("op loss params: ", self._config.op_loss_params)
+            for key, val in self._config.op_loss_params.items():
+                print(f"op loss key:{key}, val:{val} ")
+                if type(val) != list:
+                    self._config.loss_params[key] = val
+                elif len(val) == 2:
+                    # logスケールで変化
+                    self._config.loss_params[key] = trial.suggest_loguniform(
+                        f'{key}', *val
+                    )
+                elif len(val) == 3:
+                    # 線形スケールで変化
+                    self._config.loss_params[key] = trial.suggest_discrete_uniform(
+                        f'{key}', *val
+                    )
+                print("set loss params: ", self._config.loss_params)
 
         if trial:
             # init

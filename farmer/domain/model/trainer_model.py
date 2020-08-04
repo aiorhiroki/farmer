@@ -45,6 +45,7 @@ class Trainer(Config, ImageLoader):
     op_optimizer: str = None
     op_backbone: str = None
     op_loss: str = None
+    op_loss_params: Dict[str, float] = field(default_factory=dict)
     n_trials: int = 3
     timeout: int = 3 * 60 * 60
     trial_number: int = None
@@ -89,23 +90,25 @@ class Trainer(Config, ImageLoader):
         optimizer_is_list = type(self.optimizer) == list
         backbone_is_list = type(self.backbone) == list
         loss_is_list = type(self.loss) == list
+        loss_params_is_list = any((
+            type(self.loss_params["alpha"]) == list if self.loss_params.get("alpha") is not None else False,
+            type(self.loss_params["beta"]) == list if self.loss_params.get("beta") is not None else False,
+            type(self.loss_params["gamma"]) == list if self.loss_params.get("gamma") is not None else False
+        ))
         
-        if batch_size_is_list:
-            self.op_batch_size = copy.deepcopy(self.batch_size)
-        if learning_rate_is_list:
-            self.op_learning_rate = copy.deepcopy(self.learning_rate)
-        if optimizer_is_list:
-            self.op_optimizer = copy.deepcopy(self.optimizer)
-        if backbone_is_list:
-            self.op_backbone = copy.deepcopy(self.backbone)
-        if loss_is_list:
-            self.op_loss = copy.deepcopy(self.loss)
-
+        self.op_batch_size = copy.deepcopy(self.batch_size) if batch_size_is_list else None
+        self.op_learning_rate = copy.deepcopy(self.learning_rate) if learning_rate_is_list else None
+        self.op_optimizer = copy.deepcopy(self.optimizer) if optimizer_is_list else None
+        self.op_backbone = copy.deepcopy(self.backbone) if backbone_is_list else None
+        self.op_loss = copy.deepcopy(self.loss) if loss_is_list else None
+        self.op_loss_params = copy.deepcopy(self.loss_params) if loss_params_is_list else None
+        
         self.optuna = any((
             batch_size_is_list,
             learning_rate_is_list,
             optimizer_is_list,
             backbone_is_list,
-            loss_is_list
+            loss_is_list,
+            loss_params_is_list
         ))
 

@@ -40,16 +40,13 @@ class Trainer(Config, ImageLoader):
     cosine_lr_min: int = 0.001
     optuna: bool = False
     seed: int = 1
-    op_batch_size: int = None
-    op_learning_rate: float = None
-    op_optimizer: str = None
-    op_backbone: str = None
-    op_loss: str = None
-    op_loss_params: Dict[str, float] = field(default_factory=dict)
     n_trials: int = 3
     timeout: int = 3 * 60 * 60
     trial_number: int = None
     trial_params: dict = None
+    train_params: dict = None
+    optuna_params: dict = None
+
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -85,30 +82,18 @@ class Trainer(Config, ImageLoader):
         self.mean, self.std = None, None
 
         # For optuna analysis hyperparameter
-        batch_size_is_list = type(self.batch_size) == list
-        learning_rate_is_list = type(self.learning_rate) == list
-        optimizer_is_list = type(self.optimizer) == list
-        backbone_is_list = type(self.backbone) == list
-        loss_is_list = type(self.loss) == list
-        loss_params_is_list = any((
-            type(self.loss_params["alpha"]) == list if self.loss_params.get("alpha") is not None else False,
-            type(self.loss_params["beta"]) == list if self.loss_params.get("beta") is not None else False,
-            type(self.loss_params["gamma"]) == list if self.loss_params.get("gamma") is not None else False
-        ))
-        
-        self.op_batch_size = copy.deepcopy(self.batch_size) if batch_size_is_list else None
-        self.op_learning_rate = copy.deepcopy(self.learning_rate) if learning_rate_is_list else None
-        self.op_optimizer = copy.deepcopy(self.optimizer) if optimizer_is_list else None
-        self.op_backbone = copy.deepcopy(self.backbone) if backbone_is_list else None
-        self.op_loss = copy.deepcopy(self.loss) if loss_is_list else None
-        self.op_loss_params = copy.deepcopy(self.loss_params) if loss_params_is_list else None
-        
-        self.optuna = any((
-            batch_size_is_list,
-            learning_rate_is_list,
-            optimizer_is_list,
-            backbone_is_list,
-            loss_is_list,
-            loss_params_is_list
-        ))
+        def check_need_optuna(params_dict: dict) -> bool:
+            need_optuna = False
+            for key, val in params_dict.items():
+                if type(val) == list:
+                    need_optuna = True
+                elif type(val) == dict:
+                    need_optuna = check_need_optuna(val)
+            return need_optuna
 
+        self.optuna = check_need_optuna(self.train_params)
+        print("need optuna :", self.optuna)
+        if self.optuna == True:
+            self.optuna_params = copy.deepcopy(self.train_params)
+            print("optuna_params :", self.optuna_params)
+        

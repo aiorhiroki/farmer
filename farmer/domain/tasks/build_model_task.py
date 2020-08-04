@@ -24,8 +24,8 @@ class BuildModelTask:
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.backbone,
-            activation=self.config.activation
+            backbone=self.config.train_params['backbone'],
+            activation=self.config.train_params['activation']
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -35,10 +35,10 @@ class BuildModelTask:
         )
         compiled_model = self._do_compile_model_task(
             model,
-            self.config.optimizer,
-            self.config.learning_rate,
+            self.config.train_params['optimizer'],
+            self.config.train_params['learning_rate'],
             self.config.task,
-            self.config.loss
+            self.config.train_params['loss']
         )
 
         return compiled_model, base_model
@@ -149,7 +149,7 @@ class BuildModelTask:
                 print('Loss:', loss_func)
                 print('------------------')
                 loss = getattr(loss_functions, loss_func)(
-                    **self.config.loss_params
+                    **self.config.train_params['loss_params']
                 )
                 model.compile(
                     optimizer=optimizer,

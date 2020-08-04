@@ -164,9 +164,9 @@ class TrainTask:
         self, model, train_dataset, validation_dataset, callbacks
     ):
         train_gen = ncc.generators.Dataloder(
-            train_dataset, batch_size=self.config.batch_size, shuffle=True)
+            train_dataset, batch_size=self.config.train_params['batch_size'], shuffle=True)
         valid_gen = ncc.generators.Dataloder(
-            validation_dataset, batch_size=self.config.batch_size, shuffle=False)
+            validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
 
         try:
             model.fit(

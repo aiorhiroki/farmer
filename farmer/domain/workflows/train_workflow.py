@@ -16,55 +16,6 @@ from ..model.task_model import Task
 class TrainWorkflow(AbstractImageAnalyzer):
     def __init__(self, config, trial):
         super().__init__(config)
-        if self._config.op_backbone is not None:
-            self._config.backbone = trial.suggest_categorical(
-                'backbone', self._config.op_backbone
-            )
-
-        if self._config.op_learning_rate is not None:
-            # logスケールで変化
-            if len(self._config.op_learning_rate) == 2:
-                self._config.learning_rate = trial.suggest_loguniform(
-                    'learning_rate', *self._config.op_learning_rate
-                )
-            # 線形スケールで変化
-            elif len(self._config.op_learning_rate) == 3:
-                self._config.learning_rate = trial.suggest_discrete_uniform(
-                    'learning_rate', *self._config.op_learning_rate
-                )
-
-        if self._config.op_optimizer is not None:
-            self._config.optimizer = trial.suggest_categorical(
-                'optimizer', self._config.op_optimizer
-            )
-
-        if self._config.op_loss is not None:
-            self._config.loss = trial.suggest_categorical(
-                'loss', self._config.op_loss
-            )
-
-        if self._config.op_batch_size is not None:
-            self._config.batch_size = int(trial.suggest_discrete_uniform(
-                'batch_size', *self._config.op_batch_size)
-            )
-        if self._config.op_loss_params is not None:
-            print("op loss params: ", self._config.op_loss_params)
-            for key, val in self._config.op_loss_params.items():
-                print(f"op loss key:{key}, val:{val} ")
-                if type(val) != list:
-                    self._config.loss_params[key] = val
-                elif len(val) == 2:
-                    # logスケールで変化
-                    self._config.loss_params[key] = trial.suggest_loguniform(
-                        f'{key}', *val
-                    )
-                elif len(val) == 3:
-                    # 線形スケールで変化
-                    self._config.loss_params[key] = trial.suggest_discrete_uniform(
-                        f'{key}', *val
-                    )
-                print("set loss params: ", self._config.loss_params)
-
         if trial:
             # init
             self._config.model_path = os.path.join(self._config.result_path, self._config.model_dir)
@@ -80,6 +31,48 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
             self._config.trial_number = trial.number
             self._config.trial_params = trial.params
+
+            def set_train_params(params_dict: dict) -> dict:
+                params = {}
+                for key, val in params_dict.items():
+                    if not type(val) in {list, dict}:
+                        print("if not type(val) in {list, dict}:")
+                        params[key] = val
+                        print(f"param:{key}, val:{val}")
+                    elif type(val) == list:
+                        print("elif type(val) == list:")
+                        if type(val[0]) == str:
+                            print("  if type(val[0]) == str:")
+                            params[key] = trial.suggest_categorical(
+                                f'{key}', val
+                            )
+                            print(f"  params[{key}]: ", params[key])
+                        elif type(val[0]) in {int, float}:
+                            print("  elif type(param_val[0]) in {int, float}:")
+                            if len(val) == 2:
+                                print(f"    if len(val) == 2:")
+                                # logスケールで変化
+                                params[key] = trial.suggest_loguniform(
+                                    f'{key}', *val
+                                )
+                                print(f"    params[{key}]: ", params[key])
+                            elif len(val) == 3:
+                                print(f"    elif len(val) == 3:")
+                                # 線形スケールで変化
+                                params[key] = trial.suggest_discrete_uniform(
+                                    f'{key}', *val
+                                )
+                                print(f"    params[{key}]: ", params[key])
+                    elif type(val) == dict:
+                        print("elif type(val) == dict:")
+                        params[key] = set_train_params(val)
+                return params
+        
+            # set train params to params setted by optuna
+            print("optuna params: ", self._config.optuna_params)
+            self._config.train_params = set_train_params(self._config.optuna_params)
+            print("train params: ", self._config.train_params)
+
         
 
     def command(self, trial=None):

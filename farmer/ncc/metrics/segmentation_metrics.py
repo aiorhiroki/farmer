@@ -146,7 +146,7 @@ def generate_segmentation_result(
     save_dir,
 ):
     print('\nsave predicted image...')
-    for i, (image, mask) in tqdm(enumerate(dataset)):
+    for i, (image, mask) in enumerate(tqdm(dataset)):
         output = model.predict(np.expand_dims(image, axis=0))[0]
         confusion = calc_segmentation_confusion(output, mask, nb_classes)
 

@@ -68,7 +68,7 @@ class BuildModelTask:
                     height=height,
                     width=width
                 )
-            elif model_name == "dilated_xception" and mobilenet_shape_condition:
+            elif model_name == "dilated_xception" and xception_shape_condition:
                 model = dilated_xception(
                     nb_classes=nb_classes,
                     height=height,

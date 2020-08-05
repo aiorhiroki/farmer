@@ -4,6 +4,7 @@ import os
 import dataclasses
 import numpy as np
 import cv2
+import random
 
 
 class EdaTask:
@@ -14,7 +15,11 @@ class EdaTask:
         self._do_save_params_task()
         self._do_post_config_task()
         if self.config.input_data_type == 'image':
-            self._do_compute_mean_std(train_set)
+            if len(train_set) > 2000:
+                sample_train_set = random.sample(train_set, 2000)
+            else:
+                sample_train_set = train_set
+            self._do_compute_mean_std(sample_train_set)
 
     def _do_save_params_task(self):
         shutil.copy(self.config.config_path, self.config.info_path)

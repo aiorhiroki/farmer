@@ -14,7 +14,7 @@ from ..model.task_model import Task
 
 
 class TrainWorkflow(AbstractImageAnalyzer):
-    def __init__(self, config, trial):
+    def __init__(self, config, trial=None):
         super().__init__(config)
         if trial:
             # init
@@ -36,45 +36,31 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 params = {}
                 for key, val in params_dict.items():
                     if not type(val) in {list, dict}:
-                        print("if not type(val) in {list, dict}:")
                         params[key] = val
-                        print(f"param:{key}, val:{val}")
                     elif type(val) == list:
-                        print("elif type(val) == list:")
                         if type(val[0]) == str:
-                            print("  if type(val[0]) == str:")
                             params[key] = trial.suggest_categorical(
                                 f'{key}', val
                             )
-                            print(f"  params[{key}]: ", params[key])
                         elif type(val[0]) in {int, float}:
-                            print("  elif type(param_val[0]) in {int, float}:")
                             if len(val) == 2:
-                                print(f"    if len(val) == 2:")
                                 # logスケールで変化
                                 params[key] = trial.suggest_loguniform(
                                     f'{key}', *val
                                 )
-                                print(f"    params[{key}]: ", params[key])
                             elif len(val) == 3:
-                                print(f"    elif len(val) == 3:")
                                 # 線形スケールで変化
-                                params[key] = trial.suggest_discrete_uniform(
+                                param_val = trial.suggest_discrete_uniform(
                                     f'{key}', *val
                                 )
-                                print(f"    params[{key}]: ", params[key])
+                                params[key] = int(param_val) if key == 'batch_size' else param_val
                     elif type(val) == dict:
-                        print("elif type(val) == dict:")
                         params[key] = set_train_params(val)
                 return params
         
             # set train params to params setted by optuna
-            print("optuna params: ", self._config.optuna_params)
             self._config.train_params = set_train_params(self._config.optuna_params)
-            print("train params: ", self._config.train_params)
-
         
-
     def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()

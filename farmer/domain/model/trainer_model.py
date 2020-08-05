@@ -92,8 +92,6 @@ class Trainer(Config, ImageLoader):
             return need_optuna
 
         self.optuna = check_need_optuna(self.train_params)
-        print("need optuna :", self.optuna)
         if self.optuna == True:
             self.optuna_params = copy.deepcopy(self.train_params)
-            print("optuna_params :", self.optuna_params)
         

@@ -41,42 +41,38 @@ from albumentations import Compose
 def round_clip_0_1(x, **kwargs):
     return x.round().clip(0, 1)
 
-def compose_attribute_list():
-
 def segmentation_aug(input_image, label, size, augmentation_list):
     transforms = list()
     # print(augmentation_list) # ['Gaussiannoise', 'Perspecitve', 'Blur']
 
     for augmentation_command in augmentation_list:
-        augmentation_command = f"{augmentation_command}()"
+        # augmentation= f"{augmentation_command}()"
         print(augmentation_command)
-        augmentation= getattr(albumentations, augmentation_command) + '()'   
+
+        augmentation= getattr(albumentations, augmentation_command) #+ '()'   
         print(augmentation)
         # augmentation = augmentation + '()'
+        # transforms.append(augmentation)
         transforms.append(augmentation)
         print(transforms)
         print(transforms[0])
 
-        augmentation= getattr(albumentations, augmentation_command)    
-        print(augmentation)
-        print(transforms)
-    print(transforms)
-        if type(augmentation_command) == list:
-            continue
-            # transforms.append(OneOf(getattr(albumentations,str(augmentation_command)for augmentation_ in augmentation_command)))
-        else:
-            augmentation_command= getattr(albumentations, augmentation_command)
-            transforms.append(augmentation_command)
-            print(transforms)
-            print(augmentation_command)
-            while augmentation_command ==list:
-                augmentation_command = getattr()
-        print(augmentation_command)
-        augmentation_command = getattr(albumentations, augmentation_command)
-        
-
-def round_clip_0_1(x, **kwargs):
-    return x.round().clip(0, 1)
+    #     augmentation= getattr(albumentations, augmentation_command)    
+    #     print(augmentation)
+    #     print(transforms)
+    # print(transforms)
+    #     if type(augmentation_command) == list:
+    #         continue
+    #         # transforms.append(OneOf(getattr(albumentations,str(augmentation_command)for augmentation_ in augmentation_command)))
+    #     else:
+    #         augmentation_command= getattr(albumentations, augmentation_command)
+    #         transforms.append(augmentation_command)
+    #         print(transforms)
+    #         print(augmentation_command)
+    #         # while augmentation_command ==list:
+    #         #     augmentation_command = getattr()
+    #     print(augmentation_command)
+    #     augmentation_command = getattr(albumentations, augmentation_command)
 
 # def segmentation_aug(input_image, label, size, augmentation_list):
 #     transforms = list()

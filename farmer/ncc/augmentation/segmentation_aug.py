@@ -75,6 +75,8 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         augmentation_command = getattr(albumentations, augmentation_command)
         
 
+def round_clip_0_1(x, **kwargs):
+    return x.round().clip(0, 1)
 
 # def segmentation_aug(input_image, label, size, augmentation_list):
 #     transforms = list()

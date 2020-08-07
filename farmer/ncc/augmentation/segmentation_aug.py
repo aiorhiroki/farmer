@@ -45,25 +45,37 @@ def round_clip_0_1(x, **kwargs):
 
 def segmentation_aug(input_image, label, size, augmentation_list):
     transforms = list()
+    height, width = size
     # print(augmentation_list) # ['Gaussiannoise', 'Perspecitve', 'Blur']
 
     for augmentation_command in augmentation_list:
         # augmentation= f"{augmentation_command}()"
-        print(augmentation_command)
-
+        # print(augmentation_command)
+        
+        height, width = size
         if type(augmentation_command) == str:
             print('str')
             augmentation = getattr(albumentations, augmentation_command)()
         elif type(augmentation_command) == dict:
             print('dict')
-            print(list(augmentation_command.keys()), list(augmentation_command.values()))
+            # print(list(augmentation_command.keys()), list(augmentation_command.values()))
             augmentation = getattr(albumentations, list(augmentation_command.keys())[0])(**list(augmentation_command.values())[0])
+        elif type(augmentation_command) == list:
+            print('list')
 
-        print(augmentation)
+            one_of_list = list()
+            for augmentation in augmentation_command:
+                augmentation = getattr(albumentations, augmentation)()
+                print(augmentation)
+                one_of_list.append(augmentation)
+                print(one_of_list)
+            transforms.append(albumentations.OneOf(one_of_list))
+
+        # print(augmentation)
         # augmentation = augmentation + '()'
         # transforms.append(augmentation)
         transforms.append(augmentation)
-        print(transforms)
+        # print(transforms)
 
     #     augmentation= getattr(albumentations, augmentation_command)
     #     print(augmentation)
@@ -91,7 +103,7 @@ def segmentation_aug(input_image, label, size, augmentation_list):
 #         else:
 #             augmentation_command = augmentation_command
 #     # print(size)
-#     height, width = size
+    # height, width = size
 #     # print(height)
 #     # print(width)
 #     # transforms.append(

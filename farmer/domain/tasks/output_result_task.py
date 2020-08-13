@@ -14,6 +14,7 @@ class OutputResultTask:
         self.config.result = result
         with open(param_path, mode="w") as configfile:
             yaml.dump(self.config, configfile)
-            if trial:
-                configfile.write(f"\noptuna trial#{trial.number}\n")
-                configfile.write(f"optuna set params = {trial.params}\n")
+            if self.config.trial_number is not None and \
+                        self.config.trial_params is not None:
+                configfile.write(f"\noptuna trial#{self.config.trial_number}\n")
+                configfile.write(f"optuna set params = {self.config.trial_params}\n")

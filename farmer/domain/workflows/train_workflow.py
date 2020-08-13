@@ -1,3 +1,5 @@
+import os
+
 from ..workflows.abstract_workflow import AbstractImageAnalyzer
 from ..tasks.build_model_task import BuildModelTask
 from ..tasks.set_train_env_task import SetTrainEnvTask
@@ -12,22 +14,67 @@ from ..model.task_model import Task
 
 
 class TrainWorkflow(AbstractImageAnalyzer):
-    def __init__(self, config):
+    def __init__(self, config, trial=None):
         super().__init__(config)
+        if trial:
+            # init
+            self._config.model_path = os.path.join(self._config.result_path, self._config.model_dir)
+            self._config.learning_path = os.path.join(self._config.result_path, self._config.learning_dir)
+            self._config.image_path = os.path.join(self._config.result_path, self._config.image_dir)
 
+            # result_dir/trial#/learning/
+            self._config.learning_path = self._config.learning_path.replace("/learning", f"/trial{trial.number}/learning")
+            # result_dir/trial#/model/
+            self._config.model_path = self._config.model_path.replace("/model", f"/trial{trial.number}/model")
+            # result_dir/trial#/image/
+            self._config.image_path = self._config.image_path.replace("/image", f"/trial{trial.number}/image")
+
+            self._config.trial_number = trial.number
+            self._config.trial_params = trial.params
+
+            def set_train_params(params_dict: dict) -> dict:
+                params = {}
+                for key, val in params_dict.items():
+                    if not isinstance(val, (list, dict)):
+                        params[key] = val
+                    elif isinstance(val, list):
+                        if isinstance(val[0], str):
+                            params[key] = trial.suggest_categorical(
+                                key, val
+                            )
+                        elif isinstance(val[0], (int, float)):
+                            if len(val) == 2:
+                                # logスケールで変化
+                                params[key] = trial.suggest_loguniform(
+                                    key, *val
+                                )
+                            elif len(val) == 3:
+                                # 線形スケールで変化
+                                param_val = trial.suggest_discrete_uniform(
+                                    key, *val
+                                )
+                                params[key] = int(param_val) if key == 'batch_size' else param_val
+                    if isinstance(val, dict):
+                        params[key] = set_train_params(val)
+                return params
+        
+            # set train params to params setted by optuna
+            self._config.train_params = set_train_params(self._config.optuna_params)
+        
     def command(self, trial=None):
-        self.set_env_flow(trial)
+        self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
-        self.eda_flow(train_set)
-        model, base_model = self.build_model_flow(trial)
+        if trial is None or trial.number == 0:
+            self.eda_flow(train_set)
+        model, base_model = self.build_model_flow()
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
         )
         return self.output_flow(result)
 
-    def set_env_flow(self, trial=None):
+    def set_env_flow(self):
         print("SET ENV FLOW ... ", end="")
-        SetTrainEnvTask(self._config).command(trial)
+        SetTrainEnvTask(self._config).command()
         print("DONE")
 
     def read_annotation_flow(self):
@@ -45,13 +92,13 @@ class TrainWorkflow(AbstractImageAnalyzer):
         print("DONE")
         print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
-    def build_model_flow(self, trial=None):
+    def build_model_flow(self):
         print("BUILD MODEL FLOW ... ")
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model, base_model = BuildModelTask(self._config).command(trial)
+        model, base_model = BuildModelTask(self._config).command()
         print("DONE\n")
         return model, base_model
 

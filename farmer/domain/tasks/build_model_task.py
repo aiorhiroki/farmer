@@ -17,7 +17,7 @@ class BuildModelTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, trial=None):
+    def command(self):
         # return: base_model is saved when training on multi gpu
 
         base_model = self._do_make_model_task(
@@ -26,9 +26,8 @@ class BuildModelTask:
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.backbone,
-            activation=self.config.activation,
-            trial=trial
+            backbone=self.config.train_params['backbone'],
+            activation=self.config.train_params['activation']
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -38,11 +37,10 @@ class BuildModelTask:
         )
         compiled_model = self._do_compile_model_task(
             model,
-            self.config.optimizer,
-            self.config.learning_rate,
+            self.config.train_params['optimizer'],
+            self.config.train_params['learning_rate'],
             self.config.task,
-            self.config.loss,
-            trial
+            self.config.train_params['loss']
         )
 
         return compiled_model, base_model
@@ -55,8 +53,7 @@ class BuildModelTask:
         width=299,
         height=299,
         backbone="resnet50",
-        activation="softmax",
-        trial=None
+        activation="softmax"
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
@@ -92,10 +89,6 @@ class BuildModelTask:
                 model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            if self.config.op_backbone:
-                backbone = trial.suggest_categorical(
-                    'backbone', self.config.backbone
-                )
             print('------------------')
             print('Model:', model_name)
             print('Backbone:', backbone)
@@ -151,32 +144,13 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func,
-        trial
+        loss_func
     ):
-        if self.config.op_learning_rate:
-            # logスケールで変化
-            if len(self.config.learning_rate) == 2:
-                # learning_rate = [10^m(min), 10^M(max)]
-                learning_rate = trial.suggest_loguniform(
-                    'learning_rate', *self.config.learning_rate)
-            # 線形スケールで変化
-            elif len(self.config.learning_rate) == 3:
-                # learning_rate = [min, max, step]
-                learning_rate = trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.learning_rate)
-        else:
-            learning_rate = self.config.learning_rate
-
         if self.config.framework == "tensorflow":
-            if self.config.op_optimizer:
-                optimizer = trial.suggest_categorical(
-                    'optimizer', self.config.optimizer
-                )
-                print('------------------')
-                print('Optimizer:', optimizer)
-                print('------------------')
-            elif optimizer == "adam":
+            print('------------------')
+            print('Optimizer:', optimizer)
+            print('------------------')
+            if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
                 )
@@ -196,15 +170,11 @@ class BuildModelTask:
                     metrics=["acc"],
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
-                if self.config.op_loss:
-                    loss_func = trial.suggest_categorical(
-                        'loss', self.config.loss
-                    )
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
                 loss = getattr(loss_functions, loss_func)(
-                    **self.config.loss_params
+                    **self.config.train_params['loss_params']
                 )
                 model.compile(
                     optimizer=optimizer,

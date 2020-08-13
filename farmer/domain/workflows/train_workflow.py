@@ -46,12 +46,12 @@ class TrainWorkflow(AbstractImageAnalyzer):
                             if len(val) == 2:
                                 # logスケールで変化
                                 params[key] = trial.suggest_loguniform(
-                                    f'{key}', *val
+                                    key, *val
                                 )
                             elif len(val) == 3:
                                 # 線形スケールで変化
                                 param_val = trial.suggest_discrete_uniform(
-                                    f'{key}', *val
+                                    key, *val
                                 )
                                 params[key] = int(param_val) if key == 'batch_size' else param_val
                     if isinstance(val, dict):

@@ -2,7 +2,9 @@ import segmentation_models
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
-from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
+from farmer.ncc.models import (
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
+)
 from farmer.ncc.losses import loss_functions
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
@@ -61,9 +63,31 @@ class BuildModelTask:
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(nb_classes, height, width)
+                model = xception(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
+                )
+            elif model_name == "dilated_xception" and xception_shape_condition:
+                model = dilated_xception(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                    weights_info=self.config.weights_info
+                )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(nb_classes, height, width)
+                model = mobilenet(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
+                )
+            elif model_name == "mobilenetv2" and mobilenet_shape_condition:
+                model = mobilenet_v2(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                    weights_info=self.config.weights_info
+                )
             else:
                 model = Model2D(nb_classes, height, width)
 
@@ -85,6 +109,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
+                    weights_info=self.config.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,

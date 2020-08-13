@@ -43,8 +43,8 @@ class Trainer(Config, ImageLoader, Optuna):
     tversky_alpha: float = 0.3
     tversky_beta: float = 0.7
     seed: int = 1
-
-
+    weights_info: Dict[str, str] = field(default_factory=dict)
+      
     def __post_init__(self):
         self.task = self.get_task()
         self.gpu = str(self.gpu)

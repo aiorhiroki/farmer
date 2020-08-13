@@ -35,14 +35,14 @@ class TrainWorkflow(AbstractImageAnalyzer):
             def set_train_params(params_dict: dict) -> dict:
                 params = {}
                 for key, val in params_dict.items():
-                    if not type(val) in {list, dict}:
+                    if not isinstance(val, (list, dict)):
                         params[key] = val
-                    elif type(val) == list:
-                        if type(val[0]) == str:
+                    elif isinstance(val, list):
+                        if isinstance(val[0], str):
                             params[key] = trial.suggest_categorical(
-                                f'{key}', val
+                                key, val
                             )
-                        elif type(val[0]) in {int, float}:
+                        elif isinstance(val[0], (int, float)):
                             if len(val) == 2:
                                 # logスケールで変化
                                 params[key] = trial.suggest_loguniform(
@@ -54,7 +54,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                                     f'{key}', *val
                                 )
                                 params[key] = int(param_val) if key == 'batch_size' else param_val
-                    elif type(val) == dict:
+                    if isinstance(val, dict):
                         params[key] = set_train_params(val)
                 return params
         
@@ -64,7 +64,8 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
-        self.eda_flow(train_set)
+        if trial is None or trial.number == 0:
+            self.eda_flow(train_set)
         model, base_model = self.build_model_flow()
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial

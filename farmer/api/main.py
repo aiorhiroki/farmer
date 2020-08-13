@@ -10,6 +10,7 @@ from farmer.domain.workflows.train_workflow import TrainWorkflow
 import optuna
 import numpy as np
 from keras.backend import clear_session
+import logging
 
 
 def fit():
@@ -73,42 +74,14 @@ def fit():
                 trainer.image_path = f"{k_result}/{trainer.image_dir}"
 
                 if trainer.optuna:
-                    study = optuna.create_study(
-                        direction='maximize',
-                        pruner=optuna.pruners.MedianPruner(
-                            n_startup_trials=3,
-                            n_warmup_steps=10,
-                            interval_steps=1
-                        )
-                    )
-                    study.optimize(
-                        Objective(trainer),
-                        n_trials=trainer.n_trials,
-                        timeout=trainer.timeout
-                    )
-
-                    optuna_report(study)
+                    optuna_command(trainer)
 
                 else:
                     train_workflow = TrainWorkflow(trainer)
                     train_workflow.command()
         else:
             if trainer.optuna:
-                study = optuna.create_study(
-                    direction='maximize',
-                    pruner=optuna.pruners.MedianPruner(
-                        n_startup_trials=3,
-                        n_warmup_steps=10,
-                        interval_steps=1
-                    )
-                )
-                study.optimize(
-                    Objective(trainer),
-                    n_trials=trainer.n_trials,
-                    timeout=trainer.timeout
-                )
-
-                optuna_report(study)
+                optuna_command(trainer)
 
             else:
                 train_workflow = TrainWorkflow(trainer)
@@ -151,3 +124,29 @@ def optuna_report(study):
     print('  Params: ')
     for key, value in trial.params.items():
         print('    {}: {}'.format(key, value))
+    
+def optuna_command(trainer):
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)  # Setup the root logger.
+    # TODO: 任意のパスを設定したら保存されない問題．infoフォルダにいれたい．
+    logger.addHandler(logging.FileHandler(
+        "optuna_trials.log", mode="w")
+    )
+    optuna.logging.enable_propagation()  # Propagate logs to the root logger.
+    optuna.logging.enable_default_handler()  # Stop showing logs in sys.stderr.
+
+    study = optuna.create_study(
+        direction='maximize',
+        pruner=optuna.pruners.MedianPruner(
+            n_startup_trials=3,
+            n_warmup_steps=10,
+            interval_steps=1
+        )
+    )
+    study.optimize(
+        Objective(trainer),
+        n_trials=trainer.n_trials,
+        timeout=trainer.timeout
+    )
+
+    optuna_report(study)

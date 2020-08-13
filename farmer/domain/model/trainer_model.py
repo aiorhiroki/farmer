@@ -40,13 +40,14 @@ class Trainer(Config, ImageLoader):
     cosine_lr_min: int = 0.001
     optuna: bool = False
     seed: int = 1
-    n_trials: int = 3
-    timeout: int = 3 * 60 * 60
+    n_trials: int = 10
+    timeout: int = None
     trial_number: int = None
     trial_params: dict = None
     train_params: dict = None
     optuna_params: dict = None
-
+    weights_info: Dict[str, str] = field(default_factory=dict)
+ 
 
     def __post_init__(self):
         self.task = self.get_task()

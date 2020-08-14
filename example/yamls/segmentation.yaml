@@ -11,7 +11,7 @@ training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
 train_params: 
-    backbone: xception
+    backbone: mobilenetv2
     activation: softmax
     optimizer: adam
     loss: categorical_focal_loss

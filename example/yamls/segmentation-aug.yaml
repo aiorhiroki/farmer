@@ -19,7 +19,7 @@ n_trials: 1  # Optunaの探索回数(epochs * n_trials学習を行うので注�
 segmentation_val_step: 2
 
 train_params: 
-    backbone: xception
+    backbone: mobilenetv2
     activation: softmax
     optimizer: adam
     loss: categorical_focal_loss

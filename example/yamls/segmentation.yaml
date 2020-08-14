@@ -10,14 +10,20 @@ test_dirs:
 training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
-backbone: mobilenetv2
-loss: categorical_crossentropy_loss
+train_params: 
+    backbone: xception
+    activation: softmax
+    optimizer: adam
+    loss: categorical_focal_loss
+    loss_params: 
+        alpha: 0.45
+        beta: 0.55
+        gamma: 5.0
+    batch_size: 8 
+    learning_rate: 0.001
 epochs: 2
 segmentation_val_step: 2
-batch_size: 4
 n_trials: 3
-optimizer: adam
-learning_rate: 0.001
 width: 512
 height: 256
 input_dir: image

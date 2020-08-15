@@ -12,7 +12,7 @@ jobs:
       - name: cml_run
         run: |
           echo 'Hi from CML!' >> report.md
-          cml-send-comment report.md
+#         cml-send-comment report.md
 
 # on: [push]
 

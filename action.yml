@@ -1,5 +1,0 @@
-name: 'Farmer test Container'
-description: 'build farmer & test Godfarmer'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'

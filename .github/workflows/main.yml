@@ -14,3 +14,5 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root
+          cd example
+          Godfarmer

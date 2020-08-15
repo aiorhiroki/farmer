@@ -1,30 +1,16 @@
-name: train-my-model
+name: integration test
 
 on: [push]
 
 jobs:
-  train:
+  godfarmer_job:
     runs-on: [self-hosted, cml, gpu]
-
+    name: A job to test godfarmer
     steps:
-      - uses: actions/checkout@v2
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Godfamer action step
+        uses: ./ # Uses an action in the root directory
 
-      - name: cml_run
-        run: |
-          echo 'Hi from CML!' >> report.md
-#         cml-send-comment report.md
-
-# on: [push]
-
-# jobs:
-#   godfarmer_job:
-#     runs-on: ubuntu-latest
-#     name: A job to test godfarmer
-#     steps:
-#       # To use this repository's private action,
-#       # you must check out the repository
-#       - name: Checkout
-#         uses: actions/checkout@v2
-#       - name: Godfamer action step
-#         uses: ./ # Uses an action in the root directory
-#         id: farmer

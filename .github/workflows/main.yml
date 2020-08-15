@@ -1,16 +1,14 @@
-name: integration test
+name: train-my-model
 
 on: [push]
 
 jobs:
-  godfarmer_job:
+  train:
     runs-on: [self-hosted, cml, gpu]
-    name: A job to test godfarmer
-    steps:
-      # To use this repository's private action,
-      # you must check out the repository
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Godfamer action step
-        uses: ./ # Uses an action in the root directory
 
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: cml_run
+        run: |
+          docker exec -it farmer_hiroki ls

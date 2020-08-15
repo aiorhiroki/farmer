@@ -10,5 +10,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: cml_run
-        run: |
-          docker exec -it farmer_hiroki ls
+        uses: ./
+        id: farmer
+        #  run: |
+        #    docker exec -it farmer_hiroki ls

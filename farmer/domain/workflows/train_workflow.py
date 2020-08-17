@@ -65,7 +65,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
-        if trial is None or trial.number == 0:
+        if (trial is None or trial.number == 0) and len(train_set) > 0:
             self.eda_flow(train_set)
         model, base_model = self.build_model_flow()
         result = self.model_execution_flow(

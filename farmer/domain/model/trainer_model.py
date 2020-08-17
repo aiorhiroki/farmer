@@ -84,15 +84,14 @@ class Trainer(Config, ImageLoader):
 
         # For optuna analysis hyperparameter
         def check_need_optuna(params_dict: dict) -> bool:
-            need_optuna = False
             for key, val in params_dict.items():
-                if type(val) == list:
-                    need_optuna = True
-                elif type(val) == dict:
-                    need_optuna = check_need_optuna(val)
-            return need_optuna
+                if isinstance(val, list):
+                    self.optuna = True
+                    break
+                elif isinstance(val, dict):
+                    check_need_optuna(val)
 
-        self.optuna = check_need_optuna(self.train_params)
-        if self.optuna == True:
+        check_need_optuna(self.train_params)
+        if self.optuna:
             self.optuna_params = copy.deepcopy(self.train_params)
         

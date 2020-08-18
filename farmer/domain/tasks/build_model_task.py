@@ -163,9 +163,7 @@ class BuildModelTask:
                 loss = getattr(loss_functions, loss_func)(
                     **self.config.loss_params
                 )
-                print(loss_functions)
-                print(loss_func)
-                print(loss)
+                
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,

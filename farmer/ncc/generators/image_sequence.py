@@ -68,9 +68,7 @@ class ImageSequence(Sequence):
                     train_colors=self.train_colors,
                     one_hot=True
                 )
-                # print(label.dtype)#float64
                 if self.augmentation and len(self.augmentation) > 0:
-                    # print('augmentation_inputshape')
                     input_image, label = segmentation_aug(
                         input_image,
                         label,

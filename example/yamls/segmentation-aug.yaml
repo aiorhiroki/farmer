@@ -1,0 +1,74 @@
+framework: tensorflow
+# 結果の保存先
+result_root_dir: result/segmentation
+result_dir: seg_augmentation
+trained_path:
+
+# Confirm tasks and train or test
+task: segmentation
+training: yes
+
+# Model
+model_name: unet
+backbone: mobilenetv2
+activation: softmax
+# Resize input image
+width: 512
+height: 256
+# Hyperparameter
+epochs: 2
+batch_size: 2
+n_trials: 1  # Optunaの探索回数(epochs * n_trials学習を行うので注意)
+segmentation_val_step: 2
+
+loss: categorical_focal_dice_loss
+optimizer: adam
+learning_rate: 0.0001
+# learning rate scheduler
+# cosine_decay: yes
+# cosine_lr_max: 0.00005
+# cosine_lr_min: 0.00001
+
+# Data Augmentation
+augmentation: 
+    # -(ハイフン) 入れちゃダメ
+    vertical_flip: no
+    horizontal_flip: yes
+    zoom_range: [0.5, 1.2]  # x0.5 ~ x1.2 # min: x0.1 ~ max: x1.9
+    rotation_range: 30  # -30 ~ +30 degree
+    width_shift_range: 0.3  # -30% ~ 30%
+    height_shift_range: 0.1  # -10% ~ 10%
+    shear_range: 30  # -30 ~ 30 degree
+    channel_shift_range: 0.1  # -10% ~ 10%
+    augmix: yes
+    cut_black: yes
+
+input_dir: image
+label_dir: label
+
+class_names:
+    - background
+    - hoge
+    - fuga
+    - piyo
+train_colors:
+    - 0
+    - 5
+    - 10
+    - 15
+# class_weight:
+#     - 0: 1
+#     - 1: 3
+#     - 2: 1
+#     - 3: 1
+
+
+# データのあるところ
+target_dir: data/segmentation
+train_dirs:
+    - train_1
+    - train_2
+val_dirs:
+    - validation
+test_dirs:
+    - test

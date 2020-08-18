@@ -1,14 +1,14 @@
 import math
 import cv2
 
-from tensorflow.python.keras.utils.data_utils import Sequence
+import tensorflow
 import numpy as np
-from ..augmentation import segmentation_aug
+from ..augmentation import segmentation_aug, augment_and_mix
 from ..tasks import Task
 from ..utils import ImageUtil
 
 
-class ImageSequence(Sequence):
+class ImageSequence(tensorflow.keras.utils.Sequence):
     def __init__(
         self,
         annotations: list,
@@ -16,11 +16,15 @@ class ImageSequence(Sequence):
         nb_classes: int,
         task: str,
         batch_size: int,
-        augmentation=list(),
+        mean=np.zeros(3),
+        std=np.ones(3),
+        augmentation=dict(),
         train_colors=list(),
         input_data_type="image"
     ):
         self.annotations = annotations
+        self.mean = mean
+        self.std = std
         self.batch_size = batch_size
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
@@ -45,8 +49,8 @@ class ImageSequence(Sequence):
                 ret, input_image = video.read()
                 if not ret:
                     continue
-                input_image = input_image/255.0
-                # (with,height) for cv2.resize
+                input_image = input_image / 255.0
+                # (width, height) for cv2.resize
                 resize_shape = self.input_shape[::-1]
                 if input_image.shape[:2] != resize_shape:
                     input_image = cv2.resize(
@@ -69,14 +73,16 @@ class ImageSequence(Sequence):
                     one_hot=True
                 )
                 # print(label.dtype)#float64
+
                 if self.augmentation and len(self.augmentation) > 0:
                     # print('augmentation_inputshape')
                     input_image, label = segmentation_aug(
                         input_image,
                         label,
-                        self.input_shape,
+                        self.mean, self.std,
                         self.augmentation
                     )
+
             input_image = input_image / 255.0
             # else:
             #     label = self.image_util.cast_to_onehot(label)

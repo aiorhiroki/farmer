@@ -60,7 +60,7 @@ class BatchCheckpoint(keras.callbacks.Callback):
         if self.token and self.channel:
             files = {
                 'file': open(
-                    f'{self.learning_path}/{self.metric_filename}.png','rb'
+                    f'{self.learning_path}/{self.metric_filename}.png', 'rb'
                 )
             }
             param = dict(
@@ -80,19 +80,13 @@ class GenerateSampleResult(keras.callbacks.Callback):
     def __init__(
         self,
         val_save_dir,
-        validation_files,
+        valid_dataset,
         nb_classes,
-        height,
-        width,
-        train_colors=None,
         segmentation_val_step=3
     ):
         self.val_save_dir = val_save_dir
-        self.validation_files = validation_files
+        self.valid_dataset = valid_dataset
         self.nb_classes = nb_classes
-        self.height = height
-        self.width = width
-        self.train_colors = train_colors
         self.segmentation_val_step = segmentation_val_step
 
     def on_epoch_end(self, epoch, logs={}):
@@ -104,12 +98,9 @@ class GenerateSampleResult(keras.callbacks.Callback):
         os.mkdir(save_dir)
         generate_segmentation_result(
             nb_classes=self.nb_classes,
-            height=self.height,
-            width=self.width,
-            annotations=self.validation_files,
+            dataset=self.valid_dataset,
             model=self.model,
             save_dir=save_dir,
-            train_colors=self.train_colors
         )
 
 
@@ -180,18 +171,12 @@ class IouHistory(keras.callbacks.Callback):
     def __init__(
         self,
         save_dir,
-        validation_files,
+        valid_dataset,
         class_names,
-        height,
-        width,
-        train_colors=None
     ):
         self.save_dir = save_dir
-        self.validation_files = validation_files
+        self.valid_dataset = valid_dataset
         self.class_names = class_names
-        self.height = height
-        self.width = width
-        self.train_colors = train_colors
 
     def on_train_begin(self, logs={}):
         self.plot_manager = MatPlotManager(self.save_dir)
@@ -213,11 +198,8 @@ class IouHistory(keras.callbacks.Callback):
         nb_classes = len(self.class_names)
         iou_dice = iou_dice_val(
             nb_classes,
-            self.height,
-            self.width,
-            self.validation_files,
+            self.valid_dataset,
             self.model,
-            self.train_colors
         )
         iou_figure.add(
             iou_dice['iou'],

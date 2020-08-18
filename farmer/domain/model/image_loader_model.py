@@ -47,7 +47,7 @@ class ImageLoader:
                 next(reader)
                 if self.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
                     for class_name, class_id, color_id in reader:
-                        if not class_name in class_names:
+                        if class_name not in class_names:
                             class_names.append(class_name)
                         if class_id == color_id:
                             class_ids.append(class_id)
@@ -79,11 +79,12 @@ class ImageLoader:
         return height, width
 
     def get_train_dirs(self):
-        if self.training and (self.train_dirs is None or len(self.train_dirs) == 0):
-            self.train_dirs = [
-                d for d in os.listdir(self.target_dir)
-                if os.path.isdir(f"{self.target_dir}/{d}")
-            ]
+        if self.training:
+            if (self.train_dirs is None or len(self.train_dirs) == 0):
+                self.train_dirs = [
+                    d for d in os.listdir(self.target_dir)
+                    if os.path.isdir(f"{self.target_dir}/{d}")
+                ]
 
     def _get_train_files(self):
         IMAGE_EXTENTINS = [".jpg", ".png"]

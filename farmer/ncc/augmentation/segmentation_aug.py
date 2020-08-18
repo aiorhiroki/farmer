@@ -1,7 +1,6 @@
 # from keras.preprocessing import image
 from .augmentations import AutoContrast
 import albumentations
-from albumentations import Compose, OneOf
 
 
 def round_clip_0_1(x, **kwargs):
@@ -14,7 +13,7 @@ def segmentation_aug(input_image, label, size, augmentation_list):
 
     for augmentation_command in augmentation_list:
         
-        if isinstance(augmentation_command,str):
+        if isinstance(augmentation_command, str):
             print('str')
             print(augmentation_command)
                 if augmentation_command == 'AutoContrast':
@@ -24,7 +23,7 @@ def segmentation_aug(input_image, label, size, augmentation_list):
                 else:
                     augmentation = getattr(albumentations, augmentation_command)()
 
-        elif isinstance(augmentation_command,dict):
+        elif isinstance(augmentation_command, dict):
             print('dict')
             augmentation = getattr(
                 albumentations, 
@@ -57,7 +56,7 @@ def segmentation_aug(input_image, label, size, augmentation_list):
     
 
     if len(transforms) > 0:
-        aug = Compose(transforms, p=1)
+        aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
         return augmented['image'], augmented["mask"]
     

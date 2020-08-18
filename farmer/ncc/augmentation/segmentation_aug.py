@@ -16,12 +16,12 @@ def segmentation_aug(input_image, label, size, augmentation_list):
         if isinstance(augmentation_command, str):
             print('str')
             print(augmentation_command)
-                if augmentation_command == 'AutoContrast':
-                    print('AutoContrast')
-                    custom_aug = True
+            if augmentation_command == 'AutoContrast':
+                print('AutoContrast')
+                custom_aug = True
             
-                else:
-                    augmentation = getattr(albumentations, augmentation_command)()
+            else:
+                augmentation = getattr(albumentations, augmentation_command)()
 
         elif isinstance(augmentation_command, dict):
             print('dict')

@@ -83,11 +83,10 @@ class Trainer(Config, ImageLoader):
         self.mean, self.std = None, None
 
         # For optuna analysis hyperparameter
-        def check_need_optuna(params_dict: dict) -> bool:
+        def check_need_optuna( params_dict: dict) -> bool:
             for key, val in params_dict.items():
                 if isinstance(val, list):
-                    self.optuna = True
-                    break
+                    self.optuna =  True
                 elif isinstance(val, dict):
                     check_need_optuna(val)
 

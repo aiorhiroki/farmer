@@ -101,8 +101,6 @@ def segmentation_set(target_dir, data_list, image_dir, mask_dir):
         parent_mask_dir_path, _ = os.path.split(mask_dir_path)
         image_dir_path = os.path.join(parent_mask_dir_path, image_dir)
         for image_ex in IMAGE_EXTENTINS:
-            if 'label' in file_name:
-                file_name = file_name.replace('label', 'movieFrame')
             image_path = os.path.join(
                 image_dir_path, file_name + image_ex
             )

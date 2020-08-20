@@ -180,6 +180,7 @@ class BuildModelTask:
                     optimizer=optimizer,
                     loss=loss,
                     metrics=[metrics.iou_score,
+                             metrics.f1_score,
                              loss_functions.categorical_crossentropy_loss()],
                 )
             else:

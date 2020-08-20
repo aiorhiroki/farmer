@@ -125,7 +125,7 @@ class TrainTask:
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'dice'))
+                callbacks.append(KerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":

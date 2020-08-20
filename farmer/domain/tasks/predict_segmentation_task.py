@@ -1,3 +1,4 @@
+import os
 from farmer import ncc
 
 
@@ -6,21 +7,38 @@ class PredictSegmentationTask:
         self.config = config
 
     def command(self, test_set, model):
+        test_dataset = self._do_generate_batch_task(test_set)
         prediction = self._do_segmentation_predict_task(
-            test_set, model, self.config.return_result
+            test_dataset, model, self.config.return_result
         )
         return prediction
 
+    def _do_generate_batch_task(self, test_set):
+        sequence_args = dict(
+            annotations=test_set,
+            input_shape=(self.config.height, self.config.width),
+            nb_classes=self.config.nb_classes,
+            augmentation=[],
+            train_colors=self.config.train_colors,
+            input_data_type=self.config.input_data_type
+        )
+
+        if self.config.task == ncc.tasks.Task.CLASSIFICATION:
+            return ncc.generators.ClassificationDataset(**sequence_args)
+
+        elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            return ncc.generators.SegmentationDataset(**sequence_args)
+
     def _do_segmentation_predict_task(
-        self, test_set, model, return_result=False
+        self, test_dataset, model, return_result=False
     ):
-        save_dir = f"{self.config.image_path}/test"
+
+        # result_dir/image/test
+        save_dir = os.path.join(self.config.image_path, "test")
+
         ncc.segmentation_metrics.generate_segmentation_result(
             nb_classes=self.config.nb_classes,
-            height=self.config.height,
-            width=self.config.width,
-            annotations=test_set,
+            dataset=test_dataset,
             model=model,
             save_dir=save_dir,
-            train_colors=self.config.train_colors
         )

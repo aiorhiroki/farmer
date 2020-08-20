@@ -17,3 +17,5 @@ class AutoContrast(albu.ImageOnlyTransform):
         img_p = Image.fromarray(img)
         autocon = ImageOps.autocontrast(img_p, self.cutoff)
         return np.asarray(autocon)
+    def get_transform_init_args_names(self):
+        return {'cutoff': self.cutoff}

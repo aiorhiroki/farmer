@@ -8,7 +8,17 @@ test_dirs:
     - test
 training: yes
 task: detection # classification or segmentation or detection
-loss:
+train_params: 
+    backbone: 
+    activation: 
+    optimizer: 
+    loss: 
+    loss_params: 
+        alpha: 
+        beta: 
+        gamma: 
+    batch_size: 
+    learning_rate: 
 epochs: 2
 steps: 3
 width: 320

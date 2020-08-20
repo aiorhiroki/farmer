@@ -126,9 +126,10 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
         elif weights_info["weights"] in {'pascal_voc', 'cityscapes', None}:
             weights = weights_info["weights"]
         
-        elif os.path.exists(weights_info["weights"]) and weights_info.get("classes") is not None:
-            classes = int(weights_info["classes"])
+        elif os.path.exists(weights_info["weights"]):
             weights = weights_info["weights"]
+            if weights_info.get("classes") is not None:
+                classes = int(weights_info["classes"])
         
         else:
             raise ValueError('The `weights` should be either '
@@ -201,7 +202,8 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
 
     # Load weights.
     if not (weights in {'imagenet', 'pascal_voc', 'cityscapes', None}):
-        model.load_weights(weights)
+        if weights_info.get("classes") is not None:
+            model.load_weights(weights)
 
     # get model before FC layer
     if not include_top:

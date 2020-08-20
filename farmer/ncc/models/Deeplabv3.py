@@ -21,6 +21,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+
 import tensorflow as tf
 
 from tensorflow.python.keras.models import Model
@@ -246,6 +248,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
                                     WEIGHTS_PATH_MOBILE_CS,
                                     cache_subdir='models')
         model.load_weights(weights_path, by_name=True)
+    elif os.path.exists(weights):
+        if weights_info.get("classes") is None:
+            model.load_weights(weights)
     return model
 
 

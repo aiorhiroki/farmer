@@ -12,13 +12,20 @@ val_dirs:
     - train_7
 task: classification # classification or segmentation or detection
 model_name: xception
-loss: # no need to set value. only categorical for classification
 epochs: 2
-batch_size: 4
-optimizer: adam
 augmentation:
-learning_rate: 0.001
 width: 80
 height: 80
 trained_path:
 result_dir: classification_result
+train_params: 
+    backbone: 
+    activation: softmax
+    optimizer: adam
+    loss:  # no need to set value. only categorical for classification
+    loss_params: 
+        alpha: 
+        beta: 
+        gamma: 
+    batch_size: 4
+    learning_rate: 0.001

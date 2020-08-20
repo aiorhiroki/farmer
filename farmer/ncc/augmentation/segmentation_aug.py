@@ -18,7 +18,6 @@ def segmentation_alb(input_image, label, mean, std, augmentation_dict):
 def get_aug(augmentation_dict):
     transforms = list()
     for aug_command, aug_param in augmentation_dict.items():
-        print(aug_param)
         if aug_command.startswith("OneOf"):
             augs = get_aug(aug_param)
             augmentation = albumentations.OneOf(augs, aug_param['p'])

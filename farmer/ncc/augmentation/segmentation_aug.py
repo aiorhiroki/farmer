@@ -1,5 +1,3 @@
-# from keras.preprocessing import image
-from .augmentations import AutoContrast
 import albumentations
 
 
@@ -14,17 +12,9 @@ def segmentation_aug(input_image, label, size, augmentation_list):
     for augmentation_command in augmentation_list:
         
         if isinstance(augmentation_command, str):
-            print('str')
-            print(augmentation_command)
-            if augmentation_command == 'AutoContrast':
-                print('AutoContrast')
-                custom_aug = True
-            
-            else:
-                augmentation = getattr(albumentations, augmentation_command)()
+            augmentation = getattr(albumentations, augmentation_command)()
 
         elif isinstance(augmentation_command, dict):
-            print('dict')
             augmentation = getattr(
                 albumentations, 
                 list(augmentation_command.keys())[0]
@@ -33,11 +23,9 @@ def segmentation_aug(input_image, label, size, augmentation_list):
             )
 
         elif isinstance(augmentation_command, list):
-            print('list')
             one_of_list = list()  # prepare list of input inside OneOf function 
             for augmentation in augmentation_command:
                 if isinstance(augmentation, dict):
-                    print('dict in list')
                     augmentation = getattr(
                         albumentations, 
                         list(augmentation.keys())[0]
@@ -53,15 +41,10 @@ def segmentation_aug(input_image, label, size, augmentation_list):
 
         transforms.append(augmentation)
 
-    
 
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
-        return augmented['image'], augmented["mask"]
-    
-    elif custom_aug == True:
-        augmented = AutoContrast(image=input_image, mask=label)
         return augmented['image'], augmented["mask"]
 
     else:

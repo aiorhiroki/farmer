@@ -41,6 +41,9 @@ train_params:
     learning_rate: 
         - 0.00001  # min(10^n)
         - 0.1  # max(10^n)
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
 epochs: 2
 segmentation_val_step: 2
 n_trials: 3

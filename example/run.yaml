@@ -1,6 +1,6 @@
 gpu: 0
 config_paths:
-    #  classification images
+    # classification images
     - yamls/classification.yaml
     - yamls/classification-eval.yaml
     # classification video frames

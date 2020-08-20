@@ -16,6 +16,9 @@ train_params:
         gamma: 
     batch_size: 8 
     learning_rate: 0.001
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
 epochs: 2
 augmentation: no
 width: 512

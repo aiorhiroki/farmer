@@ -12,6 +12,9 @@ val_dirs:
     - train_7
 task: classification # classification or segmentation or detection
 model_name: xception
+weights_info:
+    classes: 
+    weights: 
 epochs: 2
 augmentation:
 width: 80

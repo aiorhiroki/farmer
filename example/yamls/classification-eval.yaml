@@ -7,6 +7,9 @@ test_dirs:
 training: no
 task: classification
 model_name: xception
+weights_info:
+    classes: 
+    weights: 
 train_params: 
     backbone: 
     activation: softmax

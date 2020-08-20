@@ -30,6 +30,10 @@ train_params:
     batch_size: 8 
     learning_rate: 0.001
 
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
+
 # learning rate scheduler
 # cosine_decay: yes
 # cosine_lr_max: 0.00005

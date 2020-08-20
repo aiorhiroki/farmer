@@ -26,7 +26,13 @@ weights_info:
     weights: 
 epochs: 2
 segmentation_val_step: 2
-n_trials: 3
+batch_size: 4 # min
+n_trials: 5
+optimizer: adam
+augmentation:
+    Blur:
+    MotionBlur: 
+        p: 1
 
 width: 512
 height: 256

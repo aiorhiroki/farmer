@@ -148,11 +148,21 @@ class ImageUtil:
 
         return image
 
-    # def cast_to_normalize(
-    #     self,
-    #     input_image: np.ndarray
-    # ):
-    #     input_image = input_image / 255.0
+    def resize(
+        self,
+        image: np.ndarray,
+        anti_alias=False
+    ):
+        image = Image.fromarray(np.uint8(image))
+        resample = Image.LANCZOS if anti_alias else Image.NEAREST
+        image = image.resize(self.size, resample)
+        return np.asarray(image)
+
+    def normalization(
+        self,
+        image: np.ndarray,
+    ):
+        return image / 255.0
 
     def cast_to_onehot(
         self,

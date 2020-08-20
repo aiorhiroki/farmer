@@ -76,6 +76,7 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                     input_image, label = segmentation_aug(
                         input_image,
                         label,
+                        self.input_shape,
                         self.mean, self.std,
                         self.augmentation
                     )

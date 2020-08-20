@@ -98,7 +98,7 @@ class TrainTask:
 
         plot_history = ncc.callbacks.PlotHistory(
             learning_path,
-            ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+            ['loss', 'acc', 'iou_score']
         )
 
         callbacks = [checkpoint, scheduler, plot_history]

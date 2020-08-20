@@ -179,9 +179,8 @@ class BuildModelTask:
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,
-                    metrics=[metrics.iou_score,
-                             metrics.f1_score,
-                             loss_functions.categorical_crossentropy_loss()],
+                    metrics=[metrics.IOUScore(class_indexes=list(range(1, self.config.nb_classes))),
+                             metrics.FScore(class_indexes=list(range(1, self.config.nb_classes)))],
                 )
             else:
                 raise NotImplementedError

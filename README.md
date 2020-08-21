@@ -154,5 +154,5 @@ dogrun Godfarmer
 
 ## add package
 ```
-docker exec -it farmer bash -c "cd $PWD && poetry add pandas"
+docker exec -it farmer bash -c "poetry add pandas"
 ```

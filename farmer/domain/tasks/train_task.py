@@ -19,9 +19,9 @@ class TrainTask:
             base_model, train_dataset, valid_dataset, trial
         )
         trained_model = self._do_model_optimization_task(
-            model, train_dataset, valid_dataset, callbacks, trial
+            model, train_dataset, valid_dataset, callbacks
         )
-        save_model = self._do_save_model_task(trained_model, base_model, trial)
+        save_model = self._do_save_model_task(trained_model, base_model)
 
         return save_model
 
@@ -67,9 +67,6 @@ class TrainTask:
         # Save Model Checkpoint
         # result_dir/model/
         model_save_file = os.path.join(self.config.model_path, "best_model.h5")
-        if trial:
-            # result_dir/trial#/model/
-            model_save_file = model_save_file.replace("/model/", f"/trial{trial.number}/model/")
 
         if self.config.multi_gpu:
             checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
@@ -98,13 +95,10 @@ class TrainTask:
         # Plot History
         # result_dir/learning/
         learning_path = self.config.learning_path
-        if trial:
-            # result_dir/trial#/learning/
-            learning_path = learning_path.replace("/learning/", f"/trial{trial.number}/learning/")
 
         plot_history = ncc.callbacks.PlotHistory(
             learning_path,
-            ['loss', 'acc', 'iou_score', 'categorical_crossentropy']
+            ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
         callbacks = [checkpoint, scheduler, plot_history]
@@ -120,9 +114,6 @@ class TrainTask:
             # Predict validation
             # result_dir/image/validation/
             val_save_dir = os.path.join(self.config.image_path, "validation")
-            if trial:
-                # result_dir/trial#/image/validation/
-                val_save_dir = val_save_dir.replace("/image/", f"/trial{trial.number}/image/")
 
             generate_sample_result = ncc.callbacks.GenerateSampleResult(
                 val_save_dir=val_save_dir,
@@ -134,15 +125,12 @@ class TrainTask:
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'dice'))
+                callbacks.append(KerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 # result_dir/model/
                 batch_model_path = os.path.join(self.config.model_path, "batch_model.h5")
-                if trial:
-                    # result_dir/trial#/model/
-                    batch_model_path = batch_model_path.replace("/model/", f"/trial{trial.number}/model/")
 
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
                     learning_path,
@@ -173,19 +161,12 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_dataset, validation_dataset, callbacks, trial
+        self, model, train_dataset, validation_dataset, callbacks
     ):
-
-        if self.config.op_batch_size:
-            batch_size = int(trial.suggest_discrete_uniform(
-                'batch_size', *self.config.batch_size))
-        else:
-            batch_size = self.config.batch_size
-
         train_gen = ncc.generators.Dataloder(
-            train_dataset, batch_size=batch_size, shuffle=True)
+            train_dataset, batch_size=self.config.train_params['batch_size'], shuffle=True)
         valid_gen = ncc.generators.Dataloder(
-            validation_dataset, batch_size=batch_size, shuffle=False)
+            validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
 
         try:
             model.fit(
@@ -202,18 +183,15 @@ class TrainTask:
         except KeyboardInterrupt:
             import sys
             # When stoping by Ctrl-C, save model as last_model.h5
-            save_model = self._do_save_model_task(model, None, trial)
+            save_model = self._do_save_model_task(model, None)
             print("\nstop training. save last model:", save_model)
             sys.exit()
 
         return model
 
-    def _do_save_model_task(self, model, base_model, trial):
+    def _do_save_model_task(self, model, base_model):
         # result_dir/model/
         model_path = os.path.join(self.config.model_path, "last_model.h5")
-        if trial:
-            # result_dir/trial#/model/
-            model_path = model_path.replace("/model/", f"/trial{trial.number}/model/")
 
         # Last model save
         if self.config.multi_gpu:

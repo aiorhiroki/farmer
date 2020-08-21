@@ -10,28 +10,46 @@ test_dirs:
 training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
-backbone: 
-    - mobilenetv2
-    - xception
-loss: 
-    - dice_loss
-    - categorical_focal_loss
+train_params: 
+    backbone: 
+        - xception
+        - mobilenetv2
+    activation: softmax
+    optimizer: 
+        - adam
+        - sgd
+    loss: 
+        - categorical_focal_loss
+        - categorical_focal_dice_loss
+    loss_params: 
+        alpha: 
+            - 0.1
+            - 1.0
+            - 0.05
+        beta: 
+            - 0.1
+            - 1.0
+            - 0.05
+        gamma:  # focal
+            - 1.0
+            - 5.0
+            - 0.05
+    batch_size: 
+        - 2 # min
+        - 8 # max
+        - 2 # step
+    learning_rate: 
+        - 0.00001  # min(10^n)
+        - 0.1  # max(10^n)
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
 epochs: 2
 segmentation_val_step: 2
-batch_size:
-    - 2 # min
-    - 8 # max
-    - 2 # step
 n_trials: 3
-optimizer: 
-    - adam
-    - sgd
 augmentation:
     # - horizontal_flip
     # - zoom
-learning_rate: 
-    - 0.00001  # min(10^n)
-    - 0.1  # max(10^n)
 width: 512
 height: 256
 input_dir: image
@@ -48,3 +66,4 @@ train_colors:
     - 5
     - 10
     - 15
+    

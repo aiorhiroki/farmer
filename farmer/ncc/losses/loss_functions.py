@@ -5,6 +5,7 @@ from segmentation_models.losses import (
 )
 
 import tensorflow as tf
+from tensorflow.keras import backend as K
 
 
 segmentation_models.set_framework('tf.keras')
@@ -46,7 +47,7 @@ def categorical_crossentropy_loss(class_weights=None, class_indexes=None, **kwar
 
 
 def cce_dice_loss(beta=1, class_weights=None, class_indexes=None, **kwargs):
-    cce = categorical_crossentropy(
+    cce = categorical_crossentropy_loss(
         class_weights=class_weights,
         class_indexes=class_indexes
     )
@@ -59,7 +60,7 @@ def cce_dice_loss(beta=1, class_weights=None, class_indexes=None, **kwargs):
 
 
 def cce_jaccard_loss(class_weights=None, class_indexes=None, per_image=False, **kwargs):
-    cce = categorical_crossentropy(
+    cce = categorical_crossentropy_loss(
         class_weights=class_weights,
         class_indexes=class_indexes
     )
@@ -102,7 +103,7 @@ def categorical_focal_jaccard_loss(alpha=0.25, gamma=2., class_weights=None,
 
 
 def _tversky_index(y_true, y_pred, alpha, beta):
-    eps = tf.keras.backend.epsilon()
+    eps = K.epsilon()
     y_pred = tf.clip_by_value(y_pred, eps, 1 - eps)
     reduce_axes = [0, 1, 2]
     tp = tf.reduce_sum(y_true * y_pred, axis=reduce_axes)
@@ -114,8 +115,8 @@ def focal_tversky_loss(alpha=0.45, beta=0.55, gamma=2.5, **kwargs):
     gamma = tf.clip_by_value(gamma, 1.0, 3.0)
     def loss(y_true, y_pred):
         index =_tversky_index(y_true, y_pred, alpha, beta)
-        loss = backend.pow((1.0 - index), (1.0 / gamma))
-        return backend.mean(loss)
+        loss = K.pow((1.0 - index), (1.0 / gamma))
+        return K.mean(loss)
     return loss
 
 

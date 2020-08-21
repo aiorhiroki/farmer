@@ -10,20 +10,30 @@ training: yes
 
 # Model
 model_name: unet
-backbone: mobilenetv2
-activation: softmax
 # Resize input image
 width: 512
 height: 256
 # Hyperparameter
 epochs: 2
-batch_size: 2
 n_trials: 1  # Optunaの探索回数(epochs * n_trials学習を行うので注意)
 segmentation_val_step: 2
 
-loss: categorical_focal_dice_loss
-optimizer: adam
-learning_rate: 0.0001
+train_params: 
+    backbone: mobilenetv2
+    activation: softmax
+    optimizer: adam
+    loss: categorical_focal_loss
+    loss_params: 
+        alpha: 0.45
+        beta: 0.55
+        gamma: 5.0
+    batch_size: 8 
+    learning_rate: 0.001
+
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
+
 # learning rate scheduler
 # cosine_decay: yes
 # cosine_lr_max: 0.00005

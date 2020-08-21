@@ -5,13 +5,22 @@ test_dirs:
 training: no
 task: segmentation
 model_name: deeplab_v3
-backbone: mobilenetv2
-loss: dice_loss
+train_params: 
+    backbone: mobilenetv2
+    activation: softmax
+    optimizer: adam
+    loss: dice_loss
+    loss_params: 
+        alpha: 
+        beta: 1.0
+        gamma: 
+    batch_size: 8 
+    learning_rate: 0.001
+weights_info:
+    classes: # assign only when you use backbone weights
+    weights: 
 epochs: 2
-batch_size: 2
-optimizer: adam
 augmentation: no
-learning_rate: 0.01
 width: 512
 height: 256
 input_dir: image

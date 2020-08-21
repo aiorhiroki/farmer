@@ -46,10 +46,7 @@ docker run \
 
 ### Install farmer in container
 ```bash
-docker exec -it farmer bash -c \
-    "cd $PWD && \
-    poetry run python setup.py develop && \
-    echo $PWD >> ~/.farmerpath"
+bash install_farmer.sh
 ```
 
 ### (Optional) Check farmer's path which is used in container

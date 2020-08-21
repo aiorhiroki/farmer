@@ -8,7 +8,6 @@ config_paths:
     # segmentation
     - yamls/segmentation.yaml
     - yamls/segmentation-eval.yaml
-    - yamls/segmentation-aug.yaml
     - yamls/segmentation-optuna.yaml
     # detection #bug 
     # - yamls/detection.yaml

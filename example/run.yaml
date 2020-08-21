@@ -1,4 +1,4 @@
-gpu: 0
+gpu: -1
 config_paths:
     # classification images
     - yamls/classification.yaml

@@ -111,8 +111,6 @@ $ dogrun python
 dogin   # login docker
 ```
 
-~~* **dogon** needs run.yaml in the same path~~
-
 ## Prepare Data set folder
 
 #### **`classification folder tree`**

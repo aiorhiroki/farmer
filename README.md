@@ -21,7 +21,7 @@ exit
 
 ### `build docker`
 ```bash
-docker build -t farmer:v1.4 .
+docker build -t farmer:v2.0 .
 ```
 
 ## Run docker container
@@ -40,7 +40,7 @@ docker run \
     -itd \
     -v /mnt/hdd2:/mnt/hdd2 \  # you can change a directory for mount if you need
     --name farmer \
-    farmer:v1.4
+    farmer:v2.0
 ```
 
 ### Install farmer in container

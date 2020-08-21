@@ -25,6 +25,17 @@ weights_info:
     classes: # assign only when you use backbone weights
     weights: 
 epochs: 2
+augmentation:
+  HorizontalFlip:
+  RandomCrop: 
+        height: 256
+        width: 512
+        p: 1
+  OneOf-1:
+      Blur:
+      MotionBlur:
+        p: 1  # percentage of function inside 'OneOf'
+      p: 1  # percetage of 'OneOf'
 segmentation_val_step: 2
 n_trials: 3
 width: 512

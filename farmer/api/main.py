@@ -96,7 +96,6 @@ class Objective(object):
         clear_session()
         train_workflow = TrainWorkflow(self.trainer, trial)
         result = train_workflow.command(trial)
-        
         if self.trainer.task == Task.CLASSIFICATION:
             return result["accuracy"]
         elif self.trainer.task == Task.SEMANTIC_SEGMENTATION:
@@ -124,7 +123,8 @@ def optuna_report(study):
     print('  Params: ')
     for key, value in trial.params.items():
         print('    {}: {}'.format(key, value))
-    
+
+
 def optuna_command(trainer):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)  # Setup the root logger.

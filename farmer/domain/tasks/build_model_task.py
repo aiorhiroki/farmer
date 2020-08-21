@@ -5,10 +5,9 @@ from segmentation_models import metrics
 from farmer.ncc.models import (
     xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
 )
-from farmer.ncc.losses import loss_functions
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
-from farmer.ncc.losses import loss_functions
+from farmer.ncc import losses
 
 from tensorflow import keras
 
@@ -173,7 +172,7 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                loss = getattr(loss_functions, loss_func)(
+                loss = getattr(losses, loss_func)(
                     **self.config.train_params['loss_params']
                 )
                 model.compile(

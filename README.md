@@ -48,13 +48,13 @@ docker run \
 docker exec -it farmer bash -c \
     "cd $PWD && \
     poetry run python setup.py develop && \
-    echo $PWD >> /farmerpath"
+    echo $PWD >> .farmerpath"
 ```
 
 ### (Optional) Check farmer's path which is used in container
 ```bash
 # show farmer path history
-docker exec -it farmer bash -c "cat /farmerpath"
+docker exec -it farmer bash -c "cat .farmerpath"
 ```
 
 

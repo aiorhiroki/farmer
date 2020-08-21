@@ -5,8 +5,7 @@ import albumentations
 
 def segmentation_alb(input_image, label, mean, std, augmentation_dict):
     transforms = get_aug(augmentation_dict)
-    width = input_image.shape[1]
-
+    
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
@@ -28,9 +27,10 @@ def get_aug(augmentation_dict):
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
             else:
-                augmentation = getattr(albumentations, aug_command)(aug_param)
-                print(aug_param)
+                augmentation = getattr(albumentations, aug_command)(**aug_param)
+        
             transforms.append(augmentation)
+            
     return transforms
 
 

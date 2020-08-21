@@ -11,8 +11,6 @@ jobs:
 
       - name: cml_run
         run: |
-          echo 'Hi from CML!' >> report.md
-          cml-send-comment report.md
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root

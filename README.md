@@ -5,15 +5,17 @@ You can train Classification and Segmentation tasks semi-automatically
 ## Prerequisite
 
 ### `install docker`
-- Docker >= 19.03
+- Docker == 19.03
+
+- Add USER to docker group for using docker command of USER's authority
 ```bash
-# dockerグループがなければ作る
+# (Optinal) create docker group if there is nothing
 sudo groupadd docker
 
-# 現行ユーザをdockerグループに所属させる
+# add USER to docker group
 sudo gpasswd -a $USER docker
 
-# exitして再ログインすると反映される
+# reflect setting if re-login
 exit
 ```
 
@@ -22,6 +24,42 @@ exit
 docker build -t farmer:v1.4 .
 ```
 
+## Run docker container
+You need to be in `WORKDIR` of this repository
+
+check like below
+```bash
+$ echo $PWD
+/home/USER/farmer
+```
+
+### Start container for farmer
+```bash
+docker run \
+    --gpus all \
+    -itd \
+    -v /mnt/hdd2:/mnt/hdd2 \  # you can change a directory for mount if you need
+    --name farmer \
+    farmer:v1.4
+```
+
+### Install farmer in container
+```bash
+docker exec -it farmer bash -c \
+    "cd $PWD && \
+    poetry run python setup.py develop && \
+    echo $PWD >> /farmerpath"
+```
+
+### (Optional) Check farmer's path which is used in container
+```bash
+# show farmer path history
+docker exec -it farmer bash -c "cat /farmerpath"
+```
+
+
+## COMMAND list
+
 #### **`~/.bash_aliases`**
 ```bash
 dogrun () {
@@ -29,12 +67,16 @@ dogrun () {
 }
 
 dogout () {
-    nohup docker exec farmer bash -c "cd $PWD && Godfarmer" > $1 &
+    nohup docker exec -t -u $(id -u):$(id -g) farmer bash -c "cd $PWD && Godfarmer" > $1 &
 }
 
 dogin () {
     docker exec -it -u $(id -u):$(id -g) farmer bash
 }
+```
+
+```bash
+source ~/.bashrc  # to activate bash aliases
 ```
 
 #### **`~/.config/fish/config.fish`**
@@ -44,7 +86,7 @@ function dogrun
 end
 
 function dogout
-    nohup docker exec farmer bash -c "cd $PWD && Godfarmer" > $argv &
+    nohup docker exec -t -u (id -u):(id -g) farmer bash -c "cd $PWD && Godfarmer" > $argv &
 end
 
 function dogin
@@ -52,31 +94,11 @@ function dogin
 end
 ```
 
-```
-source ~/.bashrc  # to activate bash aliases
+```bash
 source ~/.config/fish/config.fish  # to activate fish aliases
 ```
 
-## Run docker container
-```bash
-docker run \
-    --gpus all \
-    -itd \
-    -v /mnt/hdd2:/mnt/hdd2 \
-    --name farmer \
-    farmer:v1.4
-
-docker exec -it farmer bash -c \
-    "cd $PWD && \
-    poetry run python setup.py develop && \
-    echo $PWD >> /farmerpath"
-
-# show farmer path history
-docker exec -it farmer bash -c "cat /farmerpath"
-```
-
-
-## COMMAND list
+### Example
 ```bash
 dogout log.out  # run farmer in the background
 ```
@@ -91,7 +113,7 @@ $ dogrun python
 dogin   # login docker
 ```
 
-* **dogon** needs run.yaml in the same path
+~~* **dogon** needs run.yaml in the same path~~
 
 ## Prepare Data set folder
 

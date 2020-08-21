@@ -27,7 +27,7 @@ docker build -t farmer:v2.0 .
 ## Run docker container
 You need to be in `WORKDIR` of this repository
 
-check like below
+check current path as below
 ```bash
 $ echo $PWD
 /home/USER/farmer
@@ -35,10 +35,11 @@ $ echo $PWD
 
 ### Start container for farmer
 ```bash
+# you can change a directory for mount if you need
 docker run \
     --gpus all \
     -itd \
-    -v /mnt/hdd2:/mnt/hdd2 \  # you can change a directory for mount if you need
+    -v /mnt:/mnt \
     --name farmer \
     farmer:v2.0
 ```
@@ -48,13 +49,13 @@ docker run \
 docker exec -it farmer bash -c \
     "cd $PWD && \
     poetry run python setup.py develop && \
-    echo $PWD >> .farmerpath"
+    echo $PWD >> ~/.farmerpath"
 ```
 
 ### (Optional) Check farmer's path which is used in container
 ```bash
 # show farmer path history
-docker exec -it farmer bash -c "cat .farmerpath"
+docker exec -it farmer bash -c "cat ~/.farmerpath"
 ```
 
 

@@ -49,7 +49,6 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                 ret, input_image = video.read()
                 if not ret:
                     continue
-                input_image = input_image / 255.0
                 # (width, height) for cv2.resize
                 resize_shape = self.input_shape[::-1]
                 if input_image.shape[:2] != resize_shape:

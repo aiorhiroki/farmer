@@ -27,6 +27,11 @@ weights_info:
 epochs: 2
 augmentation:
   HorizontalFlip:
+  PadIfNeeded:
+    min_height: 256
+    min_width: 512
+    always_apply: True
+    border_mode: 0 #need to apply when using randomcrop
   RandomCrop: 
         height: 256
         width: 512

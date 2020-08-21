@@ -52,7 +52,7 @@ bash install_farmer.sh
 ### (Optional) Check farmer's path which is used in container
 ```bash
 # show farmer path history
-docker exec -it farmer bash -c "cat ~/.farmerpath"
+docker exec -it farmer bash -c "cat ~/.farmerpath.csv"
 ```
 
 

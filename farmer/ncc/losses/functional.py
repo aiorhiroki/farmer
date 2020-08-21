@@ -14,8 +14,8 @@ class TverskyLoss(Loss):
 
     def __call__(self, gt, pr):
         return _tversky_loss(
-            y_true=gt, 
-            y_pred=pr, 
+            gt=gt, 
+            pr=pr, 
             alpha=self.alpha, 
             beta=self.beta, 
             class_weights=self.class_weights
@@ -32,8 +32,8 @@ class FocalTverskyLoss(Loss):
 
     def __call__(self, gt, pr):
         return _focal_tversky_loss(
-            y_true=gt, 
-            y_pred=pr, 
+            gt=gt, 
+            pr=pr, 
             alpha=self.alpha, 
             beta=self.beta, 
             gamma=self.gamma, 
@@ -41,23 +41,23 @@ class FocalTverskyLoss(Loss):
         )
 
 
-def _tversky_index(y_true, y_pred, alpha, beta):
+def _tversky_index(gt, pr, alpha, beta):
     eps = K.epsilon()
-    y_pred = tf.clip_by_value(y_pred, eps, 1 - eps)
+    pr = tf.clip_by_value(pr, eps, 1 - eps)
     reduce_axes = [0, 1, 2]
-    tp = tf.reduce_sum(y_true * y_pred, axis=reduce_axes)
-    fp = tf.reduce_sum(y_pred, axis=reduce_axes) - tp
-    fn = tf.reduce_sum(y_true, axis=reduce_axes) - tp
+    tp = tf.reduce_sum(gt * pr, axis=reduce_axes)
+    fp = tf.reduce_sum(pr, axis=reduce_axes) - tp
+    fn = tf.reduce_sum(gt, axis=reduce_axes) - tp
     return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
 
 
-def _tversky_loss(y_true, y_pred, alpha=0.45, beta=0.55, class_weights=1., **kwargs):
-    index = _tversky_index(y_true, y_pred, alpha, beta) * class_weights
+def _tversky_loss(gt, pr, alpha=0.45, beta=0.55, class_weights=1., **kwargs):
+    index = _tversky_index(gt, pr, alpha, beta) * class_weights
     return 1.0 - tf.reduce_mean(index)
 
 
-def _focal_tversky_loss(y_true, y_pred, alpha=0.45, beta=0.55, gamma=2.5, class_weights=1., **kwargs):
+def _focal_tversky_loss(gt, pr, alpha=0.45, beta=0.55, gamma=2.5, class_weights=1., **kwargs):
     gamma = tf.clip_by_value(gamma, 1.0, 3.0)
-    index =_tversky_index(y_true, y_pred, alpha, beta) * class_weights
+    index =_tversky_index(gt, pr, alpha, beta) * class_weights
     loss = K.pow((1.0 - index), (1.0 / gamma))
     return K.mean(loss)

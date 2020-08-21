@@ -1,12 +1,9 @@
 import segmentation_models
-from segmentation_models.base import Loss
 from segmentation_models.losses import (
     DiceLoss, JaccardLoss, CategoricalFocalLoss, CategoricalCELoss
 )
 
-import tensorflow as tf
-from tensorflow.keras import backend as K
-
+from .functional import TverskyLoss, FocalTverskyLoss
 
 segmentation_models.set_framework('tf.keras')
 
@@ -42,6 +39,25 @@ def categorical_crossentropy_loss(class_weights=None, class_indexes=None, **kwar
     loss = CategoricalCELoss(
         class_weights=class_weights,
         class_indexes=class_indexes
+    )
+    return loss
+
+
+def tversky_loss(alpha=0.45, beta=0.55, class_weights=None, **kwargs):
+    loss = TverskyLoss(
+        alpha=alpha,
+        beta=beta,
+        class_weights=class_weights
+    )
+    return loss
+
+
+def focal_tversky_loss(alpha=0.45, beta=0.55, gamma=2.5, class_weights=None, **kwargs):
+    loss = FocalTverskyLoss(
+        alpha=alpha,
+        beta=beta,
+        gamma=gamma,
+        class_weights=class_weights
     )
     return loss
 
@@ -100,28 +116,3 @@ def categorical_focal_jaccard_loss(alpha=0.25, gamma=2., class_weights=None,
         per_image=per_image
     )
     return cfl + jl
-
-
-def _tversky_index(y_true, y_pred, alpha, beta):
-    eps = K.epsilon()
-    y_pred = tf.clip_by_value(y_pred, eps, 1 - eps)
-    reduce_axes = [0, 1, 2]
-    tp = tf.reduce_sum(y_true * y_pred, axis=reduce_axes)
-    fp = tf.reduce_sum(y_pred, axis=reduce_axes) - tp
-    fn = tf.reduce_sum(y_true, axis=reduce_axes) - tp
-    return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
-
-def focal_tversky_loss(alpha=0.45, beta=0.55, gamma=2.5, **kwargs):
-    gamma = tf.clip_by_value(gamma, 1.0, 3.0)
-    def loss(y_true, y_pred):
-        index =_tversky_index(y_true, y_pred, alpha, beta)
-        loss = K.pow((1.0 - index), (1.0 / gamma))
-        return K.mean(loss)
-    return loss
-
-
-def tversky_loss(alpha=0.45, beta=0.55, **kwargs):
-    def loss(y_true, y_pred):
-        index =_tversky_index(y_true, y_pred, alpha, beta)
-        return 1.0 - tf.reduce_mean(index)
-    return loss

@@ -1,4 +1,4 @@
-name: train-my-model
+name: integration-test
 
 on: [push]
 
@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: cml_run
+      - name: Godfarmer
         run: |
           pip install poetry
           poetry config virtualenvs.create false

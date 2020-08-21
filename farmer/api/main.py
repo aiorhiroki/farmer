@@ -14,7 +14,6 @@ import logging
 
 
 def fit():
-    print('this container is running with hiroki_s farmer image')
     with open("run.yaml") as yamlfile:
         run_config = yaml.safe_load(yamlfile)
     config_paths = run_config.get("config_paths")
@@ -97,7 +96,6 @@ class Objective(object):
         clear_session()
         train_workflow = TrainWorkflow(self.trainer, trial)
         result = train_workflow.command(trial)
-
         if self.trainer.task == Task.CLASSIFICATION:
             return result["accuracy"]
         elif self.trainer.task == Task.SEMANTIC_SEGMENTATION:

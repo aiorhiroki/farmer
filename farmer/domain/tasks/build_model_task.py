@@ -172,9 +172,11 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                loss = getattr(losses, loss_func)(
-                    **self.config.train_params['loss_params']
-                )
+                loss_params = self.config.train_params['loss_params']
+                loss_params['class_weights'] = [
+                    weight for class_id, weight in self.config.class_weights.items()
+                ]
+                loss = getattr(loss_functions, loss_func)(**loss_params)
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,

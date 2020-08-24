@@ -47,6 +47,7 @@ class Trainer(Config, ImageLoader):
     train_params: dict = None
     optuna_params: dict = None
     weights_info: Dict[str, str] = field(default_factory=dict)
+    class_weights: Dict[int, float] = field(default_factory=dict)
  
 
     def __post_init__(self):
@@ -81,6 +82,10 @@ class Trainer(Config, ImageLoader):
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
         self.mean, self.std = None, None
+        if not self.class_weights:
+            self.class_weights = {
+                class_id:1.0 for class_id in range(self.nb_classes)
+            }
 
         # For optuna analysis hyperparameter
         def check_need_optuna(params_dict: dict):

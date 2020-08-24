@@ -1,4 +1,5 @@
 import os
+import copy
 
 from ..workflows.abstract_workflow import AbstractImageAnalyzer
 from ..tasks.build_model_task import BuildModelTask
@@ -68,8 +69,12 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 return params
 
             # set train params to params setted by optuna
-            self._config.train_params = set_train_params(
-                self._config.optuna_params)
+            if trial.trial.number == 0 and self._config.optuna_start_params:
+                self._config.train_params = copy.deepcopy(
+                    self._config.optuna_start_params)
+            else:
+                self._config.train_params = set_train_params(
+                    self._config.optuna_params)
             print("self._config.train_params: ", self._config.train_params)
 
     def command(self, trial=None):

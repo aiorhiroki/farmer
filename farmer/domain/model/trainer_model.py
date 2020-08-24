@@ -47,6 +47,7 @@ class Trainer(Config, ImageLoader):
     train_params: dict = None
     optuna_params: dict = None
     weights_info: Dict[str, str] = field(default_factory=dict)
+    optuna_start_params: dict = None
  
 
     def __post_init__(self):

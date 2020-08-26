@@ -81,6 +81,13 @@ class Trainer(Config, ImageLoader):
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
         self.mean, self.std = None, None
+        # test ===========================
+        self.tmp_info_path = self.info_path
+        self.tmp_model_path = self.model_path
+        self.tmp_learning_path = self.learning_path
+        self.tmp_image_path = self.image_path
+        self.randaug_N = 0
+        self.randaug_M = 0
 
         # For optuna analysis hyperparameter
         def check_need_optuna(params_dict: dict):

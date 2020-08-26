@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 import cv2
 from ..utils import ImageUtil
-from ..augmentation import segmentation_aug, segmentation_alb
+from ..augmentation import segmentation_aug, segmentation_alb, RandAugment
 
 
 class SegmentationDataset:
@@ -15,6 +15,8 @@ class SegmentationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
+            N: int = None,
+            M: int = None,
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
             augmentation: list = list(),
@@ -29,6 +31,8 @@ class SegmentationDataset:
         self.std = std
         self.augmentation = augmentation
         self.train_colors = train_colors
+        self.N = N
+        self.M = M
 
     def __getitem__(self, i):
 
@@ -46,6 +50,16 @@ class SegmentationDataset:
                 self.mean, self.std,
                 self.augmentation
             )
+        
+        if (self.N is None) and (self.M is None):
+            sample = RandAugment(self.N, self.M, transforms=None)(
+                image=input_image, 
+                mask=label
+            )
+            print("validation now")
+        print(f"N: {self.N}, M: {self.M}" )
+        print("input_image type: ", type(input_image))
+        print("input_image shape: ", input_image.shape)
 
         # apply preprocessing
         # resize

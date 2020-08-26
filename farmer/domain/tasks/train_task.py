@@ -34,7 +34,9 @@ class TrainTask:
             std=self.config.std,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
-            input_data_type=self.config.input_data_type
+            N=self.config.randaug_N,
+            M=self.config.randaug_M,
+            input_data_type=self.config.input_data_type,
         )
 
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:

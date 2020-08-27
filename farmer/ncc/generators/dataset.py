@@ -15,8 +15,6 @@ class SegmentationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
-            N: int = None,
-            M: int = None,
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
             augmentation: list = list(),
@@ -31,8 +29,6 @@ class SegmentationDataset:
         self.std = std
         self.augmentation = augmentation
         self.train_colors = train_colors
-        self.N = N
-        self.M = M
 
     def __getitem__(self, i):
 

@@ -53,13 +53,18 @@ class TrainTask:
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             train_dataset = ncc.generators.SegmentationDataset(**sequence_args)
 
+            rand_aug = {
+                'N': self.config.randaug_N,
+                'M': self.config.randaug_M,
+            }
+            input_aug = self.config.augmentation
+            input_aug['RandAugment'] = rand_aug
+            print('input aug: ', input_aug)
             sequence_args.update(
                 annotations=validation_set,
                 mean=np.zeros(3),
                 std=np.ones(3),
-                augmentation=[],
-                N=self.config.randaug_N,
-                M=self.config.randaug_M,
+                augmentation=input_aug,
             )
             validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
 

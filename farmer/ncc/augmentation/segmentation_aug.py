@@ -2,6 +2,7 @@ from keras.preprocessing import image
 import numpy as np
 from .augment_and_mix import augment_and_mix
 import albumentations
+from .randaugmentation import RandAugment
 
 def segmentation_alb(input_image, label, mean, std, augmentation_dict):
     transforms, rand_aug_params = get_aug(augmentation_dict)
@@ -21,13 +22,14 @@ def get_aug(augmentation_dict):
     rand_aug_params = dict()
     for aug_command, aug_param in augmentation_dict.items():
         if aug_command.startswith("OneOf"):
-            augs = get_aug(aug_param)
+            augs, _ = get_aug(aug_param)
             augmentation = albumentations.OneOf(augs, aug_param['p'])
             transforms.append(augmentation)
         elif aug_command == 'p':
             continue
         elif aug_command == 'RandAugment':
             rand_aug_params = aug_param
+            print('rand_aug_params: ', rand_aug_params)
         else:
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()

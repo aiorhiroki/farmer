@@ -34,8 +34,8 @@ class TrainTask:
             std=self.config.std,
             augmentation=self.config.augmentation,
             train_colors=self.config.train_colors,
-            N=self.config.randaug_N,
-            M=self.config.randaug_M,
+            # N=self.config.randaug_N,
+            # M=self.config.randaug_M,
             input_data_type=self.config.input_data_type,
         )
 
@@ -57,7 +57,9 @@ class TrainTask:
                 annotations=validation_set,
                 mean=np.zeros(3),
                 std=np.ones(3),
-                augmentation=[]
+                augmentation=[],
+                N=self.config.randaug_N,
+                M=self.config.randaug_M,
             )
             validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
 

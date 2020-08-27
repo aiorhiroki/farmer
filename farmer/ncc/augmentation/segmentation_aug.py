@@ -4,11 +4,13 @@ from .augment_and_mix import augment_and_mix
 import albumentations
 
 def segmentation_alb(input_image, label, mean, std, augmentation_dict):
-    transforms = get_aug(augmentation_dict)
+    transforms, rand_aug_params = get_aug(augmentation_dict)
     
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
+        if rand_aug_params:
+            augmented = RandAugment(**rand_aug_params)(**augmented)
         return augmented['image'], augmented["mask"]
 
     else:
@@ -16,6 +18,7 @@ def segmentation_alb(input_image, label, mean, std, augmentation_dict):
 
 def get_aug(augmentation_dict):
     transforms = list()
+    rand_aug_params = dict()
     for aug_command, aug_param in augmentation_dict.items():
         if aug_command.startswith("OneOf"):
             augs = get_aug(aug_param)
@@ -23,6 +26,8 @@ def get_aug(augmentation_dict):
             transforms.append(augmentation)
         elif aug_command == 'p':
             continue
+        elif aug_command == 'RandAugment':
+            rand_aug_params = aug_param
         else:
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
@@ -31,7 +36,7 @@ def get_aug(augmentation_dict):
         
             transforms.append(augmentation)
             
-    return transforms
+    return transforms, rand_aug_params
 
 
 

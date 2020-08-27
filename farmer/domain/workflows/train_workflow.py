@@ -73,8 +73,8 @@ class TrainWorkflow(AbstractImageAnalyzer):
             print("self._config.train_params: ", self._config.train_params)
 
     def command(self, trial=None):
-        for N in range(14)[1:]:
-            for M in range(3):
+        for N in range(14)[7:]:
+            for M in range(11)[8:]:
                 self._config.randaug_N = N
                 self._config.randaug_M = M
                 self.set_result_dirs(N, M)

@@ -50,17 +50,6 @@ class SegmentationDataset:
                 self.mean, self.std,
                 self.augmentation
             )
-        
-        if (self.N is None) and (self.M is None):
-            sample = RandAugment(self.N, self.M, transforms=None)(
-                image=input_image, 
-                mask=label
-            )
-            print("validation now")
-        print(f"N: {self.N}, M: {self.M}" )
-        print("input_image type: ", type(input_image))
-        print("input_image shape: ", input_image.shape)
-
         # apply preprocessing
         # resize
         input_image = self.image_util.resize(input_image, anti_alias=True)

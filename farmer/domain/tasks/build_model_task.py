@@ -151,8 +151,8 @@ class BuildModelTask:
                 )
 
             elif optimizer == "radam":
-                steps_per_epoch = self.config.nb_train_data // self.config.batch_size
-                
+                steps_per_epoch = self.config.nb_train_data // self.config.train_params['batch_size']
+
                 optimizer = tfa.optimizers.RectifiedAdam(
                     lr=learning_rate,
                     weight_decay=1e-5,

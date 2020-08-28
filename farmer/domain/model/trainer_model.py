@@ -47,7 +47,8 @@ class Trainer(Config, ImageLoader):
     train_params: dict = None
     optuna_params: dict = None
     weights_info: Dict[str, str] = field(default_factory=dict)
- 
+    rand_aug: bool = False
+
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -82,12 +83,16 @@ class Trainer(Config, ImageLoader):
         self.height, self.width = self.get_image_shape()
         self.mean, self.std = None, None
         # test ===========================
-        self.tmp_info_path = self.info_path
-        self.tmp_model_path = self.model_path
-        self.tmp_learning_path = self.learning_path
-        self.tmp_image_path = self.image_path
         self.randaug_N = 0
         self.randaug_M = 0
+        self.base_result_paths = dict()
+        if self.rand_aug:
+            self.base_result_paths = {
+                'info_path': self.info_path,
+                'model_path': self.model_path,
+                'learning_path': self.learning_path,
+                'image_path': self.image_path,
+            }
 
         # For optuna analysis hyperparameter
         def check_need_optuna(params_dict: dict):

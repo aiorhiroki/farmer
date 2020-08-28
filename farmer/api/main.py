@@ -73,19 +73,9 @@ def fit():
                 trainer.learning_path = f"{k_result}/{trainer.learning_dir}"
                 trainer.image_path = f"{k_result}/{trainer.image_dir}"
 
-                if trainer.optuna:
-                    optuna_command(trainer)
-
-                else:
-                    train_workflow = TrainWorkflow(trainer)
-                    train_workflow.command()
+                train_command(trainer)
         else:
-            if trainer.optuna:
-                optuna_command(trainer)
-
-            else:
-                train_workflow = TrainWorkflow(trainer)
-                train_workflow.command()
+            train_command(trainer)
 
 
 class Objective(object):
@@ -150,3 +140,33 @@ def optuna_command(trainer):
     )
 
     optuna_report(study)
+
+
+def train_command(trainer):
+    if trainer.optuna:
+        optuna_command(trainer)
+    
+    elif trainer.rand_aug:
+        for N in trainer.rand_aug_N:
+            for M in trainer.rand_aug_M
+                self._config.randaug_N = N
+                self._config.randaug_M = M
+                set_result_dirs(trainer, N, M)
+                train_workflow = TrainWorkflow(trainer)
+                train_workflow.command()
+
+    else:
+        train_workflow = TrainWorkflow(trainer)
+        train_workflow.command()    
+
+def set_result_dirs(trainer, N, M):
+    save_dir = f"N{N}/M{M}"
+    trainer_vars = vars(trainer)
+    for var_name, base_path in trainer.base_result_paths.items():
+        dir_name = var_name.replace('path', 'dir')
+        trainer_vars[var_name] = base_path.replace(
+            trainer_vars[dir_name], 
+            os.path.join(save_dir, trainer_vars[dir_name])
+        )
+
+    print("info path: ", trainer.info_path)

@@ -345,10 +345,7 @@ class AutoContrast(albu.ImageOnlyTransform):
 
 class RandAugment:
     def __init__(self, N, M, transforms=None, max_magnitude=10):
-        
-        if N and N > 1:
-            self.N = N  # [1, len(transforms)]
-
+        self.N = N  # [1, len(transforms)]
         self.M = M  # [0, 10]
         self.transforms = transforms
         self.max_magnitude = max_magnitude

@@ -73,32 +73,15 @@ class TrainWorkflow(AbstractImageAnalyzer):
             print("self._config.train_params: ", self._config.train_params)
 
     def command(self, trial=None):
-        for N in range(14)[7:]:
-            for M in range(11)[8:]:
-                self._config.randaug_N = N
-                self._config.randaug_M = M
-                self.set_result_dirs(N, M)
-                self.set_env_flow()
-                train_set, validation_set, test_set = self.read_annotation_flow()
-                if (trial is None or trial.number == 0) and len(train_set) > 0:
-                    self.eda_flow(train_set)
-                model, base_model = self.build_model_flow()
-                result = self.model_execution_flow(
-                    train_set, model, base_model, validation_set, test_set, trial
-                )
+        self.set_env_flow()
+        train_set, validation_set, test_set = self.read_annotation_flow()
+        if (trial is None or trial.number == 0) and len(train_set) > 0:
+            self.eda_flow(train_set)
+        model, base_model = self.build_model_flow()
+        result = self.model_execution_flow(
+            train_set, model, base_model, validation_set, test_set, trial
+        )
         return self.output_flow(result)
-    
-    def set_result_dirs(self, N, M):
-        save_dir = f"N{N}/" + f"M{M}/"
-        self._config.info_path = self._config.tmp_info_path.replace(
-            self._config.info_dir, save_dir + self._config.info_dir)
-        self._config.model_path = self._config.tmp_model_path.replace(
-            self._config.model_dir, save_dir + self._config.model_dir)
-        self._config.learning_path = self._config.tmp_learning_path.replace(
-            self._config.learning_dir, save_dir + self._config.learning_dir)
-        self._config.image_path = self._config.tmp_image_path.replace(
-            self._config.image_dir, save_dir + self._config.image_dir)
-        print("info path: ", self._config.info_path)
 
     def set_env_flow(self):
         print("SET ENV FLOW ... ", end="")

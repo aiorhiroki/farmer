@@ -11,38 +11,45 @@ training: yes
 task: segmentation # classification or segmentation is supported
 model_name: deeplab_v3
 train_params: 
-    backbone: mobilenetv2
+    backbone: 
+        - xception
+        - mobilenetv2
     activation: softmax
-    optimizer: adam
-    loss: categorical_focal_loss
+    optimizer: 
+        - adam
+        - sgd
+    loss: 
+        - categorical_focal_loss
+        - categorical_focal_dice_loss
     loss_params: 
-        alpha: 0.45
-        beta: 0.55
-        gamma: 5.0
-    batch_size: 8 
-    learning_rate: 0.001
-weights_info: 
+        alpha: 
+            - 0.1
+            - 1.0
+            - 0.05
+        beta: 
+            - 0.1
+            - 1.0
+            - 0.05
+        gamma:  # focal
+            - 1.0
+            - 5.0
+            - 0.05
+    batch_size: 
+        - 2 # min
+        - 8 # max
+        - 2 # step
+    learning_rate: 
+        - 0.00001  # min(10^n)
+        - 0.1  # max(10^n)
+weights_info:
     classes: # assign only when you use backbone weights
     weights: 
 epochs: 2
-augmentation:
-  HorizontalFlip:
-  PadIfNeeded:
-    min_height: 256
-    min_width: 512
-    always_apply: True
-    border_mode: 0 #need to apply when using randomcrop
-  RandomCrop: 
-        height: 256
-        width: 512
-        p: 1
-  OneOf-1:
-      Blur:
-      MotionBlur:
-        p: 1  # percentage of function inside 'OneOf'
-      p: 1  # percetage of 'OneOf'
 segmentation_val_step: 2
 n_trials: 3
+augmentation:
+    # - horizontal_flip
+    # - zoom
 width: 512
 height: 256
 input_dir: image
@@ -59,3 +66,4 @@ train_colors:
     - 5
     - 10
     - 15
+    

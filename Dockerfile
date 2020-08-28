@@ -8,8 +8,4 @@ RUN pip install poetry
 COPY pyproject.toml ./
 COPY poetry.lock ./
 RUN poetry config virtualenvs.create false
-RUN poetry run pip install -U pip
 RUN poetry install --no-root
-
-ADD . /app
-WORKDIR /app

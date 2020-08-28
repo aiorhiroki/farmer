@@ -1,29 +1,22 @@
 import segmentation_models
-from segmentation_models import Unet, PSPNet
+from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
-from segmentation_models.losses import (
-    dice_loss, jaccard_loss, categorical_focal_loss, categorical_crossentropy
-)
 
-from farmer.ncc.models import xception, mobilenet, Deeplabv3, Model2D
+from farmer.ncc.models import (
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
+)
+from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
+from farmer.ncc import losses
 
 from tensorflow import keras
-
-segmentation_models.set_framework('tf.keras')
-
-# loss functions
-cce_dice_loss = categorical_crossentropy + dice_loss
-cce_jaccard_loss = categorical_crossentropy + jaccard_loss
-categorical_focal_dice_loss = categorical_focal_loss + dice_loss
-categorical_focal_jaccard_loss = categorical_focal_loss + jaccard_loss
 
 
 class BuildModelTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, trial=None):
+    def command(self):
         # return: base_model is saved when training on multi gpu
 
         base_model = self._do_make_model_task(
@@ -32,9 +25,8 @@ class BuildModelTask:
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.backbone,
-            activation=self.config.activation,
-            trial=trial
+            backbone=self.config.train_params['backbone'],
+            activation=self.config.train_params['activation']
         )
         base_model = self._do_load_model_task(
             base_model, self.config.trained_model_path
@@ -44,11 +36,10 @@ class BuildModelTask:
         )
         compiled_model = self._do_compile_model_task(
             model,
-            self.config.optimizer,
-            self.config.learning_rate,
+            self.config.train_params['optimizer'],
+            self.config.train_params['learning_rate'],
             self.config.task,
-            self.config.loss,
-            trial
+            self.config.train_params['loss']
         )
 
         return compiled_model, base_model
@@ -61,25 +52,42 @@ class BuildModelTask:
         width=299,
         height=299,
         backbone="resnet50",
-        activation="softmax",
-        trial=None
+        activation="softmax"
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(nb_classes, height, width)
+                model = xception(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
+                )
+            elif model_name == "dilated_xception" and xception_shape_condition:
+                model = dilated_xception(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                    weights_info=self.config.weights_info
+                )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(nb_classes, height, width)
+                model = mobilenet(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width
+                )
+            elif model_name == "mobilenetv2" and mobilenet_shape_condition:
+                model = mobilenet_v2(
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                    weights_info=self.config.weights_info
+                )
             else:
                 model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
-            if self.config.op_backbone:
-                backbone = trial.suggest_categorical(
-                    'backbone', self.config.backbone
-                )
             print('------------------')
             print('Model:', model_name)
             print('Backbone:', backbone)
@@ -93,6 +101,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
+                    weights_info=self.config.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
@@ -100,6 +109,12 @@ class BuildModelTask:
                 )
             elif model_name == "pspnet":
                 model = PSPNet(
+                    backbone_name=backbone,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
+            elif model_name == "fpn":
+                model = FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -128,32 +143,19 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func,
-        trial
+        loss_func
     ):
-        if self.config.op_learning_rate:
-            if len(self.config.learning_rate) == 2:
-                # learning_rate = [10^(min), 10^(max)]
-                learning_rate = int(trial.suggest_loguniform(
-                    'learning_rate', *self.config.learning_rate))
-            elif len(self.config.learning_rate) == 3:
-                # learning_rate = [min, max, step]
-                learning_rate = int(trial.suggest_discrete_uniform(
-                    'learning_rate', *self.config.learning_rate))
-        else:
-            learning_rate = self.config.learning_rate
-
         if self.config.framework == "tensorflow":
-            if self.config.op_optimizer:
-                optimizer = trial.suggest_categorical(
-                    'optimizer', self.config.optimizer
-                )
-                print('------------------')
-                print('Optimizer:', optimizer)
-                print('------------------')
-            elif optimizer == "adam":
+            print('------------------')
+            print('Optimizer:', optimizer)
+            print('------------------')
+            if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
                     lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                )
+            elif optimizer == "adabound":
+                optimizer = AdaBound(
+                    learning_rate=learning_rate, final_lr=0.1
                 )
             else:
                 optimizer = keras.optimizers.SGD(
@@ -170,11 +172,14 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
+                loss = getattr(losses, loss_func)(
+                    **self.config.train_params['loss_params']
+                )
                 model.compile(
                     optimizer=optimizer,
-                    loss=globals()[loss_func],
-                    metrics=[metrics.iou_score,
-                             categorical_crossentropy],
+                    loss=loss,
+                    metrics=[metrics.IOUScore(class_indexes=list(range(1, self.config.nb_classes))),
+                             metrics.FScore(class_indexes=list(range(1, self.config.nb_classes)))],
                 )
             else:
                 raise NotImplementedError

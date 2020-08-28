@@ -1,15 +1,15 @@
 from dataclasses import dataclass
+import copy
 import os
 from datetime import datetime
 from dataclasses import field
-from typing import List
+from typing import List, Dict
 from .config_model import Config
 from .image_loader_model import ImageLoader
-from .optuna_model import Optuna
 
 
 @dataclass
-class Trainer(Config, ImageLoader, Optuna):
+class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
     epochs: int = None
@@ -22,6 +22,7 @@ class Trainer(Config, ImageLoader, Optuna):
     nb_gpu: int = None
     multi_gpu: bool = None
     loss: str = None
+    loss_params: Dict[str, float] = field(default_factory=dict)
     trained_path: str = None
     trained_model_path: str = None
     model_name: str = None
@@ -38,6 +39,15 @@ class Trainer(Config, ImageLoader, Optuna):
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001
     optuna: bool = False
+    seed: int = 1
+    n_trials: int = 10
+    timeout: int = None
+    trial_number: int = None
+    trial_params: dict = None
+    train_params: dict = None
+    optuna_params: dict = None
+    weights_info: Dict[str, str] = field(default_factory=dict)
+ 
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -70,16 +80,17 @@ class Trainer(Config, ImageLoader, Optuna):
         self.class_names = self.get_class_names()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
+        self.mean, self.std = None, None
 
         # For optuna analysis hyperparameter
-        self.op_batch_size = type(self.batch_size) == list
-        self.op_learning_rate = type(self.learning_rate) == list
-        self.op_optimizer = type(self.optimizer) == list
-        self.op_backbone = type(self.backbone) == list
+        def check_need_optuna(params_dict: dict):
+            for key, val in params_dict.items():
+                if isinstance(val, list):
+                    self.optuna =  True
+                elif isinstance(val, dict):
+                    check_need_optuna(val)
 
-        self.optuna = any((
-            self.op_batch_size,
-            self.op_learning_rate,
-            self.op_optimizer,
-            self.op_backbone,
-        ))
+        check_need_optuna(self.train_params)
+        if self.optuna:
+            self.optuna_params = copy.deepcopy(self.train_params)
+        

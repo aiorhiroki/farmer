@@ -1,3 +1,5 @@
+import os
+
 from ..workflows.abstract_workflow import AbstractImageAnalyzer
 from ..tasks.build_model_task import BuildModelTask
 from ..tasks.set_train_env_task import SetTrainEnvTask
@@ -10,54 +12,112 @@ from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 
-import optuna
-import numpy as np
-from keras.backend import clear_session
-
 
 class TrainWorkflow(AbstractImageAnalyzer):
-    def __init__(self, config):
+    def __init__(self, config, trial=None):
         super().__init__(config)
+        if trial:
+            # init
+            self._config.model_path = os.path.join(
+                self._config.result_path, self._config.model_dir)
+            self._config.learning_path = os.path.join(
+                self._config.result_path, self._config.learning_dir)
+            self._config.image_path = os.path.join(
+                self._config.result_path, self._config.image_dir)
+
+            # result_dir/trial#/learning/
+            self._config.learning_path = self._config.learning_path.replace(
+                "/learning", f"/trial{trial.number}/learning")
+            # result_dir/trial#/model/
+            self._config.model_path = self._config.model_path.replace(
+                "/model", f"/trial{trial.number}/model")
+            # result_dir/trial#/image/
+            self._config.image_path = self._config.image_path.replace(
+                "/image", f"/trial{trial.number}/image")
+
+            self._config.trial_number = trial.number
+            self._config.trial_params = trial.params
+
+            def set_train_params(params_dict: dict) -> dict:
+                params = {}
+                for key, val in params_dict.items():
+                    if not isinstance(val, (list, dict)):
+                        params[key] = val
+                    elif isinstance(val, list):
+                        if isinstance(val[0], str):
+                            params[key] = trial.suggest_categorical(
+                                key, val
+                            )
+                        elif isinstance(val[0], (int, float)):
+                            if len(val) == 2:
+                                # logスケールで変化
+                                params[key] = trial.suggest_loguniform(
+                                    key, *val
+                                )
+                            elif len(val) == 3:
+                                # 線形スケールで変化
+                                param_val = trial.suggest_discrete_uniform(
+                                    key, *val
+                                )
+                                if key == 'batch_size':
+                                    params[key] = int(param_val)
+                                else:
+                                    params[key] = param_val
+                    if isinstance(val, dict):
+                        params[key] = set_train_params(val)
+                return params
+
+            # set train params to params setted by optuna
+            self._config.train_params = set_train_params(
+                self._config.optuna_params)
+            print("self._config.train_params: ", self._config.train_params)
 
     def command(self, trial=None):
         self.set_env_flow()
         train_set, validation_set, test_set = self.read_annotation_flow()
-        self.eda_flow()
-        model, base_model = self.build_model_flow(trial)
+        if (trial is None or trial.number == 0) and len(train_set) > 0:
+            self.eda_flow(train_set)
+        model, base_model = self.build_model_flow()
         result = self.model_execution_flow(
             train_set, model, base_model, validation_set, test_set, trial
         )
         return self.output_flow(result)
 
     def set_env_flow(self):
+        print("SET ENV FLOW ... ", end="")
         SetTrainEnvTask(self._config).command()
-        print("set env flow done")
+        print("DONE")
 
     def read_annotation_flow(self):
+        print("READ ANNOTATION FLOW ... ")
         read_annotation = ReadAnnotationTask(self._config)
         train_set = read_annotation.command("train")
         validation_set = read_annotation.command("validation")
         test_set = read_annotation.command("test")
-        print("read annotation flow done")
+        print("DONE")
         return train_set, validation_set, test_set
 
-    def eda_flow(self):
-        print("eda flow done")
-        EdaTask(self._config).command()
+    def eda_flow(self, train_set):
+        print("EDA FLOW ... ", end="")
+        EdaTask(self._config).command(train_set)
+        print("DONE")
+        print("MEAN:", self._config.mean, "- STD: ", self._config.std)
 
-    def build_model_flow(self, trial=None):
+    def build_model_flow(self):
+        print("BUILD MODEL FLOW ... ")
         if self._config.task == Task.OBJECT_DETECTION:
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model, base_model = BuildModelTask(self._config).command(trial)
-        print("build model flow done")
+        model, base_model = BuildModelTask(self._config).command()
+        print("DONE\n")
         return model, base_model
 
     def model_execution_flow(
         self,
         annotation_set, model, base_model, validation_set, test_set, trial
     ):
+        print("MODEL EXECUTION FLOW ... ")
         if self._config.training:
             if self._config.task == Task.OBJECT_DETECTION:
                 from keras_retinanet.bin import train
@@ -109,47 +169,13 @@ class TrainWorkflow(AbstractImageAnalyzer):
             eval_report = EvaluationTask(self._config).command(
                 test_set, model=trained_model
             )
-
-        print("model execution flow done")
+        print("DONE")
         print(eval_report)
 
         return eval_report
 
     def output_flow(self, result):
+        print("OUTPUT FLOW ... ", end="")
         OutputResultTask(self._config).command(result)
-        print("output flow done")
+        print("DONE")
         return result
-
-    def optuna_command(self):
-        study = optuna.create_study(direction='maximize')
-        study.optimize(
-            self.objective,
-            n_trials=self._config.n_trials,
-            timeout=self._config.timeout
-        )
-        pruned_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.PRUNED]
-        complete_trials = [t for t in study.trials if t.state == optuna.structs.TrialState.COMPLETE]
-        print("Study statistics: ")
-        print("  Number of finished trials: ", len(study.trials))
-        print("  Number of pruned trials: ", len(pruned_trials))
-        print("  Number of complete trials: ", len(complete_trials))
-
-        print('Best trial:')
-        trial = study.best_trial
-
-        print('  Value: {}'.format(trial.value))
-
-        print('  Params: ')
-        for key, value in trial.params.items():
-            print('    {}: {}'.format(key, value))
-        return study
-
-    def objective(self, trial):
-        clear_session()
-        result = self.command(trial)
-        if self._config.task == Task.CLASSIFICATION:
-            return result["accuracy"]
-        elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            return np.mean(result["dice"][1:])
-        else:
-            raise NotImplementedError

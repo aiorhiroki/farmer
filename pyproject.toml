@@ -14,7 +14,7 @@ segmentation-models = "^1.0.0"
 albumentations = "^0.4.3"
 optuna = "^2.0.0"
 pandas = "^1.0.5"
-tensorflow-addons = "^0.11.2"
+tensorflow-addons = "0.9.1"
 
 [tool.poetry.dev-dependencies]
 

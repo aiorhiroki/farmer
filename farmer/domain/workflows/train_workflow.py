@@ -69,7 +69,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 return params
 
             # set train params to params setted by optuna
-            if trial.trial.number == 0 and self._config.optuna_start_params:
+            if trial.number == 0 and self._config.optuna_start_params:
                 self._config.train_params = copy.deepcopy(
                     self._config.optuna_start_params)
             else:

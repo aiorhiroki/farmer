@@ -75,7 +75,6 @@ class TrainWorkflow(AbstractImageAnalyzer):
             else:
                 self._config.train_params = set_train_params(
                     self._config.optuna_params)
-            print("self._config.train_params: ", self._config.train_params)
 
     def command(self, trial=None):
         self.set_env_flow()

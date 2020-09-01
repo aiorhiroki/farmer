@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import tensorflow as tf
 from tensorflow.python import keras
 from optuna.integration import KerasPruningCallback
 from farmer import ncc
@@ -163,19 +164,41 @@ class TrainTask:
     def _do_model_optimization_task(
         self, model, train_dataset, validation_dataset, callbacks
     ):
-        train_gen = ncc.generators.Dataloder(
-            train_dataset, batch_size=self.config.train_params['batch_size'], shuffle=True)
-        valid_gen = ncc.generators.Dataloder(
-            validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
+        batch_size = self.config.train_params['batch_size']
+
+        input_shape = [self.config.height, self.config.width, 3]
+        if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            output_shape = [
+                self.config.height, self.config.width, self.config.nb_classes]
+        elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
+            output_shape = [self.config.nb_classes]
+
+        train_gens = ncc.generators.gen(train_dataset, True)
+        val_gens = ncc.generators.gen(validation_dataset, False)
+
+        train_gen = tf.data.Dataset.from_generator(
+            lambda: train_gens,
+            (tf.float32, tf.float32),
+            output_shapes=(input_shape, output_shape),
+        ).batch(batch_size)
+
+        valid_gen = tf.data.Dataset.from_generator(
+            lambda: val_gens,
+            (tf.float32, tf.float32),
+            output_shapes=(input_shape, output_shape),
+        ).batch(batch_size)
+
+        steps_per_epoch = len(train_dataset) // batch_size
+        validation_steps = len(validation_dataset) // batch_size
 
         try:
             model.fit(
                 train_gen,
-                steps_per_epoch=len(train_gen),
+                steps_per_epoch=steps_per_epoch,
                 callbacks=callbacks,
                 epochs=self.config.epochs,
                 validation_data=valid_gen,
-                validation_steps=len(valid_gen),
+                validation_steps=validation_steps,
                 workers=16 if self.config.multi_gpu else 1,
                 max_queue_size=32 if self.config.multi_gpu else 10,
                 use_multiprocessing=self.config.multi_gpu,

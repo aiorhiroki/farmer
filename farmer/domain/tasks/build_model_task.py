@@ -1,4 +1,3 @@
-import segmentation_models
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
@@ -9,6 +8,7 @@ from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 from farmer.ncc import losses
 
+import tensorflow as tf
 from tensorflow import keras
 
 
@@ -18,29 +18,28 @@ class BuildModelTask:
 
     def command(self):
         # return: base_model is saved when training on multi gpu
-
-        base_model = self._do_make_model_task(
-            task=self.config.task,
-            model_name=self.config.model_name,
-            nb_classes=self.config.nb_classes,
-            height=self.config.height,
-            width=self.config.width,
-            backbone=self.config.train_params['backbone'],
-            activation=self.config.train_params['activation']
-        )
-        base_model = self._do_load_model_task(
-            base_model, self.config.trained_model_path
-        )
-        model = self._do_multi_gpu_task(
-            base_model, self.config.multi_gpu, self.config.nb_gpu
-        )
-        compiled_model = self._do_compile_model_task(
-            model,
-            self.config.train_params['optimizer'],
-            self.config.train_params['learning_rate'],
-            self.config.task,
-            self.config.train_params['loss']
-        )
+        strategy = tf.distribute.MirroredStrategy()
+        print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+        with strategy.scope():
+            base_model = self._do_make_model_task(
+                task=self.config.task,
+                model_name=self.config.model_name,
+                nb_classes=self.config.nb_classes,
+                height=self.config.height,
+                width=self.config.width,
+                backbone=self.config.train_params['backbone'],
+                activation=self.config.train_params['activation']
+            )
+            model = self._do_load_model_task(
+                base_model, self.config.trained_model_path
+            )
+            compiled_model = self._do_compile_model_task(
+                model,
+                self.config.train_params['optimizer'],
+                self.config.train_params['learning_rate'],
+                self.config.task,
+                self.config.train_params['loss']
+            )
 
         return compiled_model, base_model
 
@@ -129,14 +128,6 @@ class BuildModelTask:
             model.load_weights(trained_model_path)
         return model
 
-    def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
-        if multi_gpu:
-            if self.config.framework == "tensorflow":
-                model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
-        else:
-            model = base_model
-        return model
-
     def _do_compile_model_task(
         self,
         model,
@@ -178,8 +169,14 @@ class BuildModelTask:
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,
-                    metrics=[metrics.IOUScore(class_indexes=list(range(1, self.config.nb_classes))),
-                             metrics.FScore(class_indexes=list(range(1, self.config.nb_classes)))],
+                    metrics=[
+                        metrics.IOUScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes))),
+                        metrics.FScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes)))
+                    ],
                 )
             else:
                 raise NotImplementedError

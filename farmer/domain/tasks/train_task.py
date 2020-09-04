@@ -79,14 +79,20 @@ class TrainTask:
             )
 
         # Learning Rate Schedule
-        if self.config.train_params.cosine_decay:
+        if self.config.scheduler_name:
             ncc_scheduler = ncc.schedulers.Scheduler(
-                self.config.train_params.cosine_lr_max,
-                self.config.train_params.cosine_lr_min,
-                self.config.epochs
+                lr_max=self.config.cosine_lr_max,
+                lr_min=self.config.cosine_lr_min,
+                T_max=self.config.epochs,
+                base_lr=self.config.scheduler_base_lr,
+                step_size=self.config.step_size,
+                step_gamma=self.config.step_gamma,
+                milestones=self.config.milestones,
+                exp_gamma=self.config.exp_gamma,
             )
+
             scheduler = keras.callbacks.LearningRateScheduler(
-                ncc_scheduler.cosine_decay)
+                getattr(ncc_scheduler, self.config.scheduler_name) )
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)

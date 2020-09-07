@@ -106,7 +106,9 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        plot_learning_rate = ncc.callbacks.PlotLearningRate(learning_path)
+
+        callbacks = [checkpoint, scheduler, plot_history, plot_learning_rate]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History

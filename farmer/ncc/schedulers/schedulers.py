@@ -1,11 +1,11 @@
 import numpy as np
 
 class Scheduler:
-    def __init__(self, lr_max, lr_min, T_max, base_lr,
-                step_size, step_gamma, milestones, exp_gamma):
+    def __init__(self, cos_lr_max, cos_lr_min, T_max, base_lr,
+                step_size, step_gamma, milestones, exp_gamma, cyc_lr_max, cyc_lr_min):
         # CosineDecay
-        self.lr_max = lr_max
-        self.lr_min = lr_min
+        self.cos_lr_max = cos_lr_max
+        self.cos_lr_min = cos_lr_min
         self.T_max = T_max
 
         # TODO :引数に追加
@@ -22,10 +22,14 @@ class Scheduler:
         # ExponentialLR
         self.exp_gamma = exp_gamma
 
+        # CyclicalLR
+        self.cyc_lr_max = cyc_lr_max
+        self.cyc_lr_min = cyc_lr_min
+
 
     def cosine_decay(self, epoch):
-        lr = self.lr_min
-        lr += 1/2*(self.lr_max-self.lr_min)*(1+np.cos(epoch/self.T_max*np.pi))
+        lr = self.cos_lr_min
+        lr += 1/2*(self.cos_lr_max-self.cos_lr_min)*(1+np.cos(epoch/self.T_max*np.pi))
         return lr
 
     def step_lr(self, epoch):
@@ -43,5 +47,15 @@ class Scheduler:
         lr = self.base_lr * (self.exp_gamma ** epoch)
         return lr
 
-    # def cyclical_lr(self, epoch):
+    def cyclical_lr(self, epoch):
+        max_min_diff = self.cyc_lr_max - self.cyc_lr_min
+        quotient = epoch // self.step_size
+        remainder = epoch % self.step_size
+        if quotient % 2 == 0:
+            lr = self.cyc_lr_min
+            lr += max_min_diff * (remainder / self.step_size)
+        else:
+            lr = self.cyc_lr_max
+            lr -= max_min_diff * (remainder / self.step_size)
+        return lr
 

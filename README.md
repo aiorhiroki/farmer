@@ -22,6 +22,7 @@ exit
 ### `build docker`
 ```bash
 docker build -t farmer:v2.0 .
+#when it fails, try with --no-cache
 ```
 
 ## Run docker container

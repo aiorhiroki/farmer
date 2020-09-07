@@ -3,26 +3,15 @@ import numpy as np
 class Scheduler:
     def __init__(self, cos_lr_max, cos_lr_min, T_max, base_lr,
                 step_size, step_gamma, milestones, exp_gamma, cyc_lr_max, cyc_lr_min):
-        # CosineDecay
         self.cos_lr_max = cos_lr_max
         self.cos_lr_min = cos_lr_min
         self.T_max = T_max
-
-        # TODO :引数に追加
         self.base_lr = base_lr
-
-        # StepLR
         self.step_size = step_size
         self.step_gamma = step_gamma
-
-        # MultiStepLR
         self.milestones = milestones
         self.milestone_num = 0
-
-        # ExponentialLR
         self.exp_gamma = exp_gamma
-
-        # CyclicalLR
         self.cyc_lr_max = cyc_lr_max
         self.cyc_lr_min = cyc_lr_min
 

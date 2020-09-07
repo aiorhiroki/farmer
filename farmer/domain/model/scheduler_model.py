@@ -11,12 +11,12 @@ class LRScheduler:
     cosine_lr_min: float = 0.001
     scheduler_base_lr: float = 0.001
     step_lr: bool = False
-    multi_step_lr: bool = False
-    exponential_lr: bool = False
-    cyclical_lr: bool = False
     step_size: int = 20
     step_gamma: float = 0.5
+    multi_step_lr: bool = False
     milestones: List[int] = field(default_factory=list)
+    exponential_lr: bool = False
     exp_gamma: float = 0.95
+    cyclical_lr: bool = False
     cyc_lr_max: float = 0.01
     cyc_lr_min: float = 0.001

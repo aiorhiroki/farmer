@@ -17,6 +17,7 @@ class Scheduler:
 
         # MultiStepLR
         self.milestones = milestones
+        self.milestone_num = 0
 
         # ExponentialLR
         self.exp_gamma = exp_gamma
@@ -28,15 +29,14 @@ class Scheduler:
         return lr
 
     def step_lr(self, epoch):
-        if (epoch != 0) and (epoch % self.step_size == 0):
-            reduce_num = epoch // self.step_size
-            lr = self.base_lr * (self.step_gamma ** reduce_num)
+        reduce_num = epoch // self.step_size
+        lr = self.base_lr * (self.step_gamma ** reduce_num)
         return lr
 
     def multi_step_lr(self, epoch):
         if epoch in self.milestones:
-            index = self.milestones.index(epoch)
-            lr = self.base_lr * (self.step_gamma ** (index + 1))
+            self.milestone_num = self.milestones.index(epoch) + 1
+        lr = self.base_lr * (self.step_gamma ** self.milestone_num)
         return lr
 
     def exponential_lr(self, epoch):

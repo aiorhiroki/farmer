@@ -62,6 +62,6 @@ train_colors:
 cosine_decay: False # True if using cosine_decay for learning rate
 cosine_lr_max: 0.001
 cosine_lr_min: 0.0001
-early_stopping: False # True if using early_stopping to interruption
+early_stopping: True # True if using early_stopping to interruption
 patience: 5
 monitor: val_loss

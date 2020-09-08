@@ -95,23 +95,13 @@ class TrainTask:
         # Early Stoppoing
         if self.config.early_stopping:
             early_stopping = keras.callbacks.EarlyStopping(
-                self.config.patience,
                 self.config.monitor,
-                min_delta=0,
-                verbose=2,
-                mode='auto',
-                baseline=None,
-                restore_best_weights=False
+                self.config.patience
             )
         else:
             early_stopping = keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                min_delta=0,
-                patience=10,
-                verbose=2,
-                mode='auto',
-                baseline=None,
-                restore_best_weights=False
+                patience=10
             )
 
         # Plot History

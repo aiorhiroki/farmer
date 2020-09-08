@@ -92,6 +92,13 @@ class TrainTask:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
 
+        # Early Stoppoing
+        if self.config.early_stopping:
+            early_stopping = keras.callbacks.EarlyStopping(
+                self.config.patience,
+                self.config.monitor
+            )
+
         # Plot History
         # result_dir/learning/
         learning_path = self.config.learning_path
@@ -101,7 +108,7 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        callbacks = [checkpoint, scheduler, plot_history, early_stopping]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History

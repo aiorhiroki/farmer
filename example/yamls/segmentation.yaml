@@ -24,7 +24,7 @@ train_params:
 weights_info: 
     classes: # assign only when you use backbone weights
     weights: 
-epochs: 50
+epochs: 2
 augmentation:
   HorizontalFlip:
   PadIfNeeded:
@@ -59,9 +59,6 @@ train_colors:
     - 5
     - 10
     - 15
-cosine_decay: False # True if using cosine_decay for learning rate
-cosine_lr_max: 0.001
-cosine_lr_min: 0.0001
 early_stopping: True # True if using early_stopping to interruption
-patience: 2
+patience: 5
 monitor: val_loss

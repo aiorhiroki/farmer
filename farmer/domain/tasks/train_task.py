@@ -162,9 +162,9 @@ class TrainTask:
         # Early Stoppoing
         if self.config.early_stopping:
             early_stopping = keras.callbacks.EarlyStopping(
-                self.config.monitor,
-                self.config.patience,
-                mode = 'auto'
+                monitor=self.config.monitor,
+                patience=self.config.patience,
+                mode='auto'
             )
             callbacks.append(early_stopping)
 

@@ -165,7 +165,6 @@ class TrainTask:
                 self.config.monitor,
                 self.config.patience,
                 mode = 'auto'
-
             )
             callbacks.append(early_stopping)
 

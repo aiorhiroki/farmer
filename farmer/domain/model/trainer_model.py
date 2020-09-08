@@ -39,7 +39,7 @@ class Trainer(Config, ImageLoader):
     cosine_lr_max: int = 0.01
     cosine_lr_min: int = 0.001
     early_stopping: bool = False
-    patience: int = 5
+    patience: int = 10
     monitor: str = "val_loss"
     optuna: bool = False
     seed: int = 1

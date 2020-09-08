@@ -92,18 +92,6 @@ class TrainTask:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
 
-        # Early Stoppoing
-        if self.config.early_stopping:
-            early_stopping = keras.callbacks.EarlyStopping(
-                self.config.monitor,
-                self.config.patience
-            )
-        else:
-            early_stopping = keras.callbacks.EarlyStopping(
-                monitor='val_loss',
-                patience=10
-            )
-
         # Plot History
         # result_dir/learning/
         learning_path = self.config.learning_path
@@ -113,7 +101,7 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history, early_stopping]
+        callbacks = [checkpoint, scheduler, plot_history]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History
@@ -170,6 +158,17 @@ class TrainTask:
                 title=self.config.model_name,
             )
             callbacks.append(slack_logging)
+
+        # Early Stoppoing
+        if self.config.early_stopping:
+            early_stopping = keras.callbacks.EarlyStopping(
+                self.config.monitor,
+                self.config.patience,
+                mode = 'auto'
+
+            )
+            callbacks.append(early_stopping)
+
         return callbacks
 
     def _do_model_optimization_task(

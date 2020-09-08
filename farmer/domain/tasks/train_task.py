@@ -105,7 +105,7 @@ class TrainTask:
                 patience=10,
                 verbose=1,
                 mode='auto',
-                baseline=None
+                baseline=None,
                 restore_best_weights=False
             )
 

@@ -158,6 +158,16 @@ class TrainTask:
                 title=self.config.model_name,
             )
             callbacks.append(slack_logging)
+
+        # Early Stoppoing
+        if self.config.early_stopping:
+            early_stopping = keras.callbacks.EarlyStopping(
+                monitor=self.config.monitor,
+                patience=self.config.patience,
+                mode='auto'
+            )
+            callbacks.append(early_stopping)
+
         return callbacks
 
     def _do_model_optimization_task(

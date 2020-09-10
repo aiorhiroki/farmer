@@ -59,6 +59,6 @@ train_colors:
     - 5
     - 10
     - 15
-early_stopping: True # True if using early_stopping to interruption
+early_stopping: yes # yes if using early_stopping to interruption
 patience: 5
 monitor: val_loss

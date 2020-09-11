@@ -36,8 +36,7 @@ def get_aug(augmentation_dict):
                     }
                 )
                 augmentation = getattr(
-                    albumentations, aug_command
-                    )(**aug_param)
+                    albumentations, aug_command)(**aug_param)
 
             transforms.append(augmentation)
             

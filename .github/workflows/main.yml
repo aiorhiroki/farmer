@@ -14,6 +14,7 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root
+          pip install tensorflow==2.3.0
           python setup.py install
           cd example
           Godfarmer

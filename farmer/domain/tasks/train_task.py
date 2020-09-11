@@ -178,6 +178,10 @@ class TrainTask:
         valid_gen = ncc.generators.Dataloder(
             validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
 
+        class_weights = None
+        if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            class_weights = self.config.class_weights
+
         try:
             model.fit(
                 train_gen,
@@ -189,6 +193,7 @@ class TrainTask:
                 workers=16 if self.config.multi_gpu else 1,
                 max_queue_size=32 if self.config.multi_gpu else 10,
                 use_multiprocessing=self.config.multi_gpu,
+                class_weight=class_weights,
             )
         except KeyboardInterrupt:
             import sys

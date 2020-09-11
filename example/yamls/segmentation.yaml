@@ -49,6 +49,11 @@ input_dir: image
 label_dir: label
 trained_path:
 result_dir: segmentation_result
+class_weights: 
+    0: 0.0
+    1: 1.0
+    2: 2.0
+    3: 3.0
 class_names:
     - background
     - hoge

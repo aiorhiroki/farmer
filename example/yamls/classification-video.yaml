@@ -13,6 +13,7 @@ model_name: xception
 weights_info:
     classes: 
     weights: 
+class_weights: 
 train_params: 
     backbone: 
     activation: softmax

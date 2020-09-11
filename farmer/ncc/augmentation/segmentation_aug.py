@@ -1,11 +1,12 @@
-from keras.preprocessing import image
+from tensorflow.keras.preprocessing import image
 import numpy as np
 from .augment_and_mix import augment_and_mix
 import albumentations
 
+
 def segmentation_alb(input_image, label, mean, std, augmentation_dict):
     transforms = get_aug(augmentation_dict)
-    
+
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
@@ -13,6 +14,7 @@ def segmentation_alb(input_image, label, mean, std, augmentation_dict):
 
     else:
         return input_image, label
+
 
 def get_aug(augmentation_dict):
     transforms = list()
@@ -27,12 +29,12 @@ def get_aug(augmentation_dict):
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
             else:
-                augmentation = getattr(albumentations, aug_command)(**aug_param)
-        
-            transforms.append(augmentation)
-            
-    return transforms
+                augmentation = getattr(
+                    albumentations, aug_command)(**aug_param)
 
+            transforms.append(augmentation)
+
+    return transforms
 
 
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):

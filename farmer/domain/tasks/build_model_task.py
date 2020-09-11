@@ -3,7 +3,7 @@ from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task

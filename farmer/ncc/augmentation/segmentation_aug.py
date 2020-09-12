@@ -29,13 +29,18 @@ def get_aug(augmentation_dict):
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
             else:
+                aug_param.update(
+                    {
+                        k: tuple(v) for k, v in aug_param.items()
+                        if type(v) is list
+                    }
+                )
                 augmentation = getattr(
                     albumentations, aug_command)(**aug_param)
 
             transforms.append(augmentation)
 
     return transforms
-
 
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     """apply augmentation to one image respectively

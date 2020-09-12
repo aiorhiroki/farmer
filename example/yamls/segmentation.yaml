@@ -27,10 +27,6 @@ weights_info:
 epochs: 2
 augmentation:
   HorizontalFlip:
-  IAAPerspective:
-    scale:
-        - 0.05
-        - 0.1
   PadIfNeeded:
     min_height: 256
     min_width: 512

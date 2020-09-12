@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import os
 from datetime import datetime
 from .config_model import Config
-from .train_params import TrainParams
+from .train_params_model import TrainParams
 from .image_loader_model import ImageLoader
 
 

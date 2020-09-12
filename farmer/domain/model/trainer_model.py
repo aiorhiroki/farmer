@@ -32,8 +32,8 @@ class Trainer(Config, ImageLoader):
     n_trials: int = 10
     timeout: int = None
     trial_number: int = None
-    trial_params: TrainParams = None
-    train_params: dict = None
+    trial_params: dict = None
+    train_params: TrainParams = None
 
     def __post_init__(self):
         self.task = self.get_task()

@@ -16,8 +16,10 @@ class EdaTask:
         if self.config.input_data_type == 'image':
             if len(train_set) > 2000:
                 sample_train_set = random.sample(train_set, 2000)
-            else:
+            elif len(train_set) > 0:
                 sample_train_set = train_set
+            else:
+                return
             self._do_compute_mean_std(sample_train_set)
 
     def _do_save_params_task(self):
@@ -61,6 +63,8 @@ class EdaTask:
     def _do_compute_mean_std(self, train_set):
         """train set全体の平均と標準偏差をchannelごとに計算
         """
+        if self.config.mean is not None and self.config.std is not None:
+            return
         bgr_images = []
         for input_file, label in train_set:
             x = cv2.imread(input_file)

@@ -9,18 +9,18 @@ class TrainTask:
         self.config = config
 
     def command(
-            self, model, base_model, training_set, validation_set, trial):
+            self, model, training_set, validation_set, trial):
 
         train_dataset, valid_dataset = self._do_generate_batch_task(
             training_set, validation_set
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_dataset, valid_dataset, trial
+            model, train_dataset, valid_dataset, trial
         )
         trained_model = self._do_model_optimization_task(
             model, train_dataset, valid_dataset, callbacks
         )
-        save_model = self._do_save_model_task(trained_model, base_model)
+        save_model = self._do_save_model_task(trained_model)
 
         return save_model
 
@@ -212,14 +212,8 @@ class TrainTask:
 
         return model
 
-    def _do_save_model_task(self, model, base_model):
+    def _do_save_model_task(self, model):
         # result_dir/model/
         model_path = os.path.join(self.config.model_path, "last_model.h5")
-
-        # Last model save
-        if self.config.multi_gpu:
-            base_model.save(model_path)
-            return base_model
-        else:
-            model.save(model_path)
-            return model
+        model.save(model_path)
+        return model

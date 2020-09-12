@@ -33,16 +33,14 @@ def fit():
         print("config path running: ", config_path)
         with open(config_path) as yamlfile:
             config = yaml.safe_load(yamlfile)
-        train_params = TrainParams(**config.get("train_params"))
         config.update(
-            {
-                k: v for (k, v) in run_config.items()
-                if k != "config_paths" or k != "train_params"}
+            {k: v for (k, v) in run_config.items() if k != "config_paths"}
         )
-        config.update(dict(config_path=config_path))
+        train_params = TrainParams(**config.get("train_params"))
+        config.update(dict(config_path=config_path, train_params=train_params))
         if secret_config:
             config.update(secret_config)
-        trainer = Trainer(**config, train_params=train_params)
+        trainer = Trainer(**config)
         val_dirs = trainer.val_dirs
         if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation

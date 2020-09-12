@@ -1,7 +1,6 @@
 import shutil
 from farmer import ncc
 import os
-import dataclasses
 import numpy as np
 import cv2
 import random

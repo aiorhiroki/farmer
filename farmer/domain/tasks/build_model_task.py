@@ -1,4 +1,3 @@
-import segmentation_models
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
@@ -84,8 +83,6 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
-            else:
-                model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')
@@ -173,16 +170,23 @@ class BuildModelTask:
                 print('Loss:', loss_func)
                 print('------------------')
                 loss_params = self.config.train_params['loss_params']
-                loss_params['class_weights'] = [ 1.0 for i in range(self.config.nb_classes)]
-                for class_id, class_weight in self.config.class_weights.items():
-                    loss_params['class_weights'][class_id] = class_weight
+                loss_params['class_weights'] = [
+                    1.0 for i in range(self.config.nb_classes)]
+                for class_id, weight in self.config.class_weights.items():
+                    loss_params['class_weights'][class_id] = weight
                 print('class weight:', loss_params['class_weights'])
                 loss = getattr(losses, loss_func)(**loss_params)
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,
-                    metrics=[metrics.IOUScore(class_indexes=list(range(1, self.config.nb_classes))),
-                             metrics.FScore(class_indexes=list(range(1, self.config.nb_classes)))],
+                    metrics=[
+                        metrics.IOUScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes))),
+                        metrics.FScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes)))
+                    ],
                 )
             else:
                 raise NotImplementedError

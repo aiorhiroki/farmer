@@ -35,7 +35,6 @@ class Trainer(Config, ImageLoader):
     trial_number: int = None
     trial_params: TrainParams = None
     train_params: dict = None
-    optuna_params: dict = None
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -75,13 +74,11 @@ class Trainer(Config, ImageLoader):
             }
 
         # For optuna analysis hyperparameter
-        def check_need_optuna(params_dict: dict):
-            for key, val in params_dict.items():
+        def _check_need_optuna(train_params: dict):
+            for val in dataclass.astuple(train_params):
                 if isinstance(val, list):
                     self.optuna = True
                 elif isinstance(val, dict):
-                    check_need_optuna(val)
+                    _check_need_optuna(val)
 
-        check_need_optuna(self.train_params)
-        if self.optuna:
-            self.optuna_params = copy.deepcopy(self.train_params)
+        _check_need_optuna(self.train_params)

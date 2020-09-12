@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from tensorflow.python import keras
-from optuna.integration import KerasPruningCallback
 from farmer import ncc
 
 
@@ -38,7 +37,7 @@ class TrainTask:
         )
 
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
-            train_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+            train_set = ncc.generators.ClassificationDataset(**sequence_args)
 
             sequence_args.update(
                 annotations=validation_set,
@@ -46,10 +45,10 @@ class TrainTask:
                 std=np.ones(3),
                 augmentation=[]
             )
-            validation_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+            valid_set = ncc.generators.ClassificationDataset(**sequence_args)
 
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            train_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+            train_set = ncc.generators.SegmentationDataset(**sequence_args)
 
             sequence_args.update(
                 annotations=validation_set,
@@ -57,9 +56,9 @@ class TrainTask:
                 std=np.ones(3),
                 augmentation=[]
             )
-            validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+            valid_set = ncc.generators.SegmentationDataset(**sequence_args)
 
-        return train_dataset, validation_dataset
+        return train_set, valid_set
 
     def _do_set_callbacks_task(
             self, base_model, train_dataset, valid_dataset, trial):
@@ -125,12 +124,14 @@ class TrainTask:
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'val_f1-score'))
+                callbacks.append(
+                    ncc.callbacks.KerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 # result_dir/model/
-                batch_model_path = os.path.join(self.config.model_path, "batch_model.h5")
+                batch_model_path = os.path.join(
+                    self.config.model_path, "batch_model.h5")
 
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
                     learning_path,
@@ -143,7 +144,8 @@ class TrainTask:
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'val_acc'))
+                callbacks.append(
+                    ncc.callbacks.KerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
@@ -158,15 +160,35 @@ class TrainTask:
                 title=self.config.model_name,
             )
             callbacks.append(slack_logging)
+
+        # Early Stoppoing
+        if self.config.early_stopping:
+            early_stopping = keras.callbacks.EarlyStopping(
+                monitor=self.config.monitor,
+                patience=self.config.patience,
+                mode='auto'
+            )
+            callbacks.append(early_stopping)
+
         return callbacks
 
     def _do_model_optimization_task(
         self, model, train_dataset, validation_dataset, callbacks
     ):
         train_gen = ncc.generators.Dataloder(
-            train_dataset, batch_size=self.config.train_params['batch_size'], shuffle=True)
+            train_dataset,
+            batch_size=self.config.train_params['batch_size'],
+            shuffle=True
+        )
         valid_gen = ncc.generators.Dataloder(
-            validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
+            validation_dataset,
+            batch_size=self.config.train_params['batch_size'],
+            shuffle=False
+        )
+
+        class_weights = None
+        if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
+            class_weights = self.config.class_weights
 
         try:
             model.fit(
@@ -179,6 +201,7 @@ class TrainTask:
                 workers=16 if self.config.multi_gpu else 1,
                 max_queue_size=32 if self.config.multi_gpu else 10,
                 use_multiprocessing=self.config.multi_gpu,
+                class_weight=class_weights,
             )
         except KeyboardInterrupt:
             import sys

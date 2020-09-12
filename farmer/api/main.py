@@ -9,7 +9,7 @@ from farmer.domain.workflows.train_workflow import TrainWorkflow
 
 import optuna
 import numpy as np
-from keras.backend import clear_session
+from tensorflow.keras.backend import clear_session
 import logging
 
 

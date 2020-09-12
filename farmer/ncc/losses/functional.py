@@ -57,7 +57,6 @@ def _tversky_loss(gt, pr, alpha=0.45, beta=0.55, class_weights=1., **kwargs):
 
 
 def _focal_tversky_loss(gt, pr, alpha=0.45, beta=0.55, gamma=2.5, class_weights=1., **kwargs):
-    gamma = tf.clip_by_value(gamma, 1.0, 3.0)
     index =_tversky_index(gt, pr, alpha, beta) * class_weights
-    loss = K.pow((1.0 - index), (1.0 / gamma))
+    loss = K.pow((1.0 - index), gamma)
     return K.mean(loss)

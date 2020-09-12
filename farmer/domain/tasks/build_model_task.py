@@ -3,7 +3,7 @@ from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, Model2D
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
@@ -172,9 +172,12 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                loss = getattr(losses, loss_func)(
-                    **self.config.train_params['loss_params']
-                )
+                loss_params = self.config.train_params['loss_params']
+                loss_params['class_weights'] = [ 1.0 for i in range(self.config.nb_classes)]
+                for class_id, class_weight in self.config.class_weights.items():
+                    loss_params['class_weights'][class_id] = class_weight
+                print('class weight:', loss_params['class_weights'])
+                loss = getattr(losses, loss_func)(**loss_params)
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,

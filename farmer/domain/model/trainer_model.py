@@ -2,9 +2,8 @@ from dataclasses import dataclass
 import copy
 import os
 from datetime import datetime
-from dataclasses import field
-from typing import List, Dict
 from .config_model import Config
+from .train_params import TrainParams
 from .image_loader_model import ImageLoader
 
 
@@ -14,20 +13,11 @@ class Trainer(Config, ImageLoader):
     training: bool = None
     epochs: int = None
     steps: int = None
-    batch_size: int = None
-    learning_rate: float = None
-    optimizer: str = None
-    augmentation: List[str] = field(default_factory=list)
     gpu: str = None
     nb_gpu: int = None
     multi_gpu: bool = None
-    loss: str = None
-    loss_params: Dict[str, float] = field(default_factory=dict)
     trained_path: str = None
     trained_model_path: str = None
-    model_name: str = None
-    backbone: str = None
-    activation: str = "softmax"
     nb_train_data: int = 0
     nb_validation_data: int = 0
     nb_test_data: int = 0
@@ -35,9 +25,6 @@ class Trainer(Config, ImageLoader):
     segmentation_val_step: int = 3
     n_splits: int = 5
     batch_period: int = 100
-    cosine_decay: bool = False
-    cosine_lr_max: int = 0.01
-    cosine_lr_min: int = 0.001
     early_stopping: bool = False
     patience: int = 10
     monitor: str = "val_loss"
@@ -46,12 +33,9 @@ class Trainer(Config, ImageLoader):
     n_trials: int = 10
     timeout: int = None
     trial_number: int = None
-    trial_params: dict = None
+    trial_params: TrainParams = None
     train_params: dict = None
     optuna_params: dict = None
-    weights_info: Dict[str, str] = field(default_factory=dict)
-    class_weights: Dict[int, float] = field(default_factory=dict)
- 
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -87,18 +71,17 @@ class Trainer(Config, ImageLoader):
         self.mean, self.std = None, None
         if not self.class_weights:
             self.class_weights = {
-                class_id:1.0 for class_id in range(self.nb_classes)
+                class_id: 1.0 for class_id in range(self.nb_classes)
             }
 
         # For optuna analysis hyperparameter
         def check_need_optuna(params_dict: dict):
             for key, val in params_dict.items():
                 if isinstance(val, list):
-                    self.optuna =  True
+                    self.optuna = True
                 elif isinstance(val, dict):
                     check_need_optuna(val)
 
         check_need_optuna(self.train_params)
         if self.optuna:
             self.optuna_params = copy.deepcopy(self.train_params)
-        

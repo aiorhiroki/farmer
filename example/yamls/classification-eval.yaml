@@ -6,10 +6,8 @@ test_dirs:
     - test
 training: no
 task: classification
-model_name: xception
-weights_info:
-    classes: 
-    weights: 
+
+
 train_params: 
     backbone: 
     activation: softmax
@@ -21,8 +19,13 @@ train_params:
         gamma: 
     batch_size: 8 
     learning_rate: 0.001
+    model_name: xception
+    weights_info:
+        classes: 
+        weights: 
+    augmentation:
+
 epochs: 2
-augmentation:
 width: 80
 height: 80
 trained_path: result/classification/images/classification_result

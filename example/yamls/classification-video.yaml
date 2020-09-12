@@ -9,11 +9,8 @@ test_dirs:
 training: yes
 task: classification # classification or segmentation or detection
 input_data_type: video # image or video
-model_name: xception
-weights_info:
-    classes: 
-    weights: 
-class_weights: 
+
+
 train_params: 
     backbone: 
     activation: softmax
@@ -25,8 +22,14 @@ train_params:
         gamma: 
     batch_size: 2
     learning_rate: 0.001
+    model_name: xception
+    weights_info:
+        classes: 
+        weights: 
+    class_weights: 
+    augmentation:
+        
 epochs: 2
-augmentation:
 width: 80
 height: 80
 batch_period: 5

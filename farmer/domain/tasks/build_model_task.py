@@ -20,22 +20,22 @@ class BuildModelTask:
 
         model = self._do_make_model_task(
             task=self.config.task,
-            model_name=self.config.model_name,
+            model_name=self.config.train_params.model_name,
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.train_params['backbone'],
-            activation=self.config.train_params['activation']
+            backbone=self.config.train_params.backbone,
+            activation=self.config.train_params.activation
         )
         model = self._do_load_model_task(
             model, self.config.trained_model_path
         )
         model = self._do_compile_model_task(
             model,
-            self.config.train_params['optimizer'],
-            self.config.train_params['learning_rate'],
+            self.config.train_params.optimizer,
+            self.config.train_params.learning_rate,
             self.config.task,
-            self.config.train_params['loss']
+            self.config.train_params.loss
         )
 
         return model
@@ -65,7 +65,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.weights_info
+                    weights_info=self.config.train_params.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(
@@ -78,7 +78,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.weights_info
+                    weights_info=self.config.train_params.weights_info
                 )
 
         elif task == Task.SEMANTIC_SEGMENTATION:
@@ -95,7 +95,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
-                    weights_info=self.config.weights_info,
+                    weights_info=self.config.train_params.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
@@ -158,7 +158,7 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                loss_params = self.config.train_params['loss_params']
+                loss_params = self.config.train_params.loss_params
                 loss_params['class_weights'] = [
                     1.0 for i in range(self.config.nb_classes)]
                 for class_id, weight in self.config.class_weights.items():

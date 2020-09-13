@@ -10,7 +10,8 @@ class EdaTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, train_set):
+    def command(self, annotation_set):
+        train_set, _, _ = annotation_set
         self._do_save_params_task()
         self._do_post_config_task()
         if self.config.input_data_type == 'image':

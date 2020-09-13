@@ -31,7 +31,7 @@ class TrainTask:
             nb_classes=self.config.nb_classes,
             mean=self.config.mean,
             std=self.config.std,
-            augmentation=self.config.augmentation,
+            augmentation=self.config.train_params.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
@@ -79,10 +79,10 @@ class TrainTask:
             )
 
         # Learning Rate Schedule
-        if self.config.cosine_decay:
+        if self.config.train_params.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
-                self.config.cosine_lr_max,
-                self.config.cosine_lr_min,
+                self.config.train_params.cosine_lr_max,
+                self.config.train_params.cosine_lr_min,
                 self.config.epochs
             )
             scheduler = keras.callbacks.LearningRateScheduler(
@@ -177,18 +177,18 @@ class TrainTask:
     ):
         train_gen = ncc.generators.Dataloder(
             train_dataset,
-            batch_size=self.config.train_params['batch_size'],
+            batch_size=self.config.train_params.batch_size,
             shuffle=True
         )
         valid_gen = ncc.generators.Dataloder(
             validation_dataset,
-            batch_size=self.config.train_params['batch_size'],
+            batch_size=self.config.train_params.batch_size,
             shuffle=False
         )
 
         class_weights = None
         if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            class_weights = self.config.class_weights
+            class_weights = self.config.train_params.class_weights
 
         try:
             model.fit(

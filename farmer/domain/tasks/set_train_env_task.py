@@ -1,7 +1,7 @@
 import os
 import shutil
 import random as rn
-from dataclasses import dataclass
+import dataclasses
 import multiprocessing as mp
 import numpy as np
 
@@ -61,7 +61,7 @@ class SetTrainEnvTask:
 
         def set_train_params(train_params: dict) -> dict:
             params = {}
-            for key, val in dataclass.asdict(train_params):
+            for key, val in train_params.items():
                 if isinstance(val, dict):
                     params[key] = set_train_params(val)
                 elif isinstance(val, list):
@@ -82,7 +82,8 @@ class SetTrainEnvTask:
             return TrainParams(**params)
 
         # set train params to params setted by optuna
-        self.config.train_params = set_train_params(self.config.train_params)
+        self.config.train_params = set_train_params(
+            dataclasses.asdict(self.config.train_params))
 
     def _do_create_dirs_task(self):
         # 結果を保存するディレクトリを目的別に作ります。

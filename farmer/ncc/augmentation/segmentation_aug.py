@@ -29,55 +29,33 @@ def get_aug(augmentation_dict):
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
             else:
-                aug_param.update(
-                    {
-                        k: tuple(v) for k, v in aug_param.items()
-                        if type(v) is list
-                    }
-                )
+                aug_list = sorted(aug_param.items(), key=lambda x: x[0])
+                new_param = dict()
+                for k, v in aug_list:
+                    if "-" in k:
+                        tuple_name, tuple_id = k.split("-")
+                        if int(tuple_id) == 1:
+                            new_param[tuple_name] = (v,)
+                        else:
+                            new_param[tuple_name] += (v,)
+                    else:
+                        new_param[k] = v
                 augmentation = getattr(
-                    albumentations, aug_command)(**aug_param)
+                    albumentations, aug_command)(**new_param)
 
             transforms.append(augmentation)
 
     return transforms
 
+
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     """apply augmentation to one image respectively
     """
-    # Cut off black mask of left and right edge
-    if "cut_black" in augmentation_dict and augmentation_dict["cut_black"] is True:
-        width = input_image.shape[1]
-        input_image = input_image[:, int(width * 0.05):int(width * 0.95), :]
-        label = label[:, int(width * 0.05):int(width * 0.95)]
 
     # For Keras ImageDataGenerator
     data_gen_args = dict()
     data_gen_args["fill_mode"] = "constant"  # cvalの値で埋める
     data_gen_args["cval"] = 0  # 黒で埋める
-
-    if "zoom_range" in augmentation_dict:
-        # convert zoom range to fit keras.ImageDataGenerator
-        # args: zoom_range: [0.8, 1.3]  # x0.8 ~ x1.3
-        # -> [0.7, 1.2]
-        zoom_range_min, zoom_range_max = augmentation_dict["zoom_range"]
-        zoom_range_lower = 2 - zoom_range_max
-        zoom_range_upper = 2 - zoom_range_min
-        data_gen_args["zoom_range"] = [zoom_range_lower, zoom_range_upper]
-    if "vertical_flip" in augmentation_dict:
-        data_gen_args["vertical_flip"] = augmentation_dict["vertical_flip"]
-    if "horizontal_flip" in augmentation_dict:
-        data_gen_args["horizontal_flip"] = augmentation_dict["horizontal_flip"]
-    if "rotation_range" in augmentation_dict:
-        data_gen_args["rotation_range"] = augmentation_dict["rotation_range"]
-    if "width_shift_range" in augmentation_dict:
-        data_gen_args["width_shift_range"] = augmentation_dict["width_shift_range"]
-    if "height_shift_range" in augmentation_dict:
-        data_gen_args["height_shift_range"] = augmentation_dict["height_shift_range"]
-    if "shear_range" in augmentation_dict:
-        data_gen_args["shear_range"] = augmentation_dict["shear_range"]
-    if "channel_shift_range" in augmentation_dict:
-        data_gen_args["channel_shift_range"] = augmentation_dict["channel_shift_range"]
 
     # (H,W[,C]) => (N,H,W,C)
     input_image = input_image[np.newaxis]
@@ -100,7 +78,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
 
     # Not Keras ImageDataGenerator
     if "augmix" in augmentation_dict and augmentation_dict["augmix"] is True:
-        """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
+        """AugMix: to Improve Robustness and Uncertainty
         AugMixは最後に行う
         TODO: ひとまずハードラベル
         Affine変換系が施されたらソフトラベルにした方がいい？

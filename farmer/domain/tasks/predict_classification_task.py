@@ -42,14 +42,20 @@ class PredictClassificationTask:
     def _do_save_result_task(self, annotation_set, prediction, save_npy):
         if save_npy:
             np.save(f"{self.config.info_path}/pred.npy", prediction)
+
+        class_count = np.array([28666,  2727,   671,   813,   603,   432])
+        class_weight = np.sum(class_count)/(len(class_count)*class_count)
+        prediction *= class_weight
         prediction_classes = np.argmax(prediction, axis=-1)
         pred_result = list()
         for files, prediction_cls in zip(annotation_set, prediction_classes):
-            image_file, *_ = files
+            image_file, frame_id, true_cls = files
             pred_result.append(
                 [
                     image_file,
-                    self.config.class_names[int(prediction_cls)]
+                    frame_id,
+                    self.config.class_names[int(prediction_cls)],
+                    self.config.class_names[int(true_cls)]
                 ]
             )
         with open(f"{self.config.info_path}/pred.csv", "w") as fw:

@@ -28,7 +28,7 @@ def segmentation_alb(input_image, label, mean, std, augmentation_dict, aug_stat)
         return input_image, label
 
 
-def get_aug(augmentation_dict, aug_stat):
+def get_aug(augmentation_dict):
     transforms = list()
     for aug_command, aug_param in augmentation_dict.items():
         if aug_command.startswith("OneOf"):

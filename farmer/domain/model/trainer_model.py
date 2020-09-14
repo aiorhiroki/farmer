@@ -1,4 +1,5 @@
 import dataclasses
+import copy
 import os
 from datetime import datetime
 from .config_model import Config
@@ -34,6 +35,7 @@ class Trainer(Config, ImageLoader):
     trial_number: int = None
     trial_params: dict = None
     train_params: TrainParams = None
+    optuna_params: TrainParams = None
 
     def __post_init__(self):
         self.task = self.get_task()
@@ -80,3 +82,5 @@ class Trainer(Config, ImageLoader):
                     _check_need_optuna(val)
 
         _check_need_optuna(dataclasses.asdict(self.train_params))
+        if self.optuna:
+            self.optuna_params = copy.deepcopy(self.train_params)

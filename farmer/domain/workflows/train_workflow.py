@@ -25,7 +25,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def set_env_flow(self, trial):
         print("SET ENV FLOW ... ", end="")
-        SetTrainEnvTask(self._config).command(trial)
+        self._config = SetTrainEnvTask(self._config).command(trial)
         print("DONE")
 
     def read_annotation_flow(self):

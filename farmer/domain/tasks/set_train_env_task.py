@@ -19,6 +19,8 @@ class SetTrainEnvTask:
         self._do_set_optuna_params_task(trial)
         self._do_create_dirs_task()
 
+        return self.config
+
     def _do_set_random_seed_task(self):
         seed = self.config.seed
         # set random_seed
@@ -79,10 +81,8 @@ class SetTrainEnvTask:
                             train_params[key] = param_val
 
         # set train params to params setted by optuna
-        train_params_dict = dataclasses.asdict(self.config.train_params)
-        print("before; ", train_params_dict)
+        train_params_dict = dataclasses.asdict(self.config.optuna_params)
         set_train_params(train_params_dict)
-        print("after; ", train_params_dict)
         self.config.train_params = TrainParams(**train_params_dict)
 
     def _do_create_dirs_task(self):

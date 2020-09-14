@@ -7,7 +7,10 @@ import albumentations
 def segmentation_alb(input_image, label, mean, std, augmentation_dict, aug_stat):
     transforms = get_aug(augmentation_dict)
 
-    if "albumentation" in aug_stat:
+    if aug_stat is None:
+        return input_image, label
+    
+    elif "albumentation" in aug_stat:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
         return augmented['image'], augmented["mask"]
@@ -22,9 +25,6 @@ def segmentation_alb(input_image, label, mean, std, augmentation_dict, aug_stat)
 
     elif "imagegenerator" in aug_stat:
     # will be modified with keras_image_generator
-        return input_image, label
-
-    else:
         return input_image, label
 
 

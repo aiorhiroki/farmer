@@ -60,30 +60,30 @@ class SetTrainEnvTask:
             "/image", f"/trial{trial.number}/image")
 
         def set_train_params(train_params: dict) -> dict:
-            params = {}
             for key, val in train_params.items():
                 if isinstance(val, dict):
-                    params[key] = set_train_params(val)
+                    set_train_params(val)
                 elif isinstance(val, list):
                     if isinstance(val[0], str):
-                        params[key] = trial.suggest_categorical(key, val)
+                        train_params[key] = trial.suggest_categorical(key, val)
                     elif isinstance(val[0], (int, float)):
                         if len(val) == 2:
-                            params[key] = trial.suggest_loguniform(key, *val)
+                            train_params[key] = trial.suggest_loguniform(
+                                key, *val)
                         elif len(val) == 3:
                             param_val = trial.suggest_discrete_uniform(
                                 key, *val
                             )
                             if key == 'batch_size':
                                 param_val = int(param_val)
-                            params[key] = param_val
-                else:
-                    params[key] = val
-            return TrainParams(**params)
+                            train_params[key] = param_val
 
         # set train params to params setted by optuna
-        self.config.train_params = set_train_params(
-            dataclasses.asdict(self.config.train_params))
+        train_params_dict = dataclasses.asdict(self.config.train_params)
+        print("before; ", train_params_dict)
+        set_train_params(train_params_dict)
+        print("after; ", train_params_dict)
+        self.config.train_params = TrainParams(**train_params_dict)
 
     def _do_create_dirs_task(self):
         # 結果を保存するディレクトリを目的別に作ります。

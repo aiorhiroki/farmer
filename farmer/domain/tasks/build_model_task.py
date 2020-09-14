@@ -161,8 +161,8 @@ class BuildModelTask:
                 loss_params = self.config.train_params.loss_params
                 loss_params['class_weights'] = [
                     1.0 for i in range(self.config.nb_classes)]
-                for class_id, weight in self.config.class_weights.items():
-                    loss_params['class_weights'][class_id] = weight
+                for cls_i, w in self.config.train_params.class_weights.items():
+                    loss_params['class_weights'][cls_i] = w
                 print('class weight:', loss_params['class_weights'])
                 loss = getattr(losses, loss_func)(**loss_params)
                 model.compile(

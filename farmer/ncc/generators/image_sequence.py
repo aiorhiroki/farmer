@@ -3,7 +3,7 @@ import cv2
 
 import tensorflow
 import numpy as np
-from ..augmentation import augment_and_mix
+from ..augmentation import segmentation_alb, augment_and_mix
 from ..tasks import Task
 from ..utils import ImageUtil
 
@@ -65,7 +65,7 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
             if self.task == Task.SEMANTIC_SEGMENTATION:
                 label = self.image_util.read_image(label, self.train_colors)
                 if self.augmentation and len(self.augmentation) > 0:
-                    input_image, label = segmentation_aug(
+                    input_image, label = segmentation_alb(
                         input_image,
                         label,
                         self.mean, self.std,

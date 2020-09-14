@@ -25,6 +25,7 @@ weights_info:
     classes: # assign only when you use backbone weights
     weights: 
 epochs: 2
+augmentation_stat: albumentation
 augmentation:
   HorizontalFlip:
   PadIfNeeded:

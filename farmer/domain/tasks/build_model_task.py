@@ -1,17 +1,17 @@
+import re
 import segmentation_models
+
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, efficientnet
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 from farmer.ncc import losses
 
 from tensorflow import keras
-
-import re
 
 class BuildModelTask:
     def __init__(self, config):
@@ -87,12 +87,11 @@ class BuildModelTask:
                     weights_info=self.config.weights_info
                 )
             elif efficientnet_name_condition:
-                model_params = []
+                model_params = {}
                 model_params['nb_classes'] = nb_classes
                 model_params['height'] = height
                 model_params['width'] = width
                 model = getattr(efficientnet, model_name)(**model_params)
-
             else:
                 model = Model2D(nb_classes, height, width)
 

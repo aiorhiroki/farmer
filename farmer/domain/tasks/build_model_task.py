@@ -11,6 +11,7 @@ from farmer.ncc import losses
 
 from tensorflow import keras
 
+import re
 
 class BuildModelTask:
     def __init__(self, config):
@@ -57,6 +58,7 @@ class BuildModelTask:
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
+            efficientnet_name_condition = re.match('efficientnetb[0-7]', model_name)
 
             if model_name == "xception" and xception_shape_condition:
                 model = xception(
@@ -84,6 +86,13 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
+            elif efficientnet_name_condition:
+                model_params = []
+                model_params['nb_classes'] = nb_classes
+                model_params['height'] = height
+                model_params['width'] = width
+                model = getattr(efficientnet, model_name)(**model_params)
+
             else:
                 model = Model2D(nb_classes, height, width)
 

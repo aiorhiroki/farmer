@@ -76,7 +76,7 @@ class SetTrainEnvTask:
                             param_val = trial.suggest_discrete_uniform(
                                 key, *val
                             )
-                            if key == 'batch_size':
+                            if int(param_val) == param_val:
                                 param_val = int(param_val)
                             train_params[key] = param_val
 

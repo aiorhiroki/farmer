@@ -4,23 +4,36 @@ from .augment_and_mix import augment_and_mix
 import albumentations
 
 
-def segmentation_alb(input_image, label, mean, std, augmentation_dict):
+def segmentation_alb(input_image, label, mean, 
+                    std, augmentation_dict, aug_stat):
     transforms = get_aug(augmentation_dict)
 
-    if len(transforms) > 0:
+    if "albumentation" in aug_stat:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
         return augmented['image'], augmented["mask"]
+
+    elif "augmix" in aug_stat:
+        input_image = augment_and_mix(
+            input_image_processed,
+            mean, std,
+        )
+        label = label
+        return input_image, label
+
+    elif "imagegenerator" in aug_stat:
+    # will be modified with keras_image_generator
+        return input_image, label
 
     else:
         return input_image, label
 
 
-def get_aug(augmentation_dict):
+def get_aug(augmentation_dict, aug_stat):
     transforms = list()
     for aug_command, aug_param in augmentation_dict.items():
         if aug_command.startswith("OneOf"):
-            augs = get_aug(aug_param)
+            augs = get_aug(aug_param, aug_stat)
             augmentation = albumentations.OneOf(augs, aug_param['p'])
             transforms.append(augmentation)
         elif aug_command == 'p':
@@ -36,16 +49,10 @@ def get_aug(augmentation_dict):
 
     return transforms
 
-
+'''
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     """apply augmentation to one image respectively
     """
-    # Cut off black mask of left and right edge
-    if "cut_black" in augmentation_dict and augmentation_dict["cut_black"] is True:
-        width = input_image.shape[1]
-        input_image = input_image[:, int(width * 0.05):int(width * 0.95), :]
-        label = label[:, int(width * 0.05):int(width * 0.95)]
-
     # For Keras ImageDataGenerator
     data_gen_args = dict()
     data_gen_args["fill_mode"] = "constant"  # cvalの値で埋める
@@ -59,6 +66,7 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
         zoom_range_lower = 2 - zoom_range_max
         zoom_range_upper = 2 - zoom_range_min
         data_gen_args["zoom_range"] = [zoom_range_lower, zoom_range_upper]
+
     if "vertical_flip" in augmentation_dict:
         data_gen_args["vertical_flip"] = augmentation_dict["vertical_flip"]
     if "horizontal_flip" in augmentation_dict:
@@ -106,3 +114,4 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
         )
 
     return input_image_processed, label_processed
+'''

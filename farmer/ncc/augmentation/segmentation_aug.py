@@ -4,8 +4,7 @@ from .augment_and_mix import augment_and_mix
 import albumentations
 
 
-def segmentation_alb(input_image, label, mean, 
-                    std, augmentation_dict, aug_stat):
+def segmentation_alb(input_image, label, mean, std, augmentation_dict, aug_stat):
     transforms = get_aug(augmentation_dict)
 
     if "albumentation" in aug_stat:
@@ -15,7 +14,7 @@ def segmentation_alb(input_image, label, mean,
 
     elif "augmix" in aug_stat:
         input_image = augment_and_mix(
-            input_image_processed,
+            input_image,
             mean, std,
         )
         label = label

@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 import cv2
 from ..utils import ImageUtil
-from ..augmentation import segmentation_aug, segmentation_alb
+from ..augmentation import segmentation_alb
 
 
 class SegmentationDataset:
@@ -18,6 +18,7 @@ class SegmentationDataset:
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
             augmentation: list = list(),
+            augmentation_stat: str = None
             train_colors: list = list(),
             **kwargs
     ):
@@ -28,6 +29,7 @@ class SegmentationDataset:
         self.mean = mean
         self.std = std
         self.augmentation = augmentation
+        self.augmentation_stat = augmentation_stat
         self.train_colors = train_colors
 
     def __getitem__(self, i):
@@ -44,7 +46,8 @@ class SegmentationDataset:
             input_image, label = segmentation_alb(
                 input_image, label,
                 self.mean, self.std,
-                self.augmentation
+                self.augmentation,
+                self.augmentation_stat
             )
 
         # apply preprocessing

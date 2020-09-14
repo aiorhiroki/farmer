@@ -11,6 +11,7 @@ jobs:
 
       - name: Godfarmer
         run: |
+          apt-get update --fix-missing
           apt-get install -y libgl1-mesa-dev
           pip install poetry
           poetry config virtualenvs.create false

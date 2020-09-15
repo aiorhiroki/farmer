@@ -19,7 +19,7 @@ class SegmentationDataset:
             std: np.ndarray = np.ones(3),
             augmentation_stat: str = None,
             augmentation: list = list(),
-            augmix: bool = False,
+            augmix: bool = None,
             train_colors: list = list(),
             **kwargs
     ):

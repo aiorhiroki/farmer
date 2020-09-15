@@ -19,7 +19,7 @@ class Trainer(Config, ImageLoader):
     optimizer: str = None
     augmentation: List[str] = field(default_factory=list)
     augmentation_stat: str = None
-    augmix: bool = False
+    augmix: bool = None
     gpu: str = None
     nb_gpu: int = None
     multi_gpu: bool = None

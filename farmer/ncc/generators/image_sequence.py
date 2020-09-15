@@ -72,8 +72,8 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                         label,
                         self.mean, self.std,
                         self.augmentation_stat,
+                        self.augmentation,
                         self.augmix,
-                        self.augmentation
                     )
             batch_x.append(self.image_util.normalization(input_image))
             batch_y.append(self.image_util.cast_to_onehot(label))

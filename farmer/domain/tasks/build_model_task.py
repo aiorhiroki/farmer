@@ -1,4 +1,3 @@
-import re
 import segmentation_models
 
 from segmentation_models import Unet, PSPNet, FPN
@@ -85,7 +84,7 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
-            elif re.match('efficientnetb[0-7]', model_name):
+            elif model_name.startswith("efficientnetb"):
                 model = EfficientNet(
                     model_name=model_name,
                     nb_classes=nb_classes,

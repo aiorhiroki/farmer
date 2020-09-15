@@ -127,8 +127,3 @@ def efficientnetb7(nb_classes, height=600, width=600):
         model = Model(base_model.input, predictions)
 
     return model
-
-
-if __name__ == '__main__':
-    model = efficientnetb7(10)
-    print(model.summary())

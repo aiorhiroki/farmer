@@ -34,6 +34,7 @@ def segmentation_alb(
 
 def get_aug(augmentation_dict):
     transforms = list()
+    print(augmentation_dict)
     for aug_command, aug_param in augmentation_dict.items():
         if aug_command.startswith("OneOf"):
             augs = get_aug(aug_param)

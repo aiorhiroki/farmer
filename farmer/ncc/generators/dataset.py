@@ -17,8 +17,8 @@ class SegmentationDataset:
             nb_classes: int,
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
-            augmentation_stat: str = None,
             augmentation: list = list(),
+            augmentation_stat: str = None,
             augmix: bool = None,
             train_colors: list = list(),
             **kwargs
@@ -29,8 +29,8 @@ class SegmentationDataset:
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.mean = mean
         self.std = std
-        self.augmentation_stat = augmentation_stat
         self.augmentation = augmentation
+        self.augmentation_stat = augmentation_stat
         self.augmix = augmix
         self.train_colors = train_colors
 
@@ -48,8 +48,8 @@ class SegmentationDataset:
             input_image, label = segmentation_alb(
                 input_image, label,
                 self.mean, self.std,
-                self.augmentation_stat,
                 self.augmentation,
+                self.augmentation_stat,
                 self.augmix
             )
 

@@ -5,7 +5,7 @@ from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, efficientnet
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, EfficientNet
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
@@ -85,8 +85,14 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
-            elif re.match('efficientnetb[0-7]', model_name)
-                getattr(efficientnet, model_name)(nb_classes, height, width)
+            elif re.match('efficientnetb[0-7]', model_name):
+                model = EfficientNet(
+                    model_name=model_name,
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                )
+
             else:
                 model = Model2D(nb_classes, height, width)
 

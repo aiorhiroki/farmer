@@ -9,8 +9,9 @@ test_dirs:
     - test
 training: yes
 task: segmentation # classification or segmentation is supported
-model_name: deeplab_v3
+
 train_params: 
+    model_name: deeplab_v3
     backbone: 
         - xception
         - mobilenetv2
@@ -41,22 +42,23 @@ train_params:
     learning_rate: 
         - 0.00001  # min(10^n)
         - 0.1  # max(10^n)
-weights_info:
-    classes: # assign only when you use backbone weights
-    weights: 
+    weights_info:
+        classes: # assign only when you use backbone weights
+        weights: 
+    augmentation:
+        # - horizontal_flip
+        # - zoom
+    class_weights: 
+
 epochs: 2
 segmentation_val_step: 2
 n_trials: 3
-augmentation:
-    # - horizontal_flip
-    # - zoom
 width: 512
 height: 256
 input_dir: image
 label_dir: label
 trained_path:
 result_dir: segmentation_result
-class_weights: 
 class_names:
     - background
     - hoge

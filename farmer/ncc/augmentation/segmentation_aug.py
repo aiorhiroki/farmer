@@ -45,8 +45,19 @@ def get_aug(augmentation_dict):
             if aug_param is None:
                 augmentation = getattr(albumentations, aug_command)()
             else:
+                aug_list = sorted(aug_param.items(), key=lambda x: x[0])
+                new_param = dict()
+                for k, v in aug_list:
+                    if "-" in k:
+                        tuple_name, tuple_id = k.split("-")
+                        if int(tuple_id) == 1:
+                            new_param[tuple_name] = (v,)
+                        else:
+                            new_param[tuple_name] += (v,)
+                    else:
+                        new_param[k] = v
                 augmentation = getattr(
-                    albumentations, aug_command)(**aug_param)
+                    albumentations, aug_command)(**new_param)
 
             transforms.append(augmentation)
 

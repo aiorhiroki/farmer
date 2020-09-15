@@ -58,7 +58,7 @@ class BuildModelTask:
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
-            
+
             if model_name == "xception" and xception_shape_condition:
                 model = xception(
                     nb_classes=nb_classes,

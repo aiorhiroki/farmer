@@ -18,8 +18,9 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
         batch_size: int,
         mean=np.zeros(3),
         std=np.ones(3),
-        augmentation=dict(),
         augmentation_stat=str,
+        augmix=bool,
+        augmentation=dict(),
         train_colors=list(),
         input_data_type="image"
     ):
@@ -30,8 +31,9 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
-        self.augmentation = augmentation
         self.augmentation_stat = augmentation_stat
+        self.augmix = augmix
+        self.augmentation = augmentation
         self.train_colors = train_colors
         self.input_data_type = input_data_type
 
@@ -69,8 +71,9 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                         input_image,
                         label,
                         self.mean, self.std,
-                        self.augmentation,
-                        self.augmentation_stat
+                        self.augmentation_stat,
+                        self.augmix,
+                        self.augmentation
                     )
             batch_x.append(self.image_util.normalization(input_image))
             batch_y.append(self.image_util.cast_to_onehot(label))

@@ -4,27 +4,31 @@ from .augment_and_mix import augment_and_mix
 import albumentations
 
 
-def segmentation_alb(input_image, label, mean, std, augmentation_dict, aug_stat):
+def segmentation_alb(
+        input_image,
+        label, mean,
+        std,
+        augmentation_dict, 
+        aug_stat, augmix
+        ):
+    
     transforms = get_aug(augmentation_dict)
 
     if aug_stat is None:
         return input_image, label
-    
+
     elif "albumentation" in aug_stat:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
+        if augmix is True:
+            augmented = augment_and_mix(augmented[image], mean, std,)
         return augmented['image'], augmented["mask"]
-
-    elif "augmix" in aug_stat:
-        input_image = augment_and_mix(
-            input_image,
-            mean, std,
-        )
-        label = label
-        return input_image, label
 
     elif "imagegenerator" in aug_stat:
     # will be modified with keras_image_generator
+        if augmix is True:
+            augmented = augment_and_mix(input_image, mean, std)
+            label = label
         return input_image, label
 
 
@@ -47,6 +51,8 @@ def get_aug(augmentation_dict):
             transforms.append(augmentation)
 
     return transforms
+
+
 
 '''
 def segmentation_aug(input_image, label, mean, std, augmentation_dict):
@@ -99,18 +105,6 @@ def segmentation_aug(input_image, label, mean, std, augmentation_dict):
     img_batches, mask_batches = next(gen)
     input_image_processed = img_batches.squeeze()  # batch次元を捨てる
     label_processed = mask_batches.squeeze()  # batchとchannel次元を捨てる
-
-    # Not Keras ImageDataGenerator
-    if "augmix" in augmentation_dict and augmentation_dict["augmix"] is True:
-        """AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty
-        AugMixは最後に行う
-        TODO: ひとまずハードラベル
-        Affine変換系が施されたらソフトラベルにした方がいい？
-        """
-        input_image_processed = augment_and_mix(
-            input_image_processed,
-            mean, std,
-        )
 
     return input_image_processed, label_processed
 '''

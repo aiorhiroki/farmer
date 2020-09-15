@@ -1,5 +1,4 @@
 import segmentation_models
-
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 

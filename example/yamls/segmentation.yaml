@@ -42,6 +42,7 @@ augmentation:
       MotionBlur:
         p: 1  # percentage of function inside 'OneOf'
       p: 1  # percetage of 'OneOf'
+augmix: yes
 segmentation_val_step: 2
 n_trials: 3
 width: 512

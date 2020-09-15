@@ -71,8 +71,8 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
                         input_image,
                         label,
                         self.mean, self.std,
-                        self.augmentation_stat,
                         self.augmentation,
+                        self.augmentation_stat,
                         self.augmix,
                     )
             batch_x.append(self.image_util.normalization(input_image))

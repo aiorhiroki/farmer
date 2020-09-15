@@ -1,9 +1,11 @@
 import segmentation_models
+import re
+
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, resnest
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
@@ -84,6 +86,14 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
+            elif re.match('resnest(50|101|200|269)', model_name):
+                model = resnest(
+                    model_name=model_name,
+                    height=height,
+                    width=width,
+                    n_classes=n_classes
+                )
+
             else:
                 model = Model2D(nb_classes, height, width)
 

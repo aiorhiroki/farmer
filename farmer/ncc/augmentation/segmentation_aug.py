@@ -20,13 +20,13 @@ def segmentation_alb(
     elif "albumentation" in aug_stat:
         aug = albumentations.Compose(transforms, p=1)
         augmented = aug(image=input_image, mask=label)
-        if augmix is True:
+        if augmix:
             augmented = augment_and_mix(augmented[image], mean, std,)
         return augmented['image'], augmented["mask"]
 
     elif "imagegenerator" in aug_stat:
     # will be modified with keras_image_generator
-        if augmix is True:
+        if augmix:
             augmented = augment_and_mix(input_image, mean, std)
             label = label
         return input_image, label

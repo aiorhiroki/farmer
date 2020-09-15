@@ -19,8 +19,8 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
         mean=np.zeros(3),
         std=np.ones(3),
         augmentation_stat=str,
-        augmix=bool,
         augmentation=dict(),
+        augmix=bool,
         train_colors=list(),
         input_data_type="image"
     ):
@@ -32,8 +32,8 @@ class ImageSequence(tensorflow.keras.utils.Sequence):
         self.image_util = ImageUtil(nb_classes, input_shape)
         self.task = task
         self.augmentation_stat = augmentation_stat
-        self.augmix = augmix
         self.augmentation = augmentation
+        self.augmix = augmix
         self.train_colors = train_colors
         self.input_data_type = input_data_type
 

@@ -9,9 +9,9 @@ def segmentation_alb(
         label, mean,
         std,
         augmentation_dict, 
-        aug_stat, augmix
+        aug_stat,
+        augmix,
         ):
-    
     transforms = get_aug(augmentation_dict)
 
     if aug_stat is None:

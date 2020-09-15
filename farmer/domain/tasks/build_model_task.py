@@ -86,11 +86,7 @@ class BuildModelTask:
                     weights_info=self.config.weights_info
                 )
             elif re.match('efficientnetb[0-7]', model_name)
-                model_params = {}
-                model_params['nb_classes'] = nb_classes
-                model_params['height'] = height
-                model_params['width'] = width
-                model = getattr(efficientnet, model_name)(**model_params)
+                getattr(efficientnet, model_name)(nb_classes, height, width)
             else:
                 model = Model2D(nb_classes, height, width)
 

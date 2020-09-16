@@ -2,14 +2,13 @@ from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, EfficientNet
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 from farmer.ncc import losses
 
 from tensorflow import keras
-
 
 class BuildModelTask:
     def __init__(self, config):
@@ -80,6 +79,15 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.train_params.weights_info
                 )
+            elif model_name.startswith("efficientnetb"):
+                model = EfficientNet(
+                    model_name=model_name,
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                )
+            else:
+                model = Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')

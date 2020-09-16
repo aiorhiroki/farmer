@@ -9,6 +9,8 @@ from ..model.task_model import Task
 from farmer.ncc import losses
 
 from tensorflow import keras
+import tensorflow as tf
+import tensorflow_addons as tfa
 
 
 class BuildModelTask:
@@ -142,6 +144,11 @@ class BuildModelTask:
             elif optimizer == "adabound":
                 optimizer = AdaBound(
                     learning_rate=learning_rate, final_lr=0.1
+                )
+            elif optimizer == "adamw":
+                optimizer = tfa.optimizers.AdamW(
+                    learning_rate=learning_rate,
+                    weight_decay=self.config.train_params.opt_weight_decay
                 )
             else:
                 optimizer = keras.optimizers.SGD(

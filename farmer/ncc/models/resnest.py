@@ -1,7 +1,4 @@
 import tensorflow as tf
-import re
-import json
-
 # tf.enable_eager_execution()
 # tf.compat.v1.enable_eager_execution()
 from tensorflow.keras import models
@@ -458,32 +455,14 @@ def resnest(model_name='ResNest50', height=345, width=345, n_classes=81,
     }
 
     if model_name in resnest_parameters.keys():
-        model = ResNest(verbose=verbose, input_shape=(height, width, 3),
-        n_classes=n_classes, dropout_rate=dropout_rate, fc_activation=fc_activation,
-        blocks_set=resnest_parameters[model_name]['blocks_set'], radix=2, groups=1, bottleneck_width=64, deep_stem=True,
-        stem_width=resnest_parameters[model_name]['stem_width'], avg_down=True, avd=True, avd_first=False,**kwargs).build()
-    else:
-        raise ValueError('Unrecognize model name {}'.format(model_name))
+        model = ResNest(
+                    verbose=verbose, input_shape=(height, width, 3),
+                    n_classes=n_classes, dropout_rate=dropout_rate, fc_activation=fc_activation,
+                    blocks_set=resnest_parameters[model_name]['blocks_set'],
+                    radix=2, groups=1, bottleneck_width=64, deep_stem=True,
+                    stem_width=resnest_parameters[model_name]['stem_width'],
+                    avg_down=True, avd=True, avd_first=False,**kwargs
+        ).build()
+
 
     return model
-
-
-if __name__ == '__main__':
-    print('test')
-
-    model_name = 'resnest101'
-    height = 100
-    width = 200
-    n_classes = 10
-
-    if re.match('resnest(50|101|200|269)', model_name):
-        model = resnest(model_name=model_name, height=height, width=width, n_classes=n_classes)
-
-        # # print(model.summary())
-        # model.summary(print_fn=myprint)
-        print('finished.')
-
-        # d = model.to_json()
-
-        # with open('model_summary.json', 'w') as f:
-        #     json.dump(d, f, indent=4)

@@ -1,6 +1,4 @@
 import segmentation_models
-import re
-
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
@@ -86,7 +84,7 @@ class BuildModelTask:
                     width=width,
                     weights_info=self.config.weights_info
                 )
-            elif re.match('resnest(50|101|200|269)', model_name):
+            elif model_name.startswith('resnest'):
                 model = resnest(
                     model_name=model_name,
                     height=height,

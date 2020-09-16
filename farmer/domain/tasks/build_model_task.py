@@ -1,4 +1,3 @@
-import segmentation_models
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
@@ -18,30 +17,27 @@ class BuildModelTask:
     def command(self):
         # return: base_model is saved when training on multi gpu
 
-        base_model = self._do_make_model_task(
+        model = self._do_make_model_task(
             task=self.config.task,
-            model_name=self.config.model_name,
+            model_name=self.config.train_params.model_name,
             nb_classes=self.config.nb_classes,
             height=self.config.height,
             width=self.config.width,
-            backbone=self.config.train_params['backbone'],
-            activation=self.config.train_params['activation']
+            backbone=self.config.train_params.backbone,
+            activation=self.config.train_params.activation
         )
-        base_model = self._do_load_model_task(
-            base_model, self.config.trained_model_path
+        model = self._do_load_model_task(
+            model, self.config.trained_model_path
         )
-        model = self._do_multi_gpu_task(
-            base_model, self.config.multi_gpu, self.config.nb_gpu
-        )
-        compiled_model = self._do_compile_model_task(
+        model = self._do_compile_model_task(
             model,
-            self.config.train_params['optimizer'],
-            self.config.train_params['learning_rate'],
+            self.config.train_params.optimizer,
+            self.config.train_params.learning_rate,
             self.config.task,
-            self.config.train_params['loss']
+            self.config.train_params.loss
         )
 
-        return compiled_model, base_model
+        return model
 
     def _do_make_model_task(
         self,
@@ -68,7 +64,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.weights_info
+                    weights_info=self.config.train_params.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = mobilenet(
@@ -81,7 +77,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.weights_info
+                    weights_info=self.config.train_params.weights_info
                 )
             elif model_name.startswith("efficientnetb"):
                 model = EfficientNet(
@@ -90,7 +86,6 @@ class BuildModelTask:
                     height=height,
                     width=width,
                 )
-
             else:
                 model = Model2D(nb_classes, height, width)
 
@@ -108,7 +103,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = Deeplabv3(
-                    weights_info=self.config.weights_info,
+                    weights_info=self.config.train_params.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
@@ -134,14 +129,6 @@ class BuildModelTask:
     def _do_load_model_task(self, model, trained_model_path):
         if trained_model_path:
             model.load_weights(trained_model_path)
-        return model
-
-    def _do_multi_gpu_task(self, base_model, multi_gpu, nb_gpu):
-        if multi_gpu:
-            if self.config.framework == "tensorflow":
-                model = keras.utils.multi_gpu_model(base_model, gpus=nb_gpu)
-        else:
-            model = base_model
         return model
 
     def _do_compile_model_task(
@@ -179,17 +166,24 @@ class BuildModelTask:
                 print('------------------')
                 print('Loss:', loss_func)
                 print('------------------')
-                loss_params = self.config.train_params['loss_params']
-                loss_params['class_weights'] = [ 1.0 for i in range(self.config.nb_classes)]
-                for class_id, class_weight in self.config.class_weights.items():
-                    loss_params['class_weights'][class_id] = class_weight
+                loss_params = self.config.train_params.loss_params
+                loss_params['class_weights'] = [
+                    1.0 for i in range(self.config.nb_classes)]
+                for cls_i, w in self.config.train_params.class_weights.items():
+                    loss_params['class_weights'][cls_i] = w
                 print('class weight:', loss_params['class_weights'])
                 loss = getattr(losses, loss_func)(**loss_params)
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,
-                    metrics=[metrics.IOUScore(class_indexes=list(range(1, self.config.nb_classes))),
-                             metrics.FScore(class_indexes=list(range(1, self.config.nb_classes)))],
+                    metrics=[
+                        metrics.IOUScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes))),
+                        metrics.FScore(
+                            class_indexes=list(
+                                range(1, self.config.nb_classes)))
+                    ],
                 )
             else:
                 raise NotImplementedError

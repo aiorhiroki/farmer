@@ -1,10 +1,11 @@
 import yaml
+from collections import OrderedDict
 import os
 from glob import glob
 
 from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
-from farmer.domain.model.trainer_model import Trainer
+from farmer.domain.model import Trainer, TrainParams
 from farmer.domain.workflows.train_workflow import TrainWorkflow
 
 import optuna
@@ -35,7 +36,8 @@ def fit():
         config.update(
             {k: v for (k, v) in run_config.items() if k != "config_paths"}
         )
-        config.update(dict(config_path=config_path))
+        train_params = TrainParams(**config.get("train_params"))
+        config.update(dict(config_path=config_path, train_params=train_params))
         if secret_config:
             config.update(secret_config)
         trainer = Trainer(**config)
@@ -102,7 +104,7 @@ class Objective(object):
         clear_session()
         train_workflow = TrainWorkflow(self.trainer, trial)
         result = train_workflow.command(trial)
-        
+
         if self.trainer.task == Task.CLASSIFICATION:
             return result["accuracy"]
         elif self.trainer.task == Task.SEMANTIC_SEGMENTATION:
@@ -130,7 +132,8 @@ def optuna_report(study):
     print('  Params: ')
     for key, value in trial.params.items():
         print('    {}: {}'.format(key, value))
-    
+
+
 def optuna_command(trainer):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)  # Setup the root logger.

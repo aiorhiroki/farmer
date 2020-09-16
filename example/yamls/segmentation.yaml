@@ -9,8 +9,9 @@ test_dirs:
     - test
 training: yes
 task: segmentation # classification or segmentation is supported
-model_name: deeplab_v3
+
 train_params: 
+    model_name: deeplab_v3
     backbone: mobilenetv2
     activation: softmax
     optimizer: adam
@@ -21,30 +22,35 @@ train_params:
         gamma: 5.0
     batch_size: 8 
     learning_rate: 0.001
-weights_info: 
-    classes: # assign only when you use backbone weights
-    weights: 
+    weights_info: 
+        classes: # assign only when you use backbone weights
+        weights: 
+    class_weights: 
+        0: 0.0
+        1: 1.0
+        2: 2.0
+        3: 3.0
+    augmentation:
+        HorizontalFlip:
+        IAAPerspective:
+            scale-1: 0.05
+            scale-2: 0.1
+        PadIfNeeded:
+            min_height: 256
+            min_width: 512
+            always_apply: True
+            border_mode: 0 #need to apply when using randomcrop
+        RandomCrop: 
+                height: 256
+                width: 512
+                p: 1
+        OneOf-1:
+            Blur:
+            MotionBlur:
+                p: 1  # percentage of function inside 'OneOf'
+            p: 1  # percetage of 'OneOf'
+
 epochs: 2
-augmentation:
-  HorizontalFlip:
-  IAAPerspective:
-    scale:
-        - 0.05
-        - 0.1
-  PadIfNeeded:
-    min_height: 256
-    min_width: 512
-    always_apply: True
-    border_mode: 0 #need to apply when using randomcrop
-  RandomCrop: 
-        height: 256
-        width: 512
-        p: 1
-  OneOf-1:
-      Blur:
-      MotionBlur:
-        p: 1  # percentage of function inside 'OneOf'
-      p: 1  # percetage of 'OneOf'
 segmentation_val_step: 2
 n_trials: 3
 width: 512
@@ -53,11 +59,6 @@ input_dir: image
 label_dir: label
 trained_path:
 result_dir: segmentation_result
-class_weights: 
-    0: 0.0
-    1: 1.0
-    2: 2.0
-    3: 3.0
 class_names:
     - background
     - hoge

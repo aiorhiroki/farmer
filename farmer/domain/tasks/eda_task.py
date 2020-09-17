@@ -14,7 +14,7 @@ class EdaTask:
         train_set, _, _ = annotation_set
         self._do_save_params_task()
         self._do_post_config_task()
-        if self.config.input_data_type == 'image':
+        if self.config.input_data_type == 'image' and self.config.mean_std:
             if len(train_set) > 2000:
                 sample_train_set = random.sample(train_set, 2000)
             elif len(train_set) > 0:

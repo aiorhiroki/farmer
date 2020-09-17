@@ -21,6 +21,7 @@ class ImageLoader:
     test_dirs: List[str] = field(default_factory=list)
     height: int = None
     width: int = None
+    mean_std: bool = False
     input_data_type: str = "image"
     skip_frame: int = 30
     time_format: str = "datetime"

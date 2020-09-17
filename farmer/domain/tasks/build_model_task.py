@@ -2,7 +2,7 @@ from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
 from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, EfficientNet
+    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, EfficientNet, resnest
 )
 from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
@@ -83,6 +83,13 @@ class BuildModelTask:
                 model = EfficientNet(
                     model_name=model_name,
                     nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                )
+            elif model_name.startswith('resnest'):
+                model = resnest(
+                    nb_classes=nb_classes,
+                    model_name=model_name,
                     height=height,
                     width=width,
                 )

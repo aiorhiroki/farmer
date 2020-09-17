@@ -425,9 +425,7 @@ class ResNest:
         return model
 
 
-# def fetch_resnest(model_name='ResNest50', input_shape=(224,224,3), nb_classes=81,
-#                 verbose=False, dropout_rate=0, fc_activation=None, **kwargs):
-def resnest(model_name='ResNest50', height=345, width=345, nb_classes=81,
+def resnest(model_name='ResNest50', height=224, width=224, nb_classes=81,
                 verbose=False, dropout_rate=0, fc_activation=None, **kwargs):
     '''fetch_resnest
     input_shape: (h,w,c)

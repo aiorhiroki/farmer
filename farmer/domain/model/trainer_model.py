@@ -8,7 +8,7 @@ from .image_loader_model import ImageLoader
 from .scheduler_model import LRScheduler
 
 
-@dataclass
+@dataclasses.dataclass
 class Trainer(Config, ImageLoader, LRScheduler):
     train_id: int = None
     training: bool = None

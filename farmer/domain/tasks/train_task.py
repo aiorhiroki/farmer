@@ -81,14 +81,16 @@ class TrainTask:
         # Learning Rate Schedule
         if self.config.scheduler_name:
             ncc_scheduler = ncc.schedulers.Scheduler(
-                lr_max=self.config.cosine_lr_max,
-                lr_min=self.config.cosine_lr_min,
+                cos_lr_max=self.config.cosine_lr_max,
+                cos_lr_min=self.config.cosine_lr_min,
                 T_max=self.config.epochs,
                 base_lr=self.config.scheduler_base_lr,
                 step_size=self.config.step_size,
                 step_gamma=self.config.step_gamma,
                 milestones=self.config.milestones,
                 exp_gamma=self.config.exp_gamma,
+                cyc_lr_max=self.config.cyc_lr_max,
+                cyc_lr_min=self.config.cyc_lr_min,
             )
 
             scheduler = keras.callbacks.LearningRateScheduler(

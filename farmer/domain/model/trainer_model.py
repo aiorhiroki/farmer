@@ -12,6 +12,7 @@ class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
     epochs: int = None
+    initial_epoch: int = 0
     steps: int = None
     gpu: str = None
     nb_gpu: int = None
@@ -36,6 +37,8 @@ class Trainer(Config, ImageLoader):
     trial_params: dict = None
     train_params: TrainParams = None
     optuna_params: TrainParams = None
+    curriculum: bool = False
+    curriculum_model_path: str = None
 
     def __post_init__(self):
         self.task = self.get_task()

@@ -1,3 +1,6 @@
+import os
+
+from tensorflow import keras
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
@@ -8,7 +11,6 @@ from farmer.ncc.optimizers import AdaBound
 from ..model.task_model import Task
 from farmer.ncc import losses
 
-from tensorflow import keras
 
 class BuildModelTask:
     def __init__(self, config):
@@ -16,26 +18,29 @@ class BuildModelTask:
 
     def command(self):
         # return: base_model is saved when training on multi gpu
-
-        model = self._do_make_model_task(
-            task=self.config.task,
-            model_name=self.config.train_params.model_name,
-            nb_classes=self.config.nb_classes,
-            height=self.config.height,
-            width=self.config.width,
-            backbone=self.config.train_params.backbone,
-            activation=self.config.train_params.activation
-        )
-        model = self._do_load_model_task(
-            model, self.config.trained_model_path
-        )
-        model = self._do_compile_model_task(
-            model,
-            self.config.train_params.optimizer,
-            self.config.train_params.learning_rate,
-            self.config.task,
-            self.config.train_params.loss
-        )
+        if self.config.curriculum and self.config.curriculum_model_path:
+            model = keras.models.load_model(
+                self.config.curriculum_model_path)
+        else:
+            model = self._do_make_model_task(
+                task=self.config.task,
+                model_name=self.config.train_params.model_name,
+                nb_classes=self.config.nb_classes,
+                height=self.config.height,
+                width=self.config.width,
+                backbone=self.config.train_params.backbone,
+                activation=self.config.train_params.activation
+            )
+            model = self._do_compile_model_task(
+                model,
+                self.config.train_params.optimizer,
+                self.config.train_params.learning_rate,
+                self.config.task,
+                self.config.train_params.loss
+            )
+            model = self._do_load_model_task(
+                model, self.config.trained_model_path
+            )
 
         return model
 

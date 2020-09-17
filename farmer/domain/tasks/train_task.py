@@ -62,7 +62,6 @@ class TrainTask:
 
     def _do_set_callbacks_task(
             self, base_model, train_dataset, valid_dataset, trial):
-
         # Save Model Checkpoint
         # result_dir/model/
         model_save_file = os.path.join(self.config.model_path, "best_model.h5")
@@ -196,6 +195,7 @@ class TrainTask:
                 steps_per_epoch=len(train_gen),
                 callbacks=callbacks,
                 epochs=self.config.epochs,
+                initial_epoch=self.config.initial_epoch,
                 validation_data=valid_gen,
                 validation_steps=len(valid_gen),
                 workers=16 if self.config.multi_gpu else 1,
@@ -216,4 +216,7 @@ class TrainTask:
         # result_dir/model/
         model_path = os.path.join(self.config.model_path, "last_model.h5")
         model.save(model_path)
+        if self.config.curriculum:
+            curriculum_model_path = os.path.join(self.config.model_path, "saved_model")
+            model.save(curriculum_model_path)
         return model

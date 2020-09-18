@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import numpy as np
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
@@ -23,8 +24,8 @@ class ImageLoader:
     height: int = None
     width: int = None
     mean_std: bool = False
-    mean: float = None
-    std: float = None
+    mean: List[float] = field(default_factory=list)
+    std: List[float] = field(default_factory=list)
     input_data_type: str = "image"
     skip_frame: int = 30
     time_format: str = "datetime"
@@ -44,8 +45,8 @@ class ImageLoader:
             mean_std_file = f"{self.trained_path}/info/mean_std.json"
             with open(mean_std_file, "r") as fr:
                 mean_std = json.load(fr)
-            self.mean = mean_std["mean"]
-            self.std = mean_std["std"]
+            self.mean = np.array(mean_std["mean"])
+            self.std = np.array(mean_std["std"])
 
     def get_class_names(self):
         if self.class_names:

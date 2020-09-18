@@ -16,7 +16,8 @@ def segmentation_aug(
     aug = albumentations.Compose(transforms, p=1)
     augmented = aug(image=input_image, mask=label)
     if augmix:
-        augmented = augment_and_mix(augmented[image], mean, std)
+        augmented['image'] = augment_and_mix(augmented['image'], mean, std)
+        augmented['mask'] = augment_and_mix(augmented['mask'], mean, std)
     return augmented['image'], augmented["mask"]
 
 

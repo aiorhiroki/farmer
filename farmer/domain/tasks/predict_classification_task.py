@@ -72,4 +72,5 @@ class PredictClassificationTask:
         with open(f"{self.config.info_path}/pred.csv", "w") as fw:
             writer = csv.writer(fw)
             writer.writerows(pred_result)
-        ncc.metrics.show_matrix(true_ids, pred_ids, self.config.class_names)
+        ncc.metrics.show_matrix(
+            true_ids, pred_ids, self.config.class_names, self.config.info_path)

@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 import cv2
 from ..utils import ImageUtil
-from ..augmentation import segmentation_alb
+from ..augmentation import segmentation_aug
 
 
 class SegmentationDataset:
@@ -45,7 +45,7 @@ class SegmentationDataset:
 
         # apply augmentations
         if self.augmentation and len(self.augmentation) > 0:
-            input_image, label = segmentation_alb(
+            input_image, label = segmentation_aug(
                 input_image, label,
                 self.mean, self.std,
                 self.augmentation,

@@ -4,14 +4,14 @@ from .augment_and_mix import augment_and_mix
 import albumentations
 
 
-def segmentation_alb(
+def segmentation_aug(
         input_image,
         label, mean,
         std,
-        augmentation_dict, 
+        augmentation_dict,
         aug_stat,
         augmix,
-        ):
+):
     transforms = get_aug(augmentation_dict)
 
     if aug_stat is None:
@@ -25,7 +25,7 @@ def segmentation_alb(
         return augmented['image'], augmented["mask"]
 
     elif "imagegenerator" in aug_stat:
-    # will be modified with keras_image_generator
+        # will be modified with keras_image_generator
         if augmix:
             augmented = augment_and_mix(input_image, mean, std)
             label = label

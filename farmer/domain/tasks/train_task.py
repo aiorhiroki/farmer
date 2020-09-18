@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import tensorflow as tf
 from tensorflow.python import keras
 from farmer import ncc
 

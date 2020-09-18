@@ -1,5 +1,6 @@
 import os
 
+import tensorflow as tf
 from tensorflow import keras
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics

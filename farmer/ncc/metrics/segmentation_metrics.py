@@ -20,9 +20,9 @@ def iou_dice_val(
             predicted, target, nb_classes)
 
     tp = np.diag(confusion)
-    tn = np.sum(tp) - tp
     fp = np.sum(confusion, 0) - tp
     fn = np.sum(confusion, 1) - tp
+    tn = np.sum(confusion) - (fp + fn + tp)
 
     iou = calc_iou_from_confusion(tp, fp, fn)
     dice = calc_dice_from_confusion(tp, fp, fn)

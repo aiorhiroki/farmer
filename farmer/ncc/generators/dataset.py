@@ -18,7 +18,6 @@ class SegmentationDataset:
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
             augmentation: list = list(),
-            augmentation_stat: str = None,
             augmix: bool = None,
             train_colors: list = list(),
             **kwargs
@@ -30,7 +29,6 @@ class SegmentationDataset:
         self.mean = mean
         self.std = std
         self.augmentation = augmentation
-        self.augmentation_stat = augmentation_stat
         self.augmix = augmix
         self.train_colors = train_colors
 
@@ -49,7 +47,6 @@ class SegmentationDataset:
                 input_image, label,
                 self.mean, self.std,
                 self.augmentation,
-                self.augmentation_stat,
                 self.augmix
             )
 

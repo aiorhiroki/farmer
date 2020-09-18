@@ -45,6 +45,8 @@ class PredictClassificationTask:
 
         prediction_classes = np.argmax(prediction, axis=-1)
         pred_result = list()
+        pred_ids = list()
+        true_ids = list()
         for files, pred_cls in zip(annotation_set, prediction_classes):
             if self.config.input_data_type == "video":
                 image_file, frame_id, true_cls = files
@@ -65,6 +67,9 @@ class PredictClassificationTask:
                         self.config.class_names[int(true_cls)]
                     ]
                 )
+            pred_ids.append(int(pred_cls))
+            true_ids.append(int(true_cls))
         with open(f"{self.config.info_path}/pred.csv", "w") as fw:
             writer = csv.writer(fw)
             writer.writerows(pred_result)
+        ncc.metrics.show_matrix(true_ids, pred_ids, self.config.class_names)

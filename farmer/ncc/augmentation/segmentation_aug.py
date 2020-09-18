@@ -13,12 +13,13 @@ def segmentation_aug(
 ):
     transforms = get_aug(augmentation_dict)
 
-    aug = albumentations.Compose(transforms, p=1)
-    augmented = aug(image=input_image, mask=label)
-    if augmix:
-        augmented['image'] = augment_and_mix(augmented['image'], mean, std)
-        augmented['mask'] = augment_and_mix(augmented['mask'], mean, std)
-    return augmented['image'], augmented["mask"]
+    if len(transforms) > 0:
+        aug = albumentations.Compose(transforms, p=1)
+        augmented = aug(image=input_image, mask=label)
+        if augmix:
+            augmented['image'] = augment_and_mix(augmented['image'], mean, std)
+            augmented['mask'] = augment_and_mix(augmented['mask'], mean, std)
+        return augmented['image'], augmented["mask"]
 
 
 def get_aug(augmentation_dict):

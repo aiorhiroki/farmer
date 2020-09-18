@@ -21,4 +21,3 @@ class TrainParams:
     augmentation_stat: str = None
     augmentation: List[str] = field(default_factory=list)
     augmix: bool = False
-    

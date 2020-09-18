@@ -18,6 +18,5 @@ class TrainParams:
     class_weights: Dict[int, float] = field(default_factory=dict)
     learning_rate: float = None
     optimizer: str = None
-    augmentation_stat: str = None
     augmentation: List[str] = field(default_factory=list)
     augmix: bool = False

@@ -1,5 +1,6 @@
 import os
 import csv
+import json
 from glob import glob
 from dataclasses import dataclass, field
 from typing import List
@@ -22,6 +23,8 @@ class ImageLoader:
     height: int = None
     width: int = None
     mean_std: bool = False
+    mean: float = None
+    std: float = None
     input_data_type: str = "image"
     skip_frame: int = 30
     time_format: str = "datetime"
@@ -35,6 +38,14 @@ class ImageLoader:
             return Task.OBJECT_DETECTION
         else:
             raise NotImplementedError
+
+    def get_mean_std(self):
+        if not self.training and self.trained_path:
+            mean_std_file = f"{self.trained_path}/info/mean_std.json"
+            with open(mean_std_file, "r") as fr:
+                mean_std = json.load(fr)
+            self.mean = mean_std["mean"]
+            self.std = mean_std["std"]
 
     def get_class_names(self):
         if self.class_names:

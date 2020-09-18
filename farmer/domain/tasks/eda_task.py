@@ -1,6 +1,7 @@
 import shutil
 from farmer import ncc
 import os
+import json
 import numpy as np
 import cv2
 import random
@@ -40,6 +41,8 @@ class EdaTask:
                 fw.write("class_name,class_id\n")
                 for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
+        with open(f"{self.config.info_path}/mean_std.json", "w") as fw:
+            json.dump(dict(mean=self.config.mean, std=self.config.std), fw)
 
     def _do_post_config_task(self):
         # milk側にconfigを送る

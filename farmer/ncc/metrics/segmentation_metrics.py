@@ -2,7 +2,7 @@ import numpy as np
 import os
 import itertools
 from tqdm import tqdm
-from ..utils import ImageUtil, get_imageset
+from ..utils import get_imageset
 import matplotlib.pyplot as plt
 
 
@@ -20,6 +20,7 @@ def iou_dice_val(
             predicted, target, nb_classes)
 
     tp = np.diag(confusion)
+    tn = np.sum(tp) - tp
     fp = np.sum(confusion, 0) - tp
     fn = np.sum(confusion, 1) - tp
 
@@ -27,8 +28,15 @@ def iou_dice_val(
     dice = calc_dice_from_confusion(tp, fp, fn)
     precision = calc_precision_from_confusion(tp, fp)
     recall = calc_recall_from_confusion(tp, fn)
+    sepecificity = calc_sepecificity_from_confusion(tn, fp)
 
-    return {'iou': iou, 'dice': dice, 'precision': precision, 'recall': recall}
+    return {
+        'iou': iou,
+        'dice': dice,
+        'precision': precision,
+        'recall': recall,
+        'specificity': sepecificity
+    }
 
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
@@ -75,6 +83,14 @@ def calc_recall_from_confusion(tp, fn):
 
     recall[np.isnan(recall)] = 0
     return [float(r) for r in recall]
+
+
+def calc_sepecificity_from_confusion(tn, fp):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        sepecificity = tn / (fp + tn)
+
+    sepecificity[np.isnan(sepecificity)] = 0
+    return [float(s) for s in sepecificity]
 
 
 def detection_rate_confusions(pred_labels, gt_labels, nb_classes):

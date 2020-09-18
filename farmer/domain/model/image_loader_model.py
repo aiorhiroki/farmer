@@ -43,6 +43,8 @@ class ImageLoader:
     def get_mean_std(self):
         if not self.training and self.trained_path:
             mean_std_file = f"{self.trained_path}/info/mean_std.json"
+            if not os.path.exists(mean_std_file):
+                return
             with open(mean_std_file, "r") as fr:
                 mean_std = json.load(fr)
             self.mean = np.array(mean_std["mean"])

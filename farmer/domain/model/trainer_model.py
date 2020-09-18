@@ -65,6 +65,7 @@ class Trainer(Config, ImageLoader):
         self.val_dirs = [str(val_dir) for val_dir in self.val_dirs if val_dir]
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
         self.class_names = self.get_class_names()
+        self.get_mean_std()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
         if not self.train_params.class_weights:

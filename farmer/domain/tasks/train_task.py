@@ -157,7 +157,7 @@ class TrainTask:
                 logger_file=file_name,
                 token=self.config.slack_token,
                 channel=self.config.slack_channel,
-                title=self.config.model_name,
+                title=self.config.train_params.model_name,
             )
             callbacks.append(slack_logging)
 

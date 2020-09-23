@@ -20,8 +20,15 @@ class BuildModelTask:
     def command(self):
         # return: base_model is saved when training on multi gpu
         if self.config.curriculum and self.config.curriculum_model_path:
+            custom_objects = {
+                'focal_loss':getattr(losses, self.config.train_params.loss)(),
+                'iou_score': metrics.IOUScore,
+                'f1-score': metrics.FScore,
+            }
             model = keras.models.load_model(
-                self.config.curriculum_model_path)
+                self.config.curriculum_model_path,
+                custom_objects=custom_objects
+            )
         else:
             model = self._do_make_model_task(
                 task=self.config.task,

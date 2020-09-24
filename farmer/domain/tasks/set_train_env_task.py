@@ -68,6 +68,8 @@ class SetTrainEnvTask:
                 elif isinstance(val, dict):
                     set_train_params(val)
                 elif isinstance(val, list):
+                    if len(val) == 0:
+                        continue
                     if isinstance(val[0], str):
                         train_params[key] = trial.suggest_categorical(key, val)
                     elif isinstance(val[0], (int, float)):

@@ -7,18 +7,29 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
-def show_matrix(y_test, y_prediction, class_names, show_plot=True, save_file=None):
+def show_matrix(
+        y_test, y_prediction, class_names, save_dir=None, show_plot=False):
     # Compute confusion matrix
     cnf_matrix = confusion_matrix(y_test, y_prediction)
     np.set_printoptions(precision=2)
 
     # Plot non-normalized confusion matrix
-    plot_confusion_matrix(cnf_matrix, classes=class_names,
-                          title='Confusion matrix, without normalization', save_file=save_file)
+    plot_confusion_matrix(
+        cnf_matrix,
+        classes=class_names,
+        title='Confusion matrix, without normalization',
+        save_dir=save_dir
+    )
 
     # Plot normalized confusion matrix
-    plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                          title='Normalized confusion matrix', save_file=save_file)
+    plot_confusion_matrix(
+        cnf_matrix,
+        classes=class_names,
+        normalize=True,
+        title='Normalized confusion matrix',
+        save_dir=save_dir
+    )
+
     if show_plot:
         plt.show()
 
@@ -27,7 +38,7 @@ def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues,
-                          save_file=None):
+                          save_dir=None):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -56,9 +67,9 @@ def plot_confusion_matrix(cm, classes,
 
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    if save_file:
+    if save_dir:
         if normalize:
-            plt.savefig('normalized_' + save_file)
+            plt.savefig(f'{save_dir}/normalized_confusion.png')
         else:
-            plt.savefig('count_' + save_file)
+            plt.savefig(f'{save_dir}/count_confusion.png')
     # plt.tight_layout()  # this may cause error

@@ -18,8 +18,10 @@ def segmentation_aug(
         augmented = aug(image=input_image, mask=label)
         if augmix:
             augmented['image'] = augment_and_mix(augmented['image'], mean, std)
-            augmented['mask'] = augment_and_mix(augmented['mask'], mean, std)
         return augmented['image'], augmented["mask"]
+
+    else:
+        return input_image, label
 
 
 def get_aug(augmentation_dict):

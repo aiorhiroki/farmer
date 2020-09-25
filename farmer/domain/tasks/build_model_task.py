@@ -1,12 +1,9 @@
 from segmentation_models import Unet, PSPNet, FPN
 from segmentation_models import metrics
 
-from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3
-)
 from farmer.ncc.optimizers import AdaBound
+from farmer.ncc import losses, models
 from ..model.task_model import Task
-from farmer.ncc import losses
 
 from tensorflow import keras
 import tensorflow as tf
@@ -57,31 +54,47 @@ class BuildModelTask:
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(
+                model = models.xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width
                 )
             elif model_name == "dilated_xception" and xception_shape_condition:
-                model = dilated_xception(
+                model = models.dilated_xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
                     weights_info=self.config.train_params.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(
+                model = models.mobilenet(
                     nb_classes=nb_classes,
                     height=height,
                     width=width
                 )
             elif model_name == "mobilenetv2" and mobilenet_shape_condition:
-                model = mobilenet_v2(
+                model = models.mobilenet_v2(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
                     weights_info=self.config.train_params.weights_info
                 )
+            elif model_name.startswith("efficientnetb"):
+                model = models.EfficientNet(
+                    model_name=model_name,
+                    nb_classes=nb_classes,
+                    height=height,
+                    width=width,
+                )
+            elif model_name.startswith('resnest'):
+                model = models.resnest(
+                    nb_classes=nb_classes,
+                    model_name=model_name,
+                    height=height,
+                    width=width,
+                )
+            else:
+                model = models.Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')
@@ -96,7 +109,7 @@ class BuildModelTask:
                     classes=nb_classes,
                 )
             elif model_name == "deeplab_v3":
-                model = Deeplabv3(
+                model = models.Deeplabv3(
                     weights_info=self.config.train_params.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,

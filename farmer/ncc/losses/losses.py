@@ -1,5 +1,6 @@
 import segmentation_models
 from segmentation_models.base import Loss
+from segmentation_models.losses import CategoricalCELoss
 from ..losses import functional as F
 
 segmentation_models.set_framework('tf.keras')

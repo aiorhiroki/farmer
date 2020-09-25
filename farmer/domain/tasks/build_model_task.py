@@ -142,7 +142,7 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func
+        loss_funcs
     ):
         if self.config.framework == "tensorflow":
             print('------------------')
@@ -169,15 +169,18 @@ class BuildModelTask:
                 )
             elif task_id == Task.SEMANTIC_SEGMENTATION:
                 print('------------------')
-                print('Loss:', loss_func)
+                print('Loss:', loss_funcs.keys())
                 print('------------------')
-                loss_params = self.config.train_params.loss_params
-                loss_params['class_weights'] = [
-                    1.0 for i in range(self.config.nb_classes)]
-                for cls_i, w in self.config.train_params.class_weights.items():
-                    loss_params['class_weights'][cls_i] = w
-                print('class weight:', loss_params['class_weights'])
-                loss = getattr(losses, loss_func)(**loss_params)
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if params.get("class_weights"):
+                        params["class_weights"] = list(
+                            params["class_weights"].values())
+                    if i == 0:
+                        loss = getattr(losses, loss_name)(**params)
+                    else:
+                        loss += getattr(losses, loss_name)(**params)
+
                 model.compile(
                     optimizer=optimizer,
                     loss=loss,

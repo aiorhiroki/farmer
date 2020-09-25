@@ -20,22 +20,22 @@ train_params:
         - adam
         - sgd
     loss: 
-        - categorical_focal_loss
-        - categorical_focal_dice_loss
-    loss_params: 
-        alpha: 
-            - 0.1
-            - 1.0
-            - 0.05
-        beta: 
-            - 0.1
-            - 1.0
-            - 0.05
-        gamma:  # focal
-            - 1.0
-            - 5.0
-            - 0.05
-    batch_size: 
+        - CategoricalFocalLoss
+        - CategoricalFocalLoss: 
+            alpha: 
+                - 0.1
+                - 1.0
+                - 0.05
+            gamma:  # focal
+                - 1.0
+                - 5.0
+                - 0.05
+          DiceLoss:
+            beta: 
+                - 0.1
+                - 1.0
+                - 0.05
+    batch_size:
         - 2 # min
         - 8 # max
         - 2 # step

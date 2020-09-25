@@ -152,7 +152,10 @@ class BuildModelTask:
             print('------------------')
             if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
-                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                    lr=learning_rate,
+                    beta_1=0.9,
+                    beta_2=0.999,
+                    decay=self.config.train_params.opt_decay
                 )
             elif optimizer == "adabound":
                 optimizer = AdaBound(
@@ -161,11 +164,13 @@ class BuildModelTask:
             elif optimizer == "adamw":
                 optimizer = tfa.optimizers.AdamW(
                     learning_rate=learning_rate,
-                    weight_decay=self.config.train_params.opt_weight_decay
+                    weight_decay=self.config.train_params.opt_decay
                 )
             else:
                 optimizer = keras.optimizers.SGD(
-                    lr=learning_rate, momentum=0.9, decay=0.001
+                    lr=learning_rate,
+                    momentum=0.9,
+                    decay=self.config.train_params.opt_decay
                 )
 
             if task_id == Task.CLASSIFICATION:

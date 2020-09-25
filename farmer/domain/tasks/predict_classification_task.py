@@ -29,7 +29,7 @@ class PredictClassificationTask:
     def _do_classification_predict_task(
         self, model, annotation_gen
     ):
-        prediction = model.predict_generator(
+        prediction = model.predict(
             annotation_gen,
             steps=len(annotation_gen),
             workers=16 if self.config.multi_gpu else 1,

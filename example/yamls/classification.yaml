@@ -23,11 +23,11 @@ train_params:
     backbone: 
     activation: softmax
     optimizer: adam
-    loss:  # no need to set value. only categorical for classification
+    loss:
+        CategoricalCrossentropy:
     batch_size: 4
     learning_rate: 0.001
     augmentation:
-    class_weights: 
     weights_info:
         classes: 
         weights: 

@@ -20,7 +20,7 @@ train_params:
         - adam
         - sgd
     loss: 
-        - CategoricalFocalLoss
+        - CategoricalFocalLoss:
         - CategoricalFocalLoss: 
             alpha: 
                 - 0.1
@@ -35,6 +35,11 @@ train_params:
                 - 0.1
                 - 1.0
                 - 0.05
+            class_weights:
+                0: 1
+                1: 1
+                2: 2
+                3: 2
     batch_size:
         - 2 # min
         - 8 # max
@@ -48,7 +53,6 @@ train_params:
     augmentation:
         # - horizontal_flip
         # - zoom
-    class_weights: 
 
 epochs: 2
 segmentation_val_step: 2

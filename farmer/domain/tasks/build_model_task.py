@@ -1,5 +1,4 @@
-from segmentation_models import Unet, PSPNet, FPN
-from segmentation_models import metrics
+import segmentation_models
 
 from farmer.ncc.optimizers import AdaBound
 from farmer.ncc import losses, models
@@ -101,7 +100,7 @@ class BuildModelTask:
             print('------------------')
 
             if model_name == "unet":
-                model = Unet(
+                model = segmentation_models.Unet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -115,13 +114,13 @@ class BuildModelTask:
                     activation=activation
                 )
             elif model_name == "pspnet":
-                model = PSPNet(
+                model = segmentation_models.PSPNet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
             elif model_name == "fpn":
-                model = FPN(
+                model = segmentation_models.FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -161,39 +160,46 @@ class BuildModelTask:
                     lr=learning_rate, momentum=0.9, decay=0.001
                 )
 
+            print('------------------')
+            print('Loss:', loss_funcs.keys())
+            print('------------------')
             if task_id == Task.CLASSIFICATION:
-                model.compile(
-                    optimizer=optimizer,
-                    loss=keras.losses.categorical_crossentropy,
-                    metrics=["acc"],
-                )
-            elif task_id == Task.SEMANTIC_SEGMENTATION:
-                print('------------------')
-                print('Loss:', loss_funcs.keys())
-                print('------------------')
                 for i, loss_func in enumerate(loss_funcs.items()):
                     loss_name, params = loss_func
-                    if params.get("class_weights"):
+                    if i == 0:
+                        if params is None:
+                            loss = getattr(keras.losses, loss_name)()
+                        else:
+                            loss = getattr(keras.losses, loss_name)(**params)
+                    else:
+                        if params is None:
+                            loss += getattr(keras.losses, loss_name)()
+                        else:
+                            loss += getattr(keras.losses, loss_name)(**params)
+                metrics = ["acc"]
+
+            elif task_id == Task.SEMANTIC_SEGMENTATION:
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if params is not None and params.get("class_weights"):
                         params["class_weights"] = list(
                             params["class_weights"].values())
                     if i == 0:
-                        loss = getattr(losses, loss_name)(**params)
+                        if params is None:
+                            loss = getattr(losses, loss_name)()
+                        else:
+                            loss = getattr(losses, loss_name)(**params)
                     else:
-                        loss += getattr(losses, loss_name)(**params)
-
-                model.compile(
-                    optimizer=optimizer,
-                    loss=loss,
-                    metrics=[
-                        metrics.IOUScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes))),
-                        metrics.FScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes)))
+                        if params is None:
+                            loss += getattr(losses, loss_name)()
+                        else:
+                            loss += getattr(losses, loss_name)(**params)
+                metrics = [
+                    segmentation_models.metrics.IOUScore(
+                        class_indexes=list(range(1, self.config.nb_classes))),
+                    segmentation_models.metrics.FScore(
+                        class_indexes=list(range(1, self.config.nb_classes)))
                     ],
-                )
-            else:
-                raise NotImplementedError
 
+            model.compile(optimizer, loss, metrics)
         return model

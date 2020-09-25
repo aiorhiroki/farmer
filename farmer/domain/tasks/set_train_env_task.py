@@ -88,9 +88,10 @@ class SetTrainEnvTask:
         train_params_dict = dataclasses.asdict(self.config.optuna_params)
         set_train_params(train_params_dict)
         self.config.train_params = TrainParams(**train_params_dict)
-        self.config.train_params.scheduler = LRScheduler(
-            **self.config.train_params.scheduler
-        )
+        if self.config.train_params.scheduler:
+            self.config.train_params.scheduler = LRScheduler(
+                **self.config.train_params.scheduler
+            )
 
 
     def _do_create_dirs_task(self):

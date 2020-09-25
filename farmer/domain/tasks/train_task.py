@@ -79,7 +79,7 @@ class TrainTask:
             )
 
         # Learning Rate Schedule
-        if self.config.train_params.scheduler.scheduler_name:
+        if self.config.train_params.scheduler:
             ncc_scheduler = ncc.schedulers.Scheduler(
                 cos_lr_max=self.config.train_params.scheduler.cosine_lr_max,
                 cos_lr_min=self.config.train_params.scheduler.cosine_lr_min,

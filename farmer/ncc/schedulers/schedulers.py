@@ -15,6 +15,18 @@ class Scheduler:
         self.cyc_lr_max = cyc_lr_max
         self.cyc_lr_min = cyc_lr_min
 
+        self.milestones = []
+        if milestones:
+            mile_list = sorted(
+                milestones.items(),
+                key=lambda x: x[0]
+            )
+            for _, v in mile_list:
+                step_epoch = int(
+                    T_max * ( v / 100 )
+                )
+                self.milestones.append(step_epoch)
+
 
     def cosine_decay(self, epoch):
         lr = self.cos_lr_min

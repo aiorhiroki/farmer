@@ -5,11 +5,10 @@ from datetime import datetime
 from .config_model import Config
 from .train_params_model import TrainParams
 from .image_loader_model import ImageLoader
-from .scheduler_model import LRScheduler
 
 
 @dataclasses.dataclass
-class Trainer(Config, ImageLoader, LRScheduler):
+class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
     epochs: int = None
@@ -73,12 +72,13 @@ class Trainer(Config, ImageLoader, LRScheduler):
             self.train_params.class_weights = {
                 class_id: 1.0 for class_id in range(self.nb_classes)
             }
-        self.scheduler_base_lr = self.train_params.learning_rate
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):
             for val in train_params.values():
-                if isinstance(val, list):
+                if not val:
+                    continue
+                elif isinstance(val, list):
                     self.optuna = True
                 elif isinstance(val, dict):
                     _check_need_optuna(val)

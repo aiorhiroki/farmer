@@ -6,7 +6,7 @@ import multiprocessing as mp
 import numpy as np
 
 import tensorflow as tf
-from farmer.domain.model import TrainParams
+from farmer.domain.model import TrainParams, LRScheduler
 
 
 class SetTrainEnvTask:
@@ -88,6 +88,10 @@ class SetTrainEnvTask:
         train_params_dict = dataclasses.asdict(self.config.optuna_params)
         set_train_params(train_params_dict)
         self.config.train_params = TrainParams(**train_params_dict)
+        self.config.train_params.scheduler = LRScheduler(
+            **self.config.train_params.scheduler
+        )
+
 
     def _do_create_dirs_task(self):
         # 結果を保存するディレクトリを目的別に作ります。

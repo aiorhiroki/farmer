@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
-
+from .scheduler_model import LRScheduler
 
 @dataclass
 class TrainParams:
@@ -19,3 +19,4 @@ class TrainParams:
     learning_rate: float = None
     optimizer: str = None
     augmentation: List[str] = field(default_factory=list)
+    scheduler: LRScheduler = None

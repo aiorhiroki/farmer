@@ -6,7 +6,8 @@ import albumentations
 
 def segmentation_aug(
         input_image,
-        label, mean,
+        label, 
+        mean,
         std,
         augmentation_dict,
         augmix,

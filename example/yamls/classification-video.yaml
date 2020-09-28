@@ -17,6 +17,7 @@ train_params:
     learning_rate: 0.001
     model_name: xception
     loss:
+      functions:
         CategoricalCrossentropy:
     classification_class_weight:
         0: 1

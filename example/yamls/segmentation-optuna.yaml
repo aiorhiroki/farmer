@@ -19,27 +19,31 @@ train_params:
     optimizer: 
         - adam
         - sgd
-    loss: 
-        - CategoricalFocalLoss:
-        - CategoricalFocalLoss: 
-            alpha: 
-                - 0.1
-                - 1.0
-                - 0.05
-            gamma:  # focal
-                - 1.0
-                - 5.0
-                - 0.05
-          DiceLoss:
-            beta: 
-                - 0.1
-                - 1.0
-                - 0.05
-            class_weights:
-                0: 1
-                1: 1
-                2: 2
-                3: 2
+    loss:
+        - name: Categorical Focal Loss
+          functions:
+            CategoricalFocalLoss:
+        - name: Categorical Focal Dice Loss
+          functions:
+            CategoricalFocalLoss: 
+                alpha: 
+                    - 0.1
+                    - 1.0
+                    - 0.05
+                gamma:  # focal
+                    - 1.0
+                    - 5.0
+                    - 0.05
+            DiceLoss:
+                beta: 
+                    - 0.1
+                    - 1.0
+                    - 0.05
+                class_weights:
+                    0: 1
+                    1: 1
+                    2: 2
+                    3: 2
     batch_size:
         - 2 # min
         - 8 # max

@@ -141,7 +141,7 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_funcs
+        loss
     ):
         if self.config.framework == "tensorflow":
             print('------------------')
@@ -160,6 +160,7 @@ class BuildModelTask:
                     lr=learning_rate, momentum=0.9, decay=0.001
                 )
 
+            loss_funcs = loss["functions"]
             print('------------------')
             print('Loss:', loss_funcs.keys())
             print('------------------')

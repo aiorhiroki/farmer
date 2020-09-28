@@ -24,6 +24,7 @@ train_params:
     activation: softmax
     optimizer: adam
     loss:
+      functions:
         CategoricalCrossentropy:
     batch_size: 4
     learning_rate: 0.001

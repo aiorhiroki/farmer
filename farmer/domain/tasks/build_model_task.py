@@ -5,6 +5,8 @@ from farmer.ncc import losses, models
 from ..model.task_model import Task
 
 from tensorflow import keras
+import tensorflow as tf
+import tensorflow_addons as tfa
 
 
 class BuildModelTask:
@@ -149,15 +151,44 @@ class BuildModelTask:
             print('------------------')
             if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
-                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                    lr=learning_rate,
+                    beta_1=0.9,
+                    beta_2=0.999,
+                    decay=self.config.train_params.opt_decay,
                 )
             elif optimizer == "adabound":
                 optimizer = AdaBound(
-                    learning_rate=learning_rate, final_lr=0.1
+                    learning_rate=learning_rate,
+                    final_lr=0.1,
+                )
+            elif optimizer == "adamw":
+                optimizer = tfa.optimizers.AdamW(
+                    learning_rate=learning_rate,
+                    weight_decay=self.config.train_params.opt_decay
+                )
+            elif optimizer == "radam":
+                steps_per_epoch = self.config.nb_train_data // self.config.train_params.batch_size
+
+                optimizer = tfa.optimizers.RectifiedAdam(
+                    lr=learning_rate,
+                    weight_decay=1e-5,
+                    total_steps=int(steps_per_epoch * self.config.epochs * 0.95),
+                    warmup_proportion=0.1,
+                    min_lr=learning_rate * 0.01,
+                )
+
+                # Lookahead
+                # https://arxiv.org/abs/1907.08610v1
+                optimizer = tfa.optimizers.Lookahead(
+                    optimizer,
+                    sync_period=6,
+                    slow_step_size=0.5
                 )
             else:
                 optimizer = keras.optimizers.SGD(
-                    lr=learning_rate, momentum=0.9, decay=0.001
+                    lr=learning_rate,
+                    momentum=0.9,
+                    decay=self.config.train_params.opt_decay
                 )
 
             loss_funcs = loss["functions"]

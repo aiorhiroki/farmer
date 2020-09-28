@@ -18,3 +18,4 @@ class TrainParams:
     learning_rate: float = None
     optimizer: str = None
     augmentation: Dict[str, int] = field(default_factory=dict)
+    opt_decay: float = 0.001

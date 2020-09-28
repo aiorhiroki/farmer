@@ -186,9 +186,7 @@ class TrainTask:
             shuffle=False
         )
 
-        class_weights = None
-        if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            class_weights = self.config.train_params.class_weights
+        class_weights = self.config.train_params.classification_class_weight
 
         try:
             model.fit(

@@ -81,6 +81,17 @@ class SetTrainEnvTask:
                             if int(param_val) == param_val:
                                 param_val = int(param_val)
                             train_params[key] = param_val
+                    elif isinstance(val[0], dict):
+                        train_params[key] = dict(
+                            name=trial.suggest_categorical(
+                                f"{key}_name", [v_dic["name"] for v_dic in val]
+                            )
+                        )
+                        for val_dic in val:
+                            if val_dic["name"] == train_params[key]["name"]:
+                                functions = val_dic["functions"]
+                                train_params[key]["functions"] = functions
+                                set_train_params(functions)
 
         # set train params to params setted by optuna
         train_params_dict = dataclasses.asdict(self.config.optuna_params)

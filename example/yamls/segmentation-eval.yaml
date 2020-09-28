@@ -11,11 +11,9 @@ train_params:
     backbone: mobilenetv2
     activation: softmax
     optimizer: adam
-    loss: dice_loss
-    loss_params: 
-        alpha: 
-        beta: 1.0
-        gamma: 
+    loss:
+      functions:
+        DiceLoss:
     batch_size: 8 
     learning_rate: 0.001
     weights_info:

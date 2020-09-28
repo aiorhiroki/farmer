@@ -19,4 +19,5 @@ class TrainParams:
     learning_rate: float = None
     optimizer: str = None
     augmentation: List[str] = field(default_factory=list)
+    opt_decay: float = 0.001
     scheduler: LRScheduler = None

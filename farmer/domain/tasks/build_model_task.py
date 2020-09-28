@@ -155,14 +155,18 @@ class BuildModelTask:
                     lr=learning_rate,
                     beta_1=0.9,
                     beta_2=0.999,
-                    decay=0.001,
+                    decay=self.config.train_params.opt_decay,
                 )
             elif optimizer == "adabound":
                 optimizer = AdaBound(
                     learning_rate=learning_rate,
                     final_lr=0.1,
                 )
-
+            elif optimizer == "adamw":
+                optimizer = tfa.optimizers.AdamW(
+                    learning_rate=learning_rate,
+                    weight_decay=self.config.train_params.opt_decay
+                )
             elif optimizer == "radam":
                 steps_per_epoch = self.config.nb_train_data // self.config.train_params.batch_size
 
@@ -181,12 +185,11 @@ class BuildModelTask:
                     sync_period=6,
                     slow_step_size=0.5
                 )
-
             else:
                 optimizer = keras.optimizers.SGD(
                     lr=learning_rate,
                     momentum=0.9,
-                    decay=0.001
+                    decay=self.config.train_params.opt_decay
                 )
 
             if task_id == Task.CLASSIFICATION:

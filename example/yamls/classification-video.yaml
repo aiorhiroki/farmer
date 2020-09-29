@@ -10,25 +10,19 @@ training: yes
 task: classification # classification or segmentation or detection
 input_data_type: video # image or video
 
-
 train_params: 
-    backbone: 
     activation: softmax
     optimizer: adam
-    loss:  # no need to set value. only categorical for classification
-    loss_params: 
-        alpha: 
-        beta: 
-        gamma: 
     batch_size: 2
     learning_rate: 0.001
     model_name: xception
-    weights_info:
-        classes: 
-        weights: 
-    class_weights: 
-    augmentation:
-        
+    loss:
+      functions:
+        CategoricalCrossentropy:
+    classification_class_weight:
+        0: 1
+        1: 2
+
 epochs: 2
 width: 80
 height: 80

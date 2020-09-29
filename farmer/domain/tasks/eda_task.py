@@ -1,6 +1,7 @@
 import shutil
 from farmer import ncc
 import os
+import json
 import numpy as np
 import cv2
 import random
@@ -11,17 +12,9 @@ class EdaTask:
         self.config = config
 
     def command(self, annotation_set):
-        train_set, _, _ = annotation_set
+        self._do_compute_mean_std(annotation_set)
         self._do_save_params_task()
         self._do_post_config_task()
-        if self.config.input_data_type == 'image':
-            if len(train_set) > 2000:
-                sample_train_set = random.sample(train_set, 2000)
-            elif len(train_set) > 0:
-                sample_train_set = train_set
-            else:
-                return
-            self._do_compute_mean_std(sample_train_set)
 
     def _do_save_params_task(self):
         shutil.copy(self.config.config_path, self.config.info_path)
@@ -40,6 +33,13 @@ class EdaTask:
                 fw.write("class_name,class_id\n")
                 for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
+        with open(f"{self.config.info_path}/mean_std.json", "w") as fw:
+            json.dump(
+                dict(
+                    mean=list(self.config.mean),
+                    std=list(self.config.std)
+                ), fw, indent=2
+            )
 
     def _do_post_config_task(self):
         # milk側にconfigを送る
@@ -61,13 +61,23 @@ class EdaTask:
         )
         milk_client.close_session()
 
-    def _do_compute_mean_std(self, train_set):
+    def _do_compute_mean_std(self, annotation_set):
         """train set全体の平均と標準偏差をchannelごとに計算
         """
-        if self.config.mean is not None and self.config.std is not None:
+        train_set, _, _ = annotation_set
+        if self.config.input_data_type == 'image' and self.config.mean_std:
+            if len(train_set) > 2000:
+                sample_train_set = random.sample(train_set, 2000)
+            elif len(train_set) > 0:
+                sample_train_set = train_set
+            else:
+                return
+        else:
+            return
+        if len(self.config.mean) > 0 and len(self.config.std) > 0:
             return
         bgr_images = []
-        for input_file, label in train_set:
+        for input_file, label in sample_train_set:
             x = cv2.imread(input_file)
             x = cv2.resize(x, (self.config.width, self.config.height))
             x = x / 255.  # 正規化してからmean,stdを計算する

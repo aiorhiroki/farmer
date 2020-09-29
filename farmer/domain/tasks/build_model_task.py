@@ -1,16 +1,12 @@
-import os
+import segmentation_models
 
-import tensorflow as tf
-from tensorflow import keras
-from segmentation_models import Unet, PSPNet, FPN
-from segmentation_models import metrics
-
-from farmer.ncc.models import (
-    xception, mobilenet, dilated_xception, mobilenet_v2, Deeplabv3, EfficientNet
-)
 from farmer.ncc.optimizers import AdaBound
+from farmer.ncc import losses, models
 from ..model.task_model import Task
-from farmer.ncc import losses
+
+from tensorflow import keras
+import tensorflow as tf
+import tensorflow_addons as tfa
 
 
 class BuildModelTask:
@@ -22,8 +18,8 @@ class BuildModelTask:
         if self.config.curriculum and self.config.curriculum_model_path:
             custom_objects = {
                 'focal_loss':getattr(losses, self.config.train_params.loss)(),
-                'iou_score': metrics.IOUScore,
-                'f1-score': metrics.FScore,
+                'iou_score': segmentation_models.metrics.IOUScore,
+                'f1-score': segmentation_models.metrics.FScore,
             }
             model = keras.models.load_model(
                 self.config.curriculum_model_path,
@@ -67,40 +63,47 @@ class BuildModelTask:
             mobilenet_shape_condition = height >= 32 and width >= 32
 
             if model_name == "xception" and xception_shape_condition:
-                model = xception(
+                model = models.xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width
                 )
             elif model_name == "dilated_xception" and xception_shape_condition:
-                model = dilated_xception(
+                model = models.dilated_xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
                     weights_info=self.config.train_params.weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
-                model = mobilenet(
+                model = models.mobilenet(
                     nb_classes=nb_classes,
                     height=height,
                     width=width
                 )
             elif model_name == "mobilenetv2" and mobilenet_shape_condition:
-                model = mobilenet_v2(
+                model = models.mobilenet_v2(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
                     weights_info=self.config.train_params.weights_info
                 )
             elif model_name.startswith("efficientnetb"):
-                model = EfficientNet(
+                model = models.EfficientNet(
                     model_name=model_name,
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
                 )
+            elif model_name.startswith('resnest'):
+                model = models.resnest(
+                    nb_classes=nb_classes,
+                    model_name=model_name,
+                    height=height,
+                    width=width,
+                )
             else:
-                model = Model2D(nb_classes, height, width)
+                model = models.Model2D(nb_classes, height, width)
 
         elif task == Task.SEMANTIC_SEGMENTATION:
             print('------------------')
@@ -109,13 +112,13 @@ class BuildModelTask:
             print('------------------')
 
             if model_name == "unet":
-                model = Unet(
+                model = segmentation_models.Unet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
             elif model_name == "deeplab_v3":
-                model = Deeplabv3(
+                model = models.Deeplabv3(
                     weights_info=self.config.train_params.weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -123,13 +126,13 @@ class BuildModelTask:
                     activation=activation
                 )
             elif model_name == "pspnet":
-                model = PSPNet(
+                model = segmentation_models.PSPNet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
             elif model_name == "fpn":
-                model = FPN(
+                model = segmentation_models.FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -150,7 +153,7 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func
+        loss
     ):
         if self.config.framework == "tensorflow":
             print('------------------')
@@ -158,47 +161,87 @@ class BuildModelTask:
             print('------------------')
             if optimizer == "adam":
                 optimizer = keras.optimizers.Adam(
-                    lr=learning_rate, beta_1=0.9, beta_2=0.999, decay=0.001
+                    lr=learning_rate,
+                    beta_1=0.9,
+                    beta_2=0.999,
+                    decay=self.config.train_params.opt_decay,
                 )
             elif optimizer == "adabound":
                 optimizer = AdaBound(
-                    learning_rate=learning_rate, final_lr=0.1
+                    learning_rate=learning_rate,
+                    final_lr=0.1,
+                )
+            elif optimizer == "adamw":
+                optimizer = tfa.optimizers.AdamW(
+                    learning_rate=learning_rate,
+                    weight_decay=self.config.train_params.opt_decay
+                )
+            elif optimizer == "radam":
+                steps_per_epoch = self.config.nb_train_data // self.config.train_params.batch_size
+
+                optimizer = tfa.optimizers.RectifiedAdam(
+                    lr=learning_rate,
+                    weight_decay=1e-5,
+                    total_steps=int(steps_per_epoch * self.config.epochs * 0.95),
+                    warmup_proportion=0.1,
+                    min_lr=learning_rate * 0.01,
+                )
+
+                # Lookahead
+                # https://arxiv.org/abs/1907.08610v1
+                optimizer = tfa.optimizers.Lookahead(
+                    optimizer,
+                    sync_period=6,
+                    slow_step_size=0.5
                 )
             else:
                 optimizer = keras.optimizers.SGD(
-                    lr=learning_rate, momentum=0.9, decay=0.001
+                    lr=learning_rate,
+                    momentum=0.9,
+                    decay=self.config.train_params.opt_decay
                 )
 
+            loss_funcs = loss["functions"]
+            print('------------------')
+            print('Loss:', loss_funcs.keys())
+            print('------------------')
             if task_id == Task.CLASSIFICATION:
-                model.compile(
-                    optimizer=optimizer,
-                    loss=keras.losses.categorical_crossentropy,
-                    metrics=["acc"],
-                )
-            elif task_id == Task.SEMANTIC_SEGMENTATION:
-                print('------------------')
-                print('Loss:', loss_func)
-                print('------------------')
-                loss_params = self.config.train_params.loss_params
-                loss_params['class_weights'] = [
-                    1.0 for i in range(self.config.nb_classes)]
-                for cls_i, w in self.config.train_params.class_weights.items():
-                    loss_params['class_weights'][cls_i] = w
-                print('class weight:', loss_params['class_weights'])
-                loss = getattr(losses, loss_func)(**loss_params)
-                model.compile(
-                    optimizer=optimizer,
-                    loss=loss,
-                    metrics=[
-                        metrics.IOUScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes))),
-                        metrics.FScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes)))
-                    ],
-                )
-            else:
-                raise NotImplementedError
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if i == 0:
+                        if params is None:
+                            loss = getattr(keras.losses, loss_name)()
+                        else:
+                            loss = getattr(keras.losses, loss_name)(**params)
+                    else:
+                        if params is None:
+                            loss += getattr(keras.losses, loss_name)()
+                        else:
+                            loss += getattr(keras.losses, loss_name)(**params)
+                metrics = ["acc"]
 
+            elif task_id == Task.SEMANTIC_SEGMENTATION:
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if params is not None and params.get("class_weights"):
+                        params["class_weights"] = list(
+                            params["class_weights"].values())
+                    if i == 0:
+                        if params is None:
+                            loss = getattr(losses, loss_name)()
+                        else:
+                            loss = getattr(losses, loss_name)(**params)
+                    else:
+                        if params is None:
+                            loss += getattr(losses, loss_name)()
+                        else:
+                            loss += getattr(losses, loss_name)(**params)
+                metrics = [
+                    segmentation_models.metrics.IOUScore(
+                        class_indexes=list(range(1, self.config.nb_classes))),
+                    segmentation_models.metrics.FScore(
+                        class_indexes=list(range(1, self.config.nb_classes)))
+                    ],
+
+            model.compile(optimizer, loss, metrics)
         return model

@@ -157,7 +157,7 @@ class TrainTask:
                 logger_file=file_name,
                 token=self.config.slack_token,
                 channel=self.config.slack_channel,
-                title=self.config.model_name,
+                title=self.config.train_params.model_name,
             )
             callbacks.append(slack_logging)
 
@@ -186,9 +186,7 @@ class TrainTask:
             shuffle=False
         )
 
-        class_weights = None
-        if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            class_weights = self.config.train_params.class_weights
+        class_weights = self.config.train_params.classification_class_weight
 
         try:
             model.fit(

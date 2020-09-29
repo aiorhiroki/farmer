@@ -15,36 +15,33 @@ class BuildModelTask:
 
     def command(self):
         # return: base_model is saved when training on multi gpu
-        if self.config.curriculum and self.config.curriculum_model_path:
-            custom_objects = {
-                'focal_loss':getattr(losses, self.config.train_params.loss)(),
-                'iou_score': segmentation_models.metrics.IOUScore,
-                'f1-score': segmentation_models.metrics.FScore,
-            }
-            model = keras.models.load_model(
-                self.config.curriculum_model_path,
-                custom_objects=custom_objects
-            )
-        else:
-            model = self._do_make_model_task(
-                task=self.config.task,
-                model_name=self.config.train_params.model_name,
-                nb_classes=self.config.nb_classes,
-                height=self.config.height,
-                width=self.config.width,
-                backbone=self.config.train_params.backbone,
-                activation=self.config.train_params.activation
-            )
-            model = self._do_compile_model_task(
-                model,
-                self.config.train_params.optimizer,
-                self.config.train_params.learning_rate,
-                self.config.task,
-                self.config.train_params.loss
-            )
-            model = self._do_load_model_task(
-                model, self.config.trained_model_path
-            )
+        model = self._do_make_model_task(
+            task=self.config.task,
+            model_name=self.config.train_params.model_name,
+            nb_classes=self.config.nb_classes,
+            height=self.config.height,
+            width=self.config.width,
+            backbone=self.config.train_params.backbone,
+            activation=self.config.train_params.activation,
+            weights_info=self.config.train_params.weights_info,
+        )
+        model = self._do_compile_model_task(
+            model,
+            self.config.train_params.optimizer,
+            self.config.train_params.learning_rate,
+            self.config.task,
+            self.config.train_params.loss,
+            self.config.curriculum,
+            self.config.curriculum_model_path,
+        )
+        model = self._do_load_model_task(
+            model,
+            self.config.trained_model_path,
+            self.config.curriculum,
+            self.config.curriculum_model_path,
+            self.config.train_params.loss,
+            self.config.task,
+        )
 
         return model
 
@@ -56,7 +53,8 @@ class BuildModelTask:
         width=299,
         height=299,
         backbone="resnet50",
-        activation="softmax"
+        activation="softmax",
+        weights_info=None,
     ):
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
@@ -73,7 +71,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.train_params.weights_info
+                    weights_info=weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = models.mobilenet(
@@ -86,7 +84,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.train_params.weights_info
+                    weights_info=weights_info
                 )
             elif model_name.startswith("efficientnetb"):
                 model = models.EfficientNet(
@@ -119,7 +117,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = models.Deeplabv3(
-                    weights_info=self.config.train_params.weights_info,
+                    weights_info=weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,
@@ -142,9 +140,31 @@ class BuildModelTask:
 
         return model
 
-    def _do_load_model_task(self, model, trained_model_path):
+    def _do_load_model_task(
+        self,
+        model,
+        trained_model_path,
+        curriculum,
+        curriculum_model_path,
+        loss_funcs,
+        task_id,
+    ):
         if trained_model_path:
             model.load_weights(trained_model_path)
+        elif curriculum and curriculum_model_path:
+            loss, loss_name = self._do_select_loss_task(
+                loss_funcs=loss_funcs["functions"],
+                task_id=task_id,
+            )
+            custom_objects = {
+                loss_name:loss,
+                'iou_score': segmentation_models.metrics.IOUScore,
+                'f1-score': segmentation_models.metrics.FScore,
+            }
+            model = keras.models.load_model(
+                curriculum_model_path,
+                custom_objects=custom_objects
+            )
         return model
 
     def _do_compile_model_task(
@@ -153,8 +173,12 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss
+        loss,
+        curriculum=False,
+        curriculum_model_path=None,
     ):
+        if curriculum and curriculum_model_path:
+            return
         if self.config.framework == "tensorflow":
             print('------------------')
             print('Optimizer:', optimizer)
@@ -205,37 +229,10 @@ class BuildModelTask:
             print('------------------')
             print('Loss:', loss_funcs.keys())
             print('------------------')
+            loss, _ = self._do_select_loss_task(loss_funcs, task_id)
             if task_id == Task.CLASSIFICATION:
-                for i, loss_func in enumerate(loss_funcs.items()):
-                    loss_name, params = loss_func
-                    if i == 0:
-                        if params is None:
-                            loss = getattr(keras.losses, loss_name)()
-                        else:
-                            loss = getattr(keras.losses, loss_name)(**params)
-                    else:
-                        if params is None:
-                            loss += getattr(keras.losses, loss_name)()
-                        else:
-                            loss += getattr(keras.losses, loss_name)(**params)
                 metrics = ["acc"]
-
             elif task_id == Task.SEMANTIC_SEGMENTATION:
-                for i, loss_func in enumerate(loss_funcs.items()):
-                    loss_name, params = loss_func
-                    if params is not None and params.get("class_weights"):
-                        params["class_weights"] = list(
-                            params["class_weights"].values())
-                    if i == 0:
-                        if params is None:
-                            loss = getattr(losses, loss_name)()
-                        else:
-                            loss = getattr(losses, loss_name)(**params)
-                    else:
-                        if params is None:
-                            loss += getattr(losses, loss_name)()
-                        else:
-                            loss += getattr(losses, loss_name)(**params)
                 metrics = [
                     segmentation_models.metrics.IOUScore(
                         class_indexes=list(range(1, self.config.nb_classes))),
@@ -245,3 +242,39 @@ class BuildModelTask:
 
             model.compile(optimizer, loss, metrics)
         return model
+
+    def _do_select_loss_task(self, loss_funcs, task_id):
+        loss = None
+        loss_name = None
+        if task_id == Task.CLASSIFICATION:
+            for i, loss_func in enumerate(loss_funcs.items()):
+                loss_name, params = loss_func
+                if i == 0:
+                    if params is None:
+                        loss = getattr(keras.losses, loss_name)()
+                    else:
+                        loss = getattr(keras.losses, loss_name)(**params)
+                else:
+                    if params is None:
+                        loss += getattr(keras.losses, loss_name)()
+                    else:
+                        loss += getattr(keras.losses, loss_name)(**params)
+
+        elif task_id == Task.SEMANTIC_SEGMENTATION:
+            for i, loss_func in enumerate(loss_funcs.items()):
+                loss_name, params = loss_func
+                if params is not None and params.get("class_weights"):
+                    params["class_weights"] = list(
+                        params["class_weights"].values())
+                if i == 0:
+                    if params is None:
+                        loss = getattr(losses, loss_name)()
+                    else:
+                        loss = getattr(losses, loss_name)(**params)
+                else:
+                    if params is None:
+                        loss += getattr(losses, loss_name)()
+                    else:
+                        loss += getattr(losses, loss_name)(**params)
+        
+        return loss, loss.name

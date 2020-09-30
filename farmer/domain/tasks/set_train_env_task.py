@@ -63,9 +63,7 @@ class SetTrainEnvTask:
 
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():
-                if not val:
-                    continue
-                elif isinstance(val, dict):
+                if isinstance(val, dict):
                     set_train_params(val)
                 elif isinstance(val, list):
                     if len(val) == 0:

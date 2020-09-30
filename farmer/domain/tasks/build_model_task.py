@@ -24,6 +24,8 @@ class BuildModelTask:
             backbone=self.config.train_params.backbone,
             activation=self.config.train_params.activation,
             weights_info=self.config.train_params.weights_info,
+            curriculum=self.config.curriculum,
+            curriculum_model_path=self.config.curriculum_model_path,
         )
         model = self._do_compile_model_task(
             model,
@@ -55,7 +57,11 @@ class BuildModelTask:
         backbone="resnet50",
         activation="softmax",
         weights_info=None,
+        curriculum=False,
+        curriculum_model_path=None,
     ):
+        if curriculum and curriculum_model_path:
+            return
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32

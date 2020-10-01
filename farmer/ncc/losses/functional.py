@@ -1,62 +1,61 @@
-import segmentation_models
-from segmentation_models.base import Loss
-
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
-
-class TverskyLoss(Loss):
-    def __init__(self, alpha=0.45, beta=0.55, class_weights=None):
-        super().__init__(name='tversky_loss')
-        self.alpha = alpha
-        self.beta = beta
-        self.class_weights = class_weights if class_weights is not None else 1.
-
-    def __call__(self, gt, pr):
-        return _tversky_loss(
-            gt=gt, 
-            pr=pr, 
-            alpha=self.alpha, 
-            beta=self.beta, 
-            class_weights=self.class_weights
-        )
+SMOOTH = K.epsilon()
 
 
-class FocalTverskyLoss(Loss):
-    def __init__(self, alpha=0.45, beta=0.55, gamma=2.5, class_weights=None):
-        super().__init__(name='tversky_loss')
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-        self.class_weights = class_weights if class_weights is not None else 1.
-
-    def __call__(self, gt, pr):
-        return _focal_tversky_loss(
-            gt=gt, 
-            pr=pr, 
-            alpha=self.alpha, 
-            beta=self.beta, 
-            gamma=self.gamma, 
-            class_weights=self.class_weights
-        )
+def dice_loss(gt, pr, beta=1, class_weights=1.):
+    index = _f_index(gt, pr, beta)
+    return (1 - index) * class_weights
 
 
-def _tversky_index(gt, pr, alpha, beta):
-    eps = K.epsilon()
-    pr = tf.clip_by_value(pr, eps, 1 - eps)
-    reduce_axes = [0, 1, 2]
-    tp = tf.reduce_sum(gt * pr, axis=reduce_axes)
-    fp = tf.reduce_sum(pr, axis=reduce_axes) - tp
-    fn = tf.reduce_sum(gt, axis=reduce_axes) - tp
-    return (tp + eps) / (tp + alpha*fp + beta*fn + eps)
+def jaccard_loss(gt, pr, beta=1, class_weights=1.):
+    index = _iou_index(gt, pr)
+    return (1 - index) * class_weights
 
 
-def _tversky_loss(gt, pr, alpha=0.45, beta=0.55, class_weights=1., **kwargs):
+def tversky_loss(gt, pr, alpha=0.45, beta=0.55, class_weights=1.):
     index = _tversky_index(gt, pr, alpha, beta) * class_weights
     return 1.0 - tf.reduce_mean(index)
 
 
-def _focal_tversky_loss(gt, pr, alpha=0.45, beta=0.55, gamma=2.5, class_weights=1., **kwargs):
-    index =_tversky_index(gt, pr, alpha, beta) * class_weights
+def focal_tversky_loss(
+        gt, pr, alpha=0.45, beta=0.55, gamma=2.5, class_weights=1.):
+    index = _tversky_index(gt, pr, alpha, beta) * class_weights
     loss = K.pow((1.0 - index), gamma)
-    return K.mean(loss)
+    return tf.reduce_mean(loss)
+
+
+def categorical_focal_loss(gt, pr, gamma=2.0, alpha=0.25, class_weights=1.):
+    pr = tf.clip_by_value(pr, SMOOTH, 1.0 - SMOOTH)
+    loss = - gt * (alpha * K.pow((1 - pr), gamma) * K.log(pr)) * class_weights
+    return tf.reduce_mean(loss)
+
+
+def _tp_fp_fn(gt, pr):
+    pr = tf.clip_by_value(pr, SMOOTH, 1 - SMOOTH)
+    reduce_axes = [0, 1, 2]
+    tp = tf.reduce_sum(gt * pr, axis=reduce_axes)
+    fp = tf.reduce_sum(pr, axis=reduce_axes) - tp
+    fn = tf.reduce_sum(gt, axis=reduce_axes) - tp
+
+    return tp, fp, fn
+
+
+def _f_index(gt, pr, beta=1):
+    tp, fp, fn = _tp_fp_fn(gt, pr)
+    intersection = (1 + beta ** 2) * tp + SMOOTH
+    summation = (1 + beta ** 2) * tp + beta ** 2 * fn + fp + SMOOTH
+    return intersection / summation
+
+
+def _iou_index(gt, pr):
+    tp, fp, fn = _tp_fp_fn(gt, pr)
+    intersection = tp + SMOOTH
+    union = tp + fn + fp + SMOOTH
+    return intersection / union
+
+
+def _tversky_index(gt, pr, alpha, beta):
+    tp, fp, fn = _tp_fp_fn(gt, pr)
+    return (tp + SMOOTH) / (tp + alpha*fp + beta*fn + SMOOTH)

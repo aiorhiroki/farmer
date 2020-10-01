@@ -68,10 +68,6 @@ class Trainer(Config, ImageLoader):
         self.get_mean_std()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-        if not self.train_params.class_weights:
-            self.train_params.class_weights = {
-                class_id: 1.0 for class_id in range(self.nb_classes)
-            }
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):

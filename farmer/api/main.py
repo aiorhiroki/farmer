@@ -5,7 +5,7 @@ from glob import glob
 
 from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
-from farmer.domain.model import Trainer, TrainParams, LRScheduler
+from farmer.domain.model import Trainer, TrainParams
 from farmer.domain.workflows.train_workflow import TrainWorkflow
 
 import optuna
@@ -37,8 +37,9 @@ def fit():
             {k: v for (k, v) in run_config.items() if k != "config_paths"}
         )
         train_params = TrainParams(**config.get("train_params"))
-        if train_params.scheduler:
-            train_params.scheduler = LRScheduler(**train_params.scheduler)
+        print("scheduler params:", vars(train_params))
+        # if train_params.scheduler:
+        #     train_params.scheduler = LRScheduler(**train_params.scheduler)
         config.update(dict(config_path=config_path, train_params=train_params))
         if secret_config:
             config.update(secret_config)

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict
-from .scheduler_model import LRScheduler
+# from .scheduler_model import LRScheduler
+from . import scheduler_model
 
 
 @dataclass
@@ -20,4 +21,8 @@ class TrainParams:
     optimizer: str = None
     augmentation: Dict[str, int] = field(default_factory=dict)
     opt_decay: float = 0.001
-    scheduler: LRScheduler = None
+    scheduler: dict = None
+
+    def __post_init__(self):
+        if self.scheduler and len(self.scheduler) == 1:
+            self.scheduler = getattr(scheduler_model, self.scheduler.keys())

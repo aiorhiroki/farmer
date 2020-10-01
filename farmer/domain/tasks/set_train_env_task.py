@@ -6,7 +6,7 @@ import multiprocessing as mp
 import numpy as np
 
 import tensorflow as tf
-from farmer.domain.model import TrainParams, LRScheduler
+from farmer.domain.model import TrainParams
 
 
 class SetTrainEnvTask:
@@ -97,12 +97,13 @@ class SetTrainEnvTask:
 
         # set train params to params setted by optuna
         train_params_dict = dataclasses.asdict(self.config.optuna_params)
+        print(train_params_dict)
         set_train_params(train_params_dict)
         self.config.train_params = TrainParams(**train_params_dict)
-        if self.config.train_params.scheduler:
-            self.config.train_params.scheduler = LRScheduler(
-                **self.config.train_params.scheduler
-            )
+        # if self.config.train_params.scheduler:
+        #     self.config.train_params.scheduler = LRScheduler(
+        #         **self.config.train_params.scheduler
+        #     )
 
 
     def _do_create_dirs_task(self):

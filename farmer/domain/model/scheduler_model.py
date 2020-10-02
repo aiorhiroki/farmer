@@ -6,7 +6,6 @@ import numpy as np
 class StepLR:
     step_size: int = None
     step_gamma: float = 0.1
-    base_lr: float = 0.001
 
     def func(self, base_lr, **kwargs):
         self.base_lr = base_lr
@@ -21,9 +20,9 @@ class StepLR:
 class MultiStepLR:
     step_gamma: float = 0.5
     milestones: dict = None
-    base_lr: float = 0.001
 
     def func(self, base_lr, n_epoch, **kwargs):
+        self.milestone_num = 0
         self.base_lr = base_lr
         milestones = []
         mile_list = sorted(
@@ -48,7 +47,6 @@ class MultiStepLR:
 @dataclass
 class ExponentialLR:
     exp_gamma: float = 0.90
-    base_lr: float = 0.001
 
     def func(self, base_lr, **kwargs):
         self.base_lr = base_lr
@@ -83,7 +81,6 @@ class CyclicalLR:
 class CosineDecay:
     cosine_lr_max: float = 0.001
     cosine_lr_min: float = 0.0001
-    n_epoch: int = 0
 
     def func(self, n_epoch, **kwargs):
         self.n_epoch = n_epoch

@@ -42,7 +42,7 @@ class Trainer(Config, ImageLoader):
         self.gpu = str(self.gpu)
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
-        self.train_params.batch_size *= self.nb_gpu if self.multi_gpu else 1
+        # self.train_params.batch_size *= self.nb_gpu if self.multi_gpu else 1
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
@@ -79,6 +79,6 @@ class Trainer(Config, ImageLoader):
                 elif isinstance(val, dict):
                     _check_need_optuna(val)
 
-        _check_need_optuna(dataclasses.asdict(self.train_params))
+        _check_need_optuna(self.train_params)
         if self.optuna:
             self.optuna_params = copy.deepcopy(self.train_params)

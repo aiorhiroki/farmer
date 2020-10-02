@@ -13,9 +13,6 @@ class TrainParams:
     loss: Dict[str, dict] = field(default_factory=dict)
     classification_class_weight: Dict[str, float] = field(default_factory=dict)
     batch_size: int = None
-    cosine_decay: bool = False
-    cosine_lr_max: int = 0.01
-    cosine_lr_min: int = 0.001
     weights_info: Dict[str, str] = field(default_factory=dict)
     learning_rate: float = None
     optimizer: str = None
@@ -24,5 +21,9 @@ class TrainParams:
     scheduler: dict = None
 
     def __post_init__(self):
-        if self.scheduler and len(self.scheduler) == 1:
-            self.scheduler = getattr(scheduler_model, self.scheduler.keys())
+        if self.scheduler and isinstance(self.scheduler, dict):
+            scheduler = self.scheduler['functions']
+            scheduler_name = [k for k in scheduler.keys()][0]
+            params = scheduler[scheduler_name]
+            self.scheduler = getattr(
+                scheduler_model, scheduler_name)(**params)

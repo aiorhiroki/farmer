@@ -4,6 +4,7 @@ import random as rn
 import dataclasses
 import multiprocessing as mp
 import numpy as np
+import copy
 
 import tensorflow as tf
 from farmer.domain.model import TrainParams
@@ -16,7 +17,7 @@ class SetTrainEnvTask:
     def command(self, trial):
         self._do_set_random_seed_task()
         self._do_set_cpu_gpu_devices_task(self.config.gpu)
-        self._do_set_optuna_params_task(trial)
+        self._do_set_train_params_task(trial)
         self._do_create_dirs_task()
 
         return self.config
@@ -48,19 +49,7 @@ class SetTrainEnvTask:
             tf.config.threading.set_inter_op_parallelism_threads(num_threads)
             tf.config.threading.set_intra_op_parallelism_threads(num_threads)
 
-    def _do_set_optuna_params_task(self, trial):
-        if not self.config.optuna:
-            return
-        self.config.trial_number = trial.number
-        self.config.trial_params = trial.params
-        # result_dir/trial#/learning/
-        self.config.learning_path = self.config.learning_path.replace(
-            "/learning", f"/trial{trial.number}/learning")
-        self.config.model_path = self.config.model_path.replace(
-            "/model", f"/trial{trial.number}/model")
-        self.config.image_path = self.config.image_path.replace(
-            "/image", f"/trial{trial.number}/image")
-
+    def _do_set_train_params_task(self, trial):
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():
                 if not val:
@@ -95,15 +84,24 @@ class SetTrainEnvTask:
                                 train_params[key]["functions"] = functions
                                 set_train_params(functions)
 
-        # set train params to params setted by optuna
-        train_params_dict = dataclasses.asdict(self.config.optuna_params)
-        print(train_params_dict)
-        set_train_params(train_params_dict)
+        if self.config.optuna:
+            self.config.trial_number = trial.number
+            self.config.trial_params = trial.params
+            # result_dir/trial#/learning/
+            self.config.learning_path = self.config.learning_path.replace(
+                "/learning", f"/trial{trial.number}/learning")
+            self.config.model_path = self.config.model_path.replace(
+                "/model", f"/trial{trial.number}/model")
+            self.config.image_path = self.config.image_path.replace(
+                "/image", f"/trial{trial.number}/image")
+
+            # set train params to params setted by optuna
+            train_params_dict = copy.deepcopy(self.config.optuna_params)
+            set_train_params(train_params_dict)
+        else:
+            train_params_dict = self.config.train_params
+
         self.config.train_params = TrainParams(**train_params_dict)
-        # if self.config.train_params.scheduler:
-        #     self.config.train_params.scheduler = LRScheduler(
-        #         **self.config.train_params.scheduler
-        #     )
 
 
     def _do_create_dirs_task(self):

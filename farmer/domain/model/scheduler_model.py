@@ -59,10 +59,13 @@ class ExponentialLR:
 @dataclass
 class CyclicalLR:
     step_size: int = None
+    cyc_freq: int = None
     cyc_lr_max: float = None
     cyc_lr_min: float = None
 
-    def func(self, **kwargs):
+    def func(self, n_epoch, **kwargs):
+        epoch_per_freq = n_epoch / self.cyc_freq
+        self.step_size = epoch_per_freq // 2
         return self.cyclical_lr
 
     def cyclical_lr(self, epoch):

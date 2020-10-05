@@ -66,24 +66,24 @@ class EdaTask:
         """
         train_set, _, _ = annotation_set
         if self.config.input_data_type == 'image' and self.config.mean_std:
-            if len(train_set) > 2000:
-                sample_train_set = random.sample(train_set, 2000)
-            elif len(train_set) > 0:
-                sample_train_set = train_set
-            else:
+            if len(train_set) <= 0:
                 return
         else:
             return
         if len(self.config.mean) > 0 and len(self.config.std) > 0:
             return
-        bgr_images = []
-        for input_file, label in sample_train_set:
+        means = []
+        pix_pow = np.zeros(3)
+        for input_file, label in train_set:
             x = cv2.imread(input_file)
             x = cv2.resize(x, (self.config.width, self.config.height))
             x = x / 255.  # 正規化してからmean,stdを計算する
-            bgr_images.append(x)
-        mean = np.mean(bgr_images, axis=(0, 1, 2))
-        std = np.std(bgr_images, axis=(0, 1, 2))
+            means.append(np.mean(x, axis=(0, 1)))
+            pix_pow += np.sum(np.power(x, 2), axis=(0, 1))
+        pix_num = self.config.height *  self.config.width * len(sample_train_set)
+        mean = np.mean(means, axis=(0))
+        var_pix = (pix_pow / pix_num) - np.power(mean, 2) 
+        std = np.sqrt(var_pix)
         # convert BGR to RGB
         self.config.mean = mean[::-1]
         self.config.std = std[::-1]

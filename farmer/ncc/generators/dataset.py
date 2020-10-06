@@ -110,6 +110,15 @@ class ClassificationDataset:
         input_image = self.image_util.normalization(input_image)
         label = self.image_util.cast_to_onehot(label)
 
+        # apply augmentations
+        if self.augmentation and len(self.augmentation) > 0:
+            input_image, label = classification_aug(
+                input_image, label,
+                self.mean, self.std,
+                self.augmentation,
+                self.augmix
+            )
+
         return input_image, label
 
     def __len__(self):

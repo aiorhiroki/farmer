@@ -5,7 +5,7 @@ import json
 import numpy as np
 import cv2
 import random
-
+from tqdm import trange
 
 class EdaTask:
     def __init__(self, config):
@@ -66,7 +66,7 @@ class EdaTask:
         """
         train_set, _, _ = annotation_set
         if self.config.input_data_type == 'image' and self.config.mean_std:
-            if len(train_set) <= 0:
+            if len(train_set) == 0:
                 return
         else:
             return
@@ -74,13 +74,14 @@ class EdaTask:
             return
         means = []
         pix_pow = np.zeros(3)
-        for input_file, label in train_set:
+        for i in trange(len(train_set)):
+            input_file, label = train_set[i]
             x = cv2.imread(input_file)
             x = cv2.resize(x, (self.config.width, self.config.height))
             x = x / 255.  # 正規化してからmean,stdを計算する
             means.append(np.mean(x, axis=(0, 1)))
             pix_pow += np.sum(np.power(x, 2), axis=(0, 1))
-        pix_num = self.config.height *  self.config.width * len(sample_train_set)
+        pix_num = self.config.height *  self.config.width * len(train_set)
         mean = np.mean(means, axis=(0))
         var_pix = (pix_pow / pix_num) - np.power(mean, 2) 
         std = np.sqrt(var_pix)

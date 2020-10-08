@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass
@@ -21,6 +22,7 @@ class Config:
     learning_path: str = None
     image_path: str = None
     video_path: str = None
+    predict_videos: List[str] = field(default_factory=list)
     return_result: bool = False
     result: dict = None
     framework: str = "tensorflow"

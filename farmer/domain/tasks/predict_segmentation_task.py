@@ -42,3 +42,13 @@ class PredictSegmentationTask:
             model=model,
             save_dir=save_dir,
         )
+
+    def _do_predict_on_video(self, model):
+        segmenter = ncc.precisions.Segmenter(model)
+        for predict_video in self.config.predict_videos:
+            video_path = predict_video["name"]
+            start = predict_video.get("start_time")
+            end = predict_video.get("end_time")
+
+            ncc.video.predict_on_video(
+                segmenter, video_path, self.config.video_path, start, end)

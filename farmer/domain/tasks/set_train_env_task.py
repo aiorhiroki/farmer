@@ -110,7 +110,8 @@ class SetTrainEnvTask:
         log_dirs = [
             self.config.model_path,
             self.config.learning_path,
-            self.config.image_path
+            self.config.image_path,
+            self.config.video_path
         ]
         for log_dir in log_dirs:
             if os.path.exists(log_dir):

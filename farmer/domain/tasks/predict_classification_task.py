@@ -74,3 +74,14 @@ class PredictClassificationTask:
             writer.writerows(pred_result)
         ncc.metrics.show_matrix(
             true_ids, pred_ids, self.config.class_names, self.config.info_path)
+
+    def _do_predict_on_video(self, model):
+        classifier = ncc.precisions.Classifier(
+            self.config.class_names, model)
+        for predict_video in self.config.predict_videos:
+            video_path = predict_video["name"]
+            start = predict_video.get("start_time")
+            end = predict_video.get("end_time")
+
+            ncc.video.predict_on_video(
+                classifier, video_path, self.config.video_path, start, end)

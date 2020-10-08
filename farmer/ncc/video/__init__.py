@@ -1,2 +1,2 @@
 from .utils import FPS, OutsideExcluder
-from .VideoProcess import VideoProcess
+from .video_predictor import predict_on_video

@@ -44,7 +44,7 @@ class Trainer(Config, ImageLoader):
         self.multi_gpu = self.nb_gpu > 1
         self.train_params.batch_size *= self.nb_gpu if self.multi_gpu else 1
         if self.result_dir is None:
-            self.result_dir = datetime.today().strftime("%Y%m%d_%H%M")
+            self.result_dir = datetime.today().strftime("%Y%m%d_%H%M%S")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
         if self.trained_path is not None:
             self.trained_path = os.path.join(self.root_dir, self.trained_path)
@@ -56,10 +56,13 @@ class Trainer(Config, ImageLoader):
                 )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
+        if os.path.exists(self.result_path):
+            self.result_path += datetime.today().strftime("_%Y%m%d_%H%M%S")
         self.info_path = os.path.join(self.result_path, self.info_dir)
         self.model_path = os.path.join(self.result_path, self.model_dir)
         self.learning_path = os.path.join(self.result_path, self.learning_dir)
         self.image_path = os.path.join(self.result_path, self.image_dir)
+        self.tfboard_path = os.path.join(self.result_path, self.tfboard_dir)
         self.get_train_dirs()
         self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
         self.val_dirs = [str(val_dir) for val_dir in self.val_dirs if val_dir]

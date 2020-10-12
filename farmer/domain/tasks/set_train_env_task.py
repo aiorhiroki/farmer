@@ -54,12 +54,15 @@ class SetTrainEnvTask:
         self.config.trial_number = trial.number
         self.config.trial_params = trial.params
         # result_dir/trial#/learning/
+        trial_result_path = f'{self.config.result_path}/trial{trial.number}'
         self.config.learning_path = os.path.join(
-            self.config.result_path, f'trial{trial.number}', self.config.learning_dir)
+            trial_result_path, self.config.learning_dir)
         self.config.model_path = os.path.join(
-            self.config.result_path, f'trial{trial.number}', self.config.model_dir)
+            trial_result_path, self.config.model_dir)
         self.config.image_path = os.path.join(
-            self.config.result_path, f'trial{trial.number}', self.config.image_dir)
+            trial_result_path, self.config.image_dir)
+        self.config.tfboard_path = os.path.join(
+            trial_result_path, self.config.tfboard_dir)
 
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():
@@ -110,7 +113,8 @@ class SetTrainEnvTask:
         log_dirs = [
             self.config.model_path,
             self.config.learning_path,
-            self.config.image_path
+            self.config.image_path,
+            self.config.tfboard_path
         ]
         for log_dir in log_dirs:
             if os.path.exists(log_dir):

@@ -25,7 +25,8 @@ class ReadAnnotationTask:
 
         data_list = list()
         for data in dirs_list:
-            data_list += glob.glob(data)
+            glob_dirs = glob.glob(f'{self.config.target_dir}/{data}')
+            data_list += [os.path.basename(d) for d in glob_dirs]
 
         print(f"{phase}: {data_list}")
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:

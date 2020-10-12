@@ -78,6 +78,14 @@ class TrainTask:
                 filepath=model_save_file, save_best_only=True
             )
 
+        step = self.config.nb_train_data // self.config.train_params.batch_size
+        tf_board = keras.callbacks.TensorBoard(
+            log_dir=self.config.tfboard_path,
+            profile_batch=[
+                int(step * 0.3), int(step * 0.5)
+            ]
+        )
+
         # Learning Rate Schedule
         if self.config.train_params.cosine_decay:
             ncc_scheduler = ncc.schedulers.Scheduler(
@@ -100,7 +108,7 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        callbacks = [checkpoint, scheduler, plot_history, tf_board]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History

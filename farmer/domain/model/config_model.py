@@ -14,11 +14,13 @@ class Config:
     model_dir: str = "model"
     learning_dir: str = "learning"
     image_dir: str = "image"
+    tfboard_dir: str = "tensorboard"
     config_path: str = None
     info_path: str = None
     model_path: str = None
     learning_path: str = None
     image_path: str = None
+    tfboard_path: str = None
     return_result: bool = False
     result: dict = None
     framework: str = "tensorflow"

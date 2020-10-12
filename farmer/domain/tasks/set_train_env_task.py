@@ -54,15 +54,12 @@ class SetTrainEnvTask:
         self.config.trial_number = trial.number
         self.config.trial_params = trial.params
         # result_dir/trial#/learning/
-        learning_path = os.path.join(self.config.result_path, self.config.learning_dir)
-        model_path = os.path.join(self.config.result_path, self.config.model_dir)
-        image_path = os.path.join(self.config.result_path, self.config.image_dir)
-        self.config.learning_path = learning_path.replace(
-            "/learning", f"/trial{trial.number}/learning")
-        self.config.model_path = model_path.replace(
-            "/model", f"/trial{trial.number}/model")
-        self.config.image_path = image_path.replace(
-            "/image", f"/trial{trial.number}/image")
+        self.config.learning_path = os.path.join(
+            self.config.result_path, f'trial{trial.number}', self.config.learning_dir)
+        self.config.model_path = os.path.join(
+            self.config.result_path, f'trial{trial.number}', self.config.model_dir)
+        self.config.image_path = os.path.join(
+            self.config.result_path, f'trial{trial.number}', self.config.image_dir)
 
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():

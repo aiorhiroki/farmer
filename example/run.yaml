@@ -12,3 +12,5 @@ config_paths:
     # detection #bug 
     # - yamls/detection.yaml
     # - yamls/detection-eval.yaml
+
+overwrite: yes

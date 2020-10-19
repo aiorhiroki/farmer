@@ -11,6 +11,7 @@ from .image_loader_model import ImageLoader
 class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
+    generator: bool = False
     epochs: int = None
     steps: int = None
     gpu: str = None
@@ -42,7 +43,14 @@ class Trainer(Config, ImageLoader):
         self.gpu = str(self.gpu)
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
-        self.train_params.batch_size *= self.nb_gpu if self.multi_gpu else 1
+        if self.multi_gpu:
+            if type(self.train_params.batch_size) == list:
+                self.train_params.batch_size = [
+                    b_size * self.nb_gpu for b_size
+                    in self.train_params.batch_size
+                ]
+            else:
+                self.train_params.batch_size *= self.nb_gpu
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M%S")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
@@ -56,7 +64,7 @@ class Trainer(Config, ImageLoader):
                 )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
-        if os.path.exists(self.result_path):
+        if os.path.exists(self.result_path) and self.overwrite:
             self.result_path += datetime.today().strftime("_%Y%m%d_%H%M%S")
         self.info_path = os.path.join(self.result_path, self.info_dir)
         self.model_path = os.path.join(self.result_path, self.model_dir)

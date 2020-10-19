@@ -5,7 +5,6 @@ from farmer.ncc import losses, models
 from ..model.task_model import Task
 
 from tensorflow import keras
-import tensorflow as tf
 import tensorflow_addons as tfa
 
 
@@ -172,7 +171,8 @@ class BuildModelTask:
                 optimizer = tfa.optimizers.RectifiedAdam(
                     lr=learning_rate,
                     weight_decay=1e-5,
-                    total_steps=int(steps_per_epoch * self.config.epochs * 0.95),
+                    total_steps=int(
+                        steps_per_epoch * self.config.epochs * 0.95),
                     warmup_proportion=0.1,
                     min_lr=learning_rate * 0.01,
                 )

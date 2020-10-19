@@ -12,6 +12,7 @@ class Config:
     result_path: str = None
     info_dir: str = "info"
     model_dir: str = "model"
+    overwrite: bool = False
     learning_dir: str = "learning"
     image_dir: str = "image"
     tfboard_dir: str = "tensorboard"

@@ -1,6 +1,7 @@
 import os
 import numpy as np
-from tensorflow.python import keras
+from tensorflow import keras
+import tensorflow as tf
 from farmer import ncc
 
 
@@ -66,17 +67,9 @@ class TrainTask:
         # Save Model Checkpoint
         # result_dir/model/
         model_save_file = os.path.join(self.config.model_path, "best_model.h5")
-
-        if self.config.multi_gpu:
-            checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
-                filepath=model_save_file,
-                base_model=base_model,
-                save_best_only=True,
-            )
-        else:
-            checkpoint = keras.callbacks.ModelCheckpoint(
-                filepath=model_save_file, save_best_only=True
-            )
+        checkpoint = keras.callbacks.ModelCheckpoint(
+            filepath=model_save_file, save_best_only=True
+        )
 
         # Learning Rate Schedule
         if self.config.train_params.cosine_decay:
@@ -173,18 +166,31 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_dataset, validation_dataset, callbacks
+        self, model, train_dataset, val_dataset, callbacks
     ):
-        train_gen = ncc.generators.Dataloder(
-            train_dataset,
-            batch_size=self.config.train_params.batch_size,
-            shuffle=True
-        )
-        valid_gen = ncc.generators.Dataloder(
-            validation_dataset,
-            batch_size=self.config.train_params.batch_size,
-            shuffle=False
-        )
+        if self.config.generator:
+            train_gen = ncc.generators.Dataloder(
+                train_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=True
+            )
+            valid_gen = ncc.generators.Dataloder(
+                val_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=False
+            )
+        else:
+            val_data = [d for d in val_dataset]
+            train_data = [d for d in train_dataset]
+            val = [np.stack(samples, axis=0) for samples in zip(*val_data)]
+            train = [np.stack(samples, axis=0) for samples in zip(*train_data)]
+            valid_ds = tf.data.Dataset.from_tensor_slices((val[0], val[1]))
+            train_ds = tf.data.Dataset.from_tensor_slices((train[0], train[1]))
+
+            train_gen = train_ds.shuffle(len(train_dataset)).batch(
+                    self.config.train_params.batch_size
+            )
+            valid_gen = valid_ds.batch(self.config.train_params.batch_size)
 
         class_weights = self.config.train_params.classification_class_weight
 

@@ -13,9 +13,11 @@ class Config:
     result_path: str = None
     info_dir: str = "info"
     model_dir: str = "model"
+    overwrite: bool = False
     learning_dir: str = "learning"
     image_dir: str = "image"
     video_dir: str = "video"
+    tfboard_dir: str = "tensorboard"
     config_path: str = None
     info_path: str = None
     model_path: str = None
@@ -23,6 +25,7 @@ class Config:
     image_path: str = None
     video_path: str = None
     predict_videos: List[str] = field(default_factory=list)
+    tfboard_path: str = None
     return_result: bool = False
     result: dict = None
     framework: str = "tensorflow"

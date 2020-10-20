@@ -11,7 +11,7 @@ from .image_loader_model import ImageLoader
 class Trainer(Config, ImageLoader):
     train_id: int = None
     training: bool = None
-    generator: bool = False
+    generator: bool = True
     epochs: int = None
     steps: int = None
     gpu: str = None
@@ -44,6 +44,7 @@ class Trainer(Config, ImageLoader):
         self.nb_gpu = len(self.gpu.split(",")) if self.gpu else 0
         self.multi_gpu = self.nb_gpu > 1
         if self.multi_gpu:
+            self.generator = False
             if type(self.train_params.batch_size) == list:
                 self.train_params.batch_size = [
                     b_size * self.nb_gpu for b_size

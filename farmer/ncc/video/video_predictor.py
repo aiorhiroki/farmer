@@ -15,15 +15,18 @@ def predict_on_video(
     save_path = f"{save_dir}/{save_video_name}"
     width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = video.get(cv2.CAP_PROP_FPS)
     fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-    writer = cv2.VideoWriter(save_path, fourcc, 30.0, (width, height))
-    if start is not None:
-        start_frame = _to_frame(start)
+    writer = cv2.VideoWriter(save_path, fourcc, fps, (width, height))
+    if start is None:
+        start_frame = 0
+    else:
+        start_frame = _to_frame(start, fps)
         video.set(1, start_frame)
     if end is None:
         end_frame = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     else:
-        end_frame = _to_frame(end)
+        end_frame = _to_frame(end, fps)
     for _ in tqdm(range(end_frame - start_frame)):
         ret, frame = video.read()
         if not ret:
@@ -37,12 +40,13 @@ def predict_on_video(
     writer.release()
 
 
-def _to_frame(time):
+def _to_frame(time, fps):
     time_list = time.split(":")
     if len(time_list) == 3:
-        frame = int(time_list[2])*60*60*30
-        frame += int(time_list[1])*60*30
-        frame += int(time_list[0])*30
+        frame = int(time_list[0])*60*60*fps
+        frame += int(time_list[1])*60*fps
+        frame += int(time_list[2])*fps
+        frame = int(frame)
     else:
         frame = int(time_list[0])
     return frame

@@ -36,5 +36,5 @@ class_names:
     - dog
 predict_videos:
     - name: data/classification/videos/test/SampleVideo_1280x720_1mb.mp4
-      start: 0:00:40
-      end: 0:01:00
+      start_time: 0:00:02
+      end_time: 0:00:04

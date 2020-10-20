@@ -12,6 +12,7 @@ class PredictClassificationTask:
         prediction = self._do_classification_predict_task(
             model, prediction_gen
         )
+        self._do_predict_on_video(model)
         self._do_save_result_task(test_set, prediction, save_npy)
         return prediction
 
@@ -76,7 +77,9 @@ class PredictClassificationTask:
             true_ids, pred_ids, self.config.class_names, self.config.info_path)
 
     def _do_predict_on_video(self, model):
-        classifier = ncc.precisions.Classifier(
+        if len(self.config.predict_videos) == 0:
+            return
+        classifier = ncc.predictions.Classifier(
             self.config.class_names, model)
         for predict_video in self.config.predict_videos:
             video_path = predict_video["name"]

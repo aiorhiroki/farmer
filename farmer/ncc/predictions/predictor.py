@@ -1,41 +1,21 @@
 from abc import ABCMeta, abstractmethod
-import os
 import colorsys
 import numpy as np
 import cv2
-import tensorflow as tf
 
 
 class Predictor(metaclass=ABCMeta):
     class_axis = 0
 
-    def __init__(self, model_file, weight_path=None, custom_objects=None):
-        self.model_file = model_file
-        self.weight_path = weight_path
-        self.custom_objects = custom_objects
-        self.model = self.load_models()
+    def __init__(self, model):
+        self.model = model
         self.height, self.width = self.model.input_shape[1:3]
         self.nb_class = self.model.output_shape[-1] - 1
-
-    def load_models(self) -> tf.keras.Model:
-        if self.weight_path is None:
-            path = os.path.dirname(os.path.abspath(__file__))
-            self.weight_path = os.path.join(path, "weights")
-        model_path = os.path.join(self.weight_path, self.model_file)
-        self.graph = tf.get_default_graph()
-        with self.graph.as_default():
-            model = tf.keras.models.load_model(
-                model_path,
-                custom_objects=self.custom_objects,
-                compile=False
-            )
-        return model
 
     def predict_frame(self, frame: np.array) -> np.array:
         frame_height, frame_width = frame.shape[:2]
         in_frame = self.pre_process(frame)
-        with self.graph.as_default():
-            prediction = self.model.predict(in_frame)[0]
+        prediction = self.model.predict(in_frame)[0]
         res = self.post_process(prediction, frame_height, frame_width)
         return res
 
@@ -83,10 +63,10 @@ class Classifier(Predictor):
 class Segmenter(Predictor):
     class_axis = 2
 
-    def __init__(self, model_file, weight_path=None, custom_objects=None):
-        super().__init__(model_file, weight_path, custom_objects)
+    def __init__(self, model):
+        super().__init__(model)
         self.colors = self.generate_colors()
-        self.min_area = 800
+        self.min_area = 100
 
     @classmethod
     def post_process(cls, prediction, height: int, width: int):

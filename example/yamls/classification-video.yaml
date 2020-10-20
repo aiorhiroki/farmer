@@ -34,3 +34,7 @@ class_names:
     - cat
     # - flower
     - dog
+predict_videos:
+    - name: data/classification/videos/test/SampleVideo_1280x720_1mb.mp4
+      start_time: 0:00:02
+      end_time: 0:00:04

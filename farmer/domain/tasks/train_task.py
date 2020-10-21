@@ -2,6 +2,7 @@ import os
 import numpy as np
 from tensorflow.python import keras
 from farmer import ncc
+from farmer.ncc import schedulers
 
 
 class TrainTask:
@@ -80,11 +81,13 @@ class TrainTask:
 
         # Learning Rate Schedule
         if self.config.train_params.scheduler:
-            params = {}
-            params["base_lr"] = self.config.train_params.learning_rate
-            params["n_epoch"] = self.config.epochs
+            funcs = self.config.train_params.scheduler["functions"]
+            scheduler_name = next(iter(funcs.keys()))
+            scheduler_params = next(iter(funcs.values()))
+            scheduler_params["n_epoch"] = self.config.epochs
+            scheduler_params["base_lr"] = self.config.train_params.learning_rate
             scheduler = keras.callbacks.LearningRateScheduler(
-                self.config.train_params.scheduler.func(**params))
+                getattr(schedulers, scheduler_name)(**scheduler_params))
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)

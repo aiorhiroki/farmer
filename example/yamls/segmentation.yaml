@@ -35,8 +35,8 @@ train_params:
     scheduler:
         functions:
             CosineDecay:
-                cosine_lr_max: 0.001
-                cosine_lr_min: 0.0001
+                lr_max: 0.001
+                lr_min: 0.0001
     batch_size: 8 
     learning_rate: 0.001
     weights_info: 

@@ -3,6 +3,7 @@ from collections import OrderedDict
 import os
 from glob import glob
 
+from farmer.ncc import pruners
 from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
 from farmer.domain.model import Trainer, TrainParams
@@ -144,14 +145,13 @@ def optuna_command(trainer):
     optuna.logging.enable_propagation()  # Propagate logs to the root logger.
     optuna.logging.enable_default_handler()  # Stop showing logs in sys.stderr.
 
+    pruner_params = trainer.pruner_params
+    pruner = getattr(pruners, trainer.pruner)(**pruner_params)
     study = optuna.create_study(
         direction='maximize',
-        pruner=optuna.pruners.MedianPruner(
-            n_startup_trials=3,
-            n_warmup_steps=10,
-            interval_steps=1
-        )
+        pruner=pruner
     )
+    
     study.optimize(
         Objective(trainer),
         n_trials=trainer.n_trials,

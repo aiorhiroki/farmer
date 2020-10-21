@@ -36,6 +36,8 @@ class Trainer(Config, ImageLoader):
     trial_params: dict = None
     train_params: TrainParams = None
     optuna_params: TrainParams = None
+    pruner: str = None
+    pruner_params: dict = None
 
     def __post_init__(self):
         self.task = self.get_task()

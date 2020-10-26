@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 import cv2
 from ..utils import ImageUtil
-from ..augmentation import segmentation_aug
+from ..augmentation import segmentation_aug, classification_aug
 
 
 class SegmentationDataset:

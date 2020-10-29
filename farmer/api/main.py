@@ -3,7 +3,6 @@ from collections import OrderedDict
 import os
 from glob import glob
 
-# from farmer.ncc import pruners
 from optuna import pruners
 from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task

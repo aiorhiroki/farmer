@@ -19,6 +19,7 @@ def exponential_lr(epoch, base_lr, gamma):
 
 def cyclical_lr(epoch, lr_max, lr_min, step_size):
     max_min_diff = lr_max - lr_min
+    epoch += 1
     quotient = epoch // step_size
     remainder = epoch % step_size
     if quotient % 2 == 0:

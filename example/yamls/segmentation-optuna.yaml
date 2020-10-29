@@ -48,23 +48,23 @@ train_params:
         - name: Cyclical LR
           functions:
             CyclicalLR:
-                step_size: 
+                cyc_freq: 
                     - 2
                     - 10
                     - 1
-                cyc_lr_max: 
+                lr_max: 
                     - 0.0005
                     - 0.001
-                cyc_lr_min: 
+                lr_min: 
                     - 0.0001
                     - 0.0005
         - name: Cosine Decay
           functions:
             CosineDecay: 
-                cosine_lr_max: 
+                lr_max: 
                     - 0.0005
                     - 0.001
-                cosine_lr_min: 
+                lr_min: 
                     - 0.0001
                     - 0.0005
     batch_size:

@@ -17,7 +17,7 @@ class SetTrainEnvTask:
     def command(self, trial):
         self._do_set_random_seed_task()
         self._do_set_cpu_gpu_devices_task(self.config.gpu)
-        self._do_set_train_params_task(trial)
+        self._do_set_optuna_params_task(trial)
         self._do_create_dirs_task()
 
         return self.config

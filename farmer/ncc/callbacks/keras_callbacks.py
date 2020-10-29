@@ -6,7 +6,7 @@ import warnings
 from ..utils import PostClient, MatPlotManager
 from ..metrics import iou_dice_val, generate_segmentation_result
 
-from tensorflow.python import keras
+from tensorflow import keras
 
 
 class BatchCheckpoint(keras.callbacks.Callback):

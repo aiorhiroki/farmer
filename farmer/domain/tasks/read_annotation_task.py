@@ -1,6 +1,7 @@
 import os
 import csv
 import numpy as np
+import glob
 from farmer import ncc
 
 
@@ -16,11 +17,20 @@ class ReadAnnotationTask:
 
     def _do_read_annotation_set_task(self, phase: str):
         if phase == "train":
-            data_list = self.config.train_dirs
+            dirs_list = self.config.train_dirs
         elif phase == "validation":
-            data_list = self.config.val_dirs
+            dirs_list = self.config.val_dirs
         elif phase == "test":
-            data_list = self.config.test_dirs
+            dirs_list = self.config.test_dirs
+
+        data_list = list()
+        for data in dirs_list:
+            if data.endswith('*'):
+                glob_dirs = glob.glob(f'{self.config.target_dir}/{data}')
+                data_list += [
+                    d.lstrip(self.config.target_dir) for d in glob_dirs]
+            else:
+                data_list += [data]
 
         print(f"{phase}: {data_list}")
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:

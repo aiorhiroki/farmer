@@ -118,3 +118,4 @@ venv.bak/
 result/
 develop/
 example/yamls/logs/
+*.out

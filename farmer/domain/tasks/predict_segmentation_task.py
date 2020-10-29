@@ -11,6 +11,7 @@ class PredictSegmentationTask:
         prediction = self._do_segmentation_predict_task(
             test_dataset, model, self.config.return_result
         )
+        self._do_predict_on_video(model)
         return prediction
 
     def _do_generate_batch_task(self, test_set):
@@ -42,3 +43,15 @@ class PredictSegmentationTask:
             model=model,
             save_dir=save_dir,
         )
+
+    def _do_predict_on_video(self, model):
+        if len(self.config.predict_videos) == 0:
+            return
+        segmenter = ncc.predictions.Segmenter(model)
+        for predict_video in self.config.predict_videos:
+            video_path = predict_video["name"]
+            start = predict_video.get("start_time")
+            end = predict_video.get("end_time")
+
+            ncc.video.predict_on_video(
+                segmenter, video_path, self.config.video_path, start, end)

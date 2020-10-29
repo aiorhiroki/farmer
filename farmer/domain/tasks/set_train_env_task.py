@@ -49,7 +49,22 @@ class SetTrainEnvTask:
             tf.config.threading.set_inter_op_parallelism_threads(num_threads)
             tf.config.threading.set_intra_op_parallelism_threads(num_threads)
 
-    def _do_set_train_params_task(self, trial):
+    def _do_set_optuna_params_task(self, trial):
+        if not self.config.optuna:
+            return
+        self.config.trial_number = trial.number
+        self.config.trial_params = trial.params
+        # result_dir/trial#/learning/
+        trial_result_path = f'{self.config.result_path}/trial{trial.number}'
+        self.config.learning_path = os.path.join(
+            trial_result_path, self.config.learning_dir)
+        self.config.model_path = os.path.join(
+            trial_result_path, self.config.model_dir)
+        self.config.image_path = os.path.join(
+            trial_result_path, self.config.image_dir)
+        self.config.tfboard_path = os.path.join(
+            trial_result_path, self.config.tfboard_dir)
+
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():
                 if not val:
@@ -116,7 +131,9 @@ class SetTrainEnvTask:
         log_dirs = [
             self.config.model_path,
             self.config.learning_path,
-            self.config.image_path
+            self.config.image_path,
+            self.config.video_path,
+            self.config.tfboard_path
         ]
         for log_dir in log_dirs:
             if os.path.exists(log_dir):

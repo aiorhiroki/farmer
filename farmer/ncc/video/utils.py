@@ -27,20 +27,21 @@ class FPS(object):
         self.curr_fps += 1
         if self.accum_time > 1:
             self.accum_time -= 1
-            self.fps = "FPS: " + str(self.curr_fps)
+            self.fps = self.curr_fps
             self.curr_fps = 0
         if show:
             cv2.rectangle(draw, (0, 0), (60, 20), (255, 255, 255), -1)
-            cv2.putText(draw, self.fps, (3, 13),
+            cv2.putText(draw, "FPS: " + str(self.fps), (3, 13),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 1)
         else:
-            print(self.fps)
+            return self.fps
 
 
 def delete_small_mask(mask: np.array, threshold: int) -> np.array:
     gray = mask.copy()
     _, bw = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-    contours, hierarchy = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(
+        bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     if len(contours) == 0:
         return mask

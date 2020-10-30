@@ -52,9 +52,7 @@ class SetTrainEnvTask:
     def _do_set_train_params_task(self, trial):
         def set_train_params(train_params: dict) -> dict:
             for key, val in train_params.items():
-                if not val:
-                    continue
-                elif isinstance(val, dict):
+                if isinstance(val, dict):
                     set_train_params(val)
                 elif isinstance(val, list):
                     if len(val) == 0:
@@ -88,12 +86,15 @@ class SetTrainEnvTask:
             self.config.trial_number = trial.number
             self.config.trial_params = trial.params
             # result_dir/trial#/learning/
-            self.config.learning_path = self.config.learning_path.replace(
-                "/learning", f"/trial{trial.number}/learning")
-            self.config.model_path = self.config.model_path.replace(
-                "/model", f"/trial{trial.number}/model")
-            self.config.image_path = self.config.image_path.replace(
-                "/image", f"/trial{trial.number}/image")
+            trial_result_path = f'{self.config.result_path}/trial{trial.number}'
+            self.config.learning_path = os.path.join(
+                trial_result_path, self.config.learning_dir)
+            self.config.model_path = os.path.join(
+                trial_result_path, self.config.model_dir)
+            self.config.image_path = os.path.join(
+                trial_result_path, self.config.image_dir)
+            self.config.tfboard_path = os.path.join(
+                trial_result_path, self.config.tfboard_dir)
 
             # set train params to params setted by optuna
             train_params_dict = copy.deepcopy(self.config.optuna_params)

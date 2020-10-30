@@ -85,9 +85,7 @@ class Trainer(Config, ImageLoader):
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):
             for val in train_params.values():
-                if not val:
-                    continue
-                elif isinstance(val, list):
+                if isinstance(val, list):
                     self.optuna = True
                 elif isinstance(val, dict):
                     _check_need_optuna(val)

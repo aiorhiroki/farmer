@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow import keras
 import tensorflow as tf
 from farmer import ncc
+from optuna.integration import TFKerasPruningCallback
 
 
 class TrainTask:
@@ -118,7 +119,7 @@ class TrainTask:
             if self.config.optuna:
                 # Trial prune for Optuna
                 callbacks.append(
-                    ncc.callbacks.KerasPruningCallback(trial, 'val_f1-score'))
+                    TFKerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
@@ -138,7 +139,7 @@ class TrainTask:
             if self.config.optuna:
                 # Trial prune for Optuna
                 callbacks.append(
-                    ncc.callbacks.KerasPruningCallback(trial, 'val_acc'))
+                    TFKerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:

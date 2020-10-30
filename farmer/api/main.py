@@ -145,6 +145,9 @@ def optuna_command(trainer):
     optuna.logging.enable_default_handler()  # Stop showing logs in sys.stderr.
 
     study = optuna.create_study(
+        storage=f"sqlite:////optuna_study.db",
+        load_if_exists=True,
+        study_name=trainer.result_path,
         direction='maximize',
         pruner=optuna.pruners.MedianPruner(
             n_startup_trials=3,

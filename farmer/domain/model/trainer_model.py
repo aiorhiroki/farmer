@@ -74,6 +74,8 @@ class Trainer(Config, ImageLoader):
             self.train_params.class_weights = {
                 class_id: 1.0 for class_id in range(self.nb_classes)
             }
+        if self.pruner_params is None:
+            self.pruner_params = {'n_startup_trials':3, 'n_warmup_steps':10, 'interval_steps':1}
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):

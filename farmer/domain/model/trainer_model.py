@@ -92,4 +92,4 @@ class Trainer(Config, ImageLoader):
 
         _check_need_optuna(self.train_params)
         if self.optuna:
-            self.optuna_params = copy.deepcopy(self.train_params)
+            self.optuna_params = self.train_params

@@ -101,6 +101,7 @@ class TrainTask:
                 save_dir=learning_path,
                 valid_dataset=valid_dataset,
                 class_names=self.config.class_names,
+                batch_size=self.config.train_params.batch_size
             )
 
             # Predict validation
@@ -111,6 +112,7 @@ class TrainTask:
                 val_save_dir=val_save_dir,
                 valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
+                batch_size=self.config.train_params.batch_size,
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])

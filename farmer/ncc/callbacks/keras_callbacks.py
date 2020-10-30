@@ -82,12 +82,14 @@ class GenerateSampleResult(keras.callbacks.Callback):
         val_save_dir,
         valid_dataset,
         nb_classes,
+        batch_size,
         segmentation_val_step=3
     ):
         self.val_save_dir = val_save_dir
         self.valid_dataset = valid_dataset
         self.nb_classes = nb_classes
         self.segmentation_val_step = segmentation_val_step
+        self.batch_size = batch_size
 
     def on_epoch_end(self, epoch, logs={}):
         # display sample predict
@@ -101,6 +103,7 @@ class GenerateSampleResult(keras.callbacks.Callback):
             dataset=self.valid_dataset,
             model=self.model,
             save_dir=save_dir,
+            batch_size=self.batch_size
         )
 
 
@@ -173,10 +176,12 @@ class IouHistory(keras.callbacks.Callback):
         save_dir,
         valid_dataset,
         class_names,
+        batch_size
     ):
         self.save_dir = save_dir
         self.valid_dataset = valid_dataset
         self.class_names = class_names
+        self.batch_size = batch_size
 
     def on_train_begin(self, logs={}):
         self.plot_manager = MatPlotManager(self.save_dir)
@@ -200,6 +205,7 @@ class IouHistory(keras.callbacks.Callback):
             nb_classes,
             self.valid_dataset,
             self.model,
+            self.batch_size
         )
         iou_figure.add(
             iou_dice['iou'],

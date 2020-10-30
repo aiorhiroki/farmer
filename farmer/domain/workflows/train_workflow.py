@@ -6,7 +6,7 @@ from ..tasks.eda_task import EdaTask
 from ..tasks.train_task import TrainTask
 from ..tasks.predict_classification_task import PredictClassificationTask
 from ..tasks.predict_segmentation_task import PredictSegmentationTask
-from ..tasks.evaluation_task import EvaluationTask
+from ..tasks.predict_detection_task import PredictDetectionTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
 import tensorflow as tf
@@ -92,21 +92,15 @@ class TrainWorkflow(AbstractImageAnalyzer):
         if len(test_set) == 0:
             return 0
         if self._config.task == Task.CLASSIFICATION:
-            prediction = PredictClassificationTask(self._config).command(
+            eval_report = PredictClassificationTask(self._config).command(
                 test_set, trained_model, self._config.save_pred
             )
-            eval_report = EvaluationTask(self._config).command(
-                test_set, prediction=prediction
-            )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            PredictSegmentationTask(self._config).command(
-                test_set, model=trained_model
-            )
-            eval_report = EvaluationTask(self._config).command(
+            eval_report = PredictSegmentationTask(self._config).command(
                 test_set, model=trained_model
             )
         elif self._config.task == Task.OBJECT_DETECTION:
-            eval_report = EvaluationTask(self._config).command(
+            eval_report = PredictDetectionTask(self._config).command(
                 test_set, model=trained_model
             )
         print("DONE")

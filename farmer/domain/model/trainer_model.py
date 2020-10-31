@@ -90,6 +90,6 @@ class Trainer(Config, ImageLoader):
                 elif isinstance(val, dict):
                     _check_need_optuna(val)
 
-        _check_need_optuna(dataclasses.asdict(self.train_params))
+        _check_need_optuna(self.train_params)
         if self.optuna:
-            self.optuna_params = copy.deepcopy(self.train_params)
+            self.optuna_params = self.train_params

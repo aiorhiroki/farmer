@@ -3,6 +3,7 @@ import numpy as np
 from tensorflow import keras
 import tensorflow as tf
 from farmer import ncc
+from farmer.ncc import schedulers
 from optuna.integration import TFKerasPruningCallback
 
 
@@ -73,14 +74,14 @@ class TrainTask:
         )
 
         # Learning Rate Schedule
-        if self.config.train_params.cosine_decay:
-            ncc_scheduler = ncc.schedulers.Scheduler(
-                self.config.train_params.cosine_lr_max,
-                self.config.train_params.cosine_lr_min,
-                self.config.epochs
-            )
+        if self.config.train_params.scheduler:
+            funcs = self.config.train_params.scheduler["functions"]
+            scheduler_name = next(iter(funcs.keys()))
+            scheduler_params = next(iter(funcs.values()))
+            scheduler_params["n_epoch"] = self.config.epochs
+            scheduler_params["base_lr"] = self.config.train_params.learning_rate
             scheduler = keras.callbacks.LearningRateScheduler(
-                ncc_scheduler.cosine_decay)
+                getattr(schedulers, scheduler_name)(**scheduler_params))
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
@@ -94,7 +95,9 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        plot_learning_rate = ncc.callbacks.PlotLearningRate(learning_path)
+
+        callbacks = [checkpoint, scheduler, plot_history, plot_learning_rate]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History

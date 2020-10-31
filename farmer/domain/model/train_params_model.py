@@ -11,11 +11,9 @@ class TrainParams:
     loss: Dict[str, dict] = field(default_factory=dict)
     classification_class_weight: Dict[str, float] = field(default_factory=dict)
     batch_size: int = None
-    cosine_decay: bool = False
-    cosine_lr_max: int = 0.01
-    cosine_lr_min: int = 0.001
     weights_info: Dict[str, str] = field(default_factory=dict)
     learning_rate: float = None
     optimizer: str = None
     augmentation: Dict[str, int] = field(default_factory=dict)
     opt_decay: float = 0.001
+    scheduler: dict = None

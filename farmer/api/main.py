@@ -36,8 +36,7 @@ def fit():
         config.update(
             {k: v for (k, v) in run_config.items() if k != "config_paths"}
         )
-        train_params = TrainParams(**config.get("train_params"))
-        config.update(dict(config_path=config_path, train_params=train_params))
+        config.update(dict(config_path=config_path))
         if secret_config:
             config.update(secret_config)
         trainer = Trainer(**config)

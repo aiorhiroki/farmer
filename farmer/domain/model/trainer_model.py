@@ -65,7 +65,7 @@ class Trainer(Config, ImageLoader):
                 )
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
-        if os.path.exists(self.result_path) and self.overwrite:
+        if os.path.exists(self.result_path) and not self.overwrite:
             self.result_path += datetime.today().strftime("_%Y%m%d_%H%M%S")
         self.info_path = os.path.join(self.result_path, self.info_dir)
         self.model_path = os.path.join(self.result_path, self.model_dir)
@@ -90,6 +90,6 @@ class Trainer(Config, ImageLoader):
                 elif isinstance(val, dict):
                     _check_need_optuna(val)
 
-        _check_need_optuna(dataclasses.asdict(self.train_params))
+        _check_need_optuna(self.train_params)
         if self.optuna:
-            self.optuna_params = copy.deepcopy(self.train_params)
+            self.optuna_params = self.train_params

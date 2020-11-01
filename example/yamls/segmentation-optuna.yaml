@@ -44,6 +44,29 @@ train_params:
                     1: 1
                     2: 2
                     3: 2
+    scheduler:
+        - name: Cyclical LR
+          functions:
+            CyclicalLR:
+                cyc_freq: 
+                    - 2
+                    - 10
+                    - 1
+                lr_max: 
+                    - 0.0005
+                    - 0.001
+                lr_min: 
+                    - 0.0001
+                    - 0.0005
+        - name: Cosine Decay
+          functions:
+            CosineDecay: 
+                lr_max: 
+                    - 0.0005
+                    - 0.001
+                lr_min: 
+                    - 0.0001
+                    - 0.0005
     batch_size:
         - 2 # min
         - 8 # max

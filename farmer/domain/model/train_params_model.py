@@ -10,7 +10,7 @@ class TrainParams:
     activation: str = "softmax"
     loss: Dict[str, dict] = field(default_factory=dict)
     classification_class_weight: Dict[str, float] = field(default_factory=dict)
-    batch_size: int = None
+    batch_size: int = 1
     weights_info: Dict[str, str] = field(default_factory=dict)
     learning_rate: float = None
     optimizer: str = None

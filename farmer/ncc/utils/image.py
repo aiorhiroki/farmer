@@ -49,32 +49,36 @@ def change_color_palettes(image_files, colors):
         pil_palette.save(image_file)
 
 
-def concat_images(im1, im2, palette, mode):
-    if mode == "P":
-        assert palette is not None
-        dst = Image.new("P", (im1.width + im2.width, im1.height))
-        dst.paste(im1, (0, 0))
-        dst.paste(im2, (im1.width, 0))
-        dst.putpalette(palette)
-    elif mode == "RGB":
-        dst = Image.new("RGB", (im1.width + im2.width, im1.height))
-        dst.paste(im1, (0, 0))
-        dst.paste(im2, (im1.width, 0))
-    else:
-        raise NotImplementedError
+def draw_text(
+    image,
+    put_text,
+    top_left,
+    font=cv2.FONT_HERSHEY_SIMPLEX,
+    scale=1,
+    thickness=1,
+    line_type=cv2.LINE_8,
+    color=(255, 255, 255)
+):
+    (_, text_height), _ = cv2.getTextSize(put_text, font, scale, thickness)
+    bottom_left = (top_left[0], top_left[1] + text_height)
+    cv2.putText(image, put_text, bottom_left, font, scale,
+                color, thickness, line_type)
 
-    return dst
+
+def get_labels(mask):
+    hist = np.bincount(mask.flatten())
+    return [i for i, n in enumerate(hist) if i > 0 and n > 0]
 
 
-def cast_to_pil(ndarray, palette, index_void=None):
-    # index_void: 境界線のindexで学習・可視化の際は背景色と同じにする。
-    assert len(ndarray.shape) == 3
-    res = np.argmax(ndarray, axis=2)
-    if index_void is not None:
-        res = np.where(res == index_void, 0, res)
-    image = Image.fromarray(np.uint8(res), mode="P")
-    image.putpalette(palette)
-    return image
+def fill_indexed(
+    image,
+    mask,
+    palette,
+    index_void=None
+):
+    for i in get_labels(mask):
+        if i != index_void:
+            image[mask==i] = palette[i]
 
 
 def get_imageset(
@@ -85,27 +89,22 @@ def get_imageset(
     index_void=None,
     put_text=None
 ):
-    # 3つの画像(in, out, gt)をくっつけます。
-    image_out = cast_to_pil(
-        image_out_np, palette, index_void
-    )
-    image_tc = cast_to_pil(
-        image_gt_np, palette, index_void
-    )
-    image_merged = concat_images(
-        image_out, image_tc, palette, "P"
-    ).convert("RGB")
+    image_in = np.uint8(image_in_np * 255)
+    image_out = np.uint8(np.argmax(image_out_np, axis=2))
+    image_gt = np.uint8(np.argmax(image_gt_np, axis=2))
+
+    palette = np.reshape(palette, (-1, 3))
+
+    rows, cols, channels = image_in.shape
+    image_result = np.zeros((rows, cols * 3, channels), dtype=np.uint8)
+    image_result[:,:cols] = image_in
+
+    fill_indexed(image_result[:,cols:cols*2], image_out, palette, index_void)
+    fill_indexed(image_result[:,cols*2:], image_gt, palette, index_void)
 
     if put_text is not None:
-        draw = ImageDraw.Draw(image_merged)
-        draw.text((0, 0), put_text, fill='white')
+        draw_text(image_result, put_text, (cols, 0), scale=0.5)
 
-    image_in_pil = Image.fromarray(
-        np.uint8(image_in_np * 255), mode="RGB"
-    )
-    image_result = concat_images(
-        image_in_pil, image_merged, None, "RGB"
-    )
     return image_result
 
 

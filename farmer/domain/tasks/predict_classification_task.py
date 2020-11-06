@@ -1,20 +1,21 @@
 import numpy as np
 import csv
 from farmer import ncc
+from sklearn.metrics import classification_report
 
 
 class PredictClassificationTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, test_set, model, save_npy=True):
-        prediction_gen = self._do_generate_batch_task(test_set)
-        prediction = self._do_classification_predict_task(
-            model, prediction_gen
+    def command(self, annotation_set, model, save_npy=True):
+        dataset, generator = self._do_generate_batch_task(annotation_set)
+        prediction, eval_report = self._do_classification_predict_task(
+            model, dataset, generator
         )
         self._do_predict_on_video(model)
-        self._do_save_result_task(test_set, prediction, save_npy)
-        return prediction
+        self._do_save_result_task(annotation_set, prediction, save_npy)
+        return eval_report
 
     def _do_generate_batch_task(self, annotation_set):
         dataset = ncc.generators.ClassificationDataset(
@@ -25,20 +26,25 @@ class PredictClassificationTask:
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        return ncc.generators.Dataloder(dataset, batch_size=1, shuffle=False)
+        generator = ncc.generators.Dataloder(dataset, batch_size=1, shuffle=False)
+        return dataset, generator
 
-    def _do_classification_predict_task(
-        self, model, annotation_gen
-    ):
+    def _do_classification_predict_task(self, model, dataset, generator):
         prediction = model.predict(
-            annotation_gen,
-            steps=len(annotation_gen),
+            generator,
+            steps=len(generator),
             workers=16 if self.config.multi_gpu else 1,
             max_queue_size=32 if self.config.multi_gpu else 10,
             use_multiprocessing=self.config.multi_gpu,
             verbose=1,
         )
-        return prediction
+        prediction_cls = np.argmax(prediction, axis=1)
+        true_cls = np.argmax(
+            [class_id for _, class_id in dataset], axis=1)
+        eval_report = classification_report(
+            true_cls, prediction_cls, output_dict=True
+        )
+        return prediction, eval_report
 
     def _do_save_result_task(self, annotation_set, prediction, save_npy):
         if save_npy:

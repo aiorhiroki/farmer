@@ -4,21 +4,10 @@ import itertools
 from tqdm import tqdm
 from ..utils import get_imageset
 import matplotlib.pyplot as plt
+import cv2
 
 
-def iou_dice_val(
-        nb_classes,
-        dataset,
-        model,
-):
-    confusion = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-    print('\nvalidation...')
-    for sample, target in tqdm(dataset):
-        # Get a training sample and make a prediction using current model
-        predicted = model.predict(np.expand_dims(sample, axis=0))[0]
-        confusion += calc_segmentation_confusion(
-            predicted, target, nb_classes)
-
+def calc_segmentation_metrics(confusion):
     tp = np.diag(confusion)
     fp = np.sum(confusion, 0) - tp
     fn = np.sum(confusion, 1) - tp
@@ -37,6 +26,38 @@ def iou_dice_val(
         'recall': recall,
         'specificity': sepecificity
     }
+
+
+def iou_dice_val(
+        nb_classes,
+        dataset,
+        model,
+        batch_size
+):
+    confusion = np.zeros((nb_classes, nb_classes), dtype=np.int32)
+
+    print('\nvalidation...')
+    for i, (image, mask) in enumerate(tqdm(dataset)):
+        if i == 0:
+            images = np.zeros((batch_size,) + image.shape, dtype=image.dtype)
+            masks = np.zeros((batch_size,) + mask.shape, dtype=mask.dtype)
+
+        batch_index = i // batch_size
+        image_index = i % batch_size
+
+        images[image_index] = image
+        masks[image_index] = mask
+
+        if i == len(dataset) - 1 or image_index == batch_size - 1:
+            output = model.predict(images)
+            for j in range(image_index + 1):
+                confusion += calc_segmentation_confusion(
+                    output[j], masks[j], nb_classes)
+
+            images[:] = 0
+            masks[:] = 0
+
+    return calc_segmentation_metrics(confusion)
 
 
 def calc_segmentation_confusion(y_pred, y_true, nb_classes):
@@ -160,20 +181,44 @@ def generate_segmentation_result(
     dataset,
     model,
     save_dir,
+    batch_size
 ):
+    confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
+
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
-        output = model.predict(np.expand_dims(image, axis=0))[0]
-        confusion = calc_segmentation_confusion(output, mask, nb_classes)
+        if i == 0:
+            images = np.zeros((batch_size,) + image.shape, dtype=image.dtype)
+            masks = np.zeros((batch_size,) + mask.shape, dtype=mask.dtype)
 
-        tp = np.diag(confusion)
-        fp = np.sum(confusion, 0) - tp
-        fn = np.sum(confusion, 1) - tp
-        dice = calc_dice_from_confusion(tp, fp, fn)
+        batch_index = i // batch_size
+        image_index = i % batch_size
 
-        result_image = get_imageset(
-            image, output, mask, put_text=f'dice: {dice}')
+        images[image_index] = image
+        masks[image_index] = mask
 
-        *input_file, _ = dataset.annotations[i]
-        save_image_name = os.path.basename(input_file[0])
-        result_image.save(f"{save_dir}/{save_image_name}")
+        if i == len(dataset) - 1 or image_index == batch_size - 1:
+            output = model.predict(images)
+            for j in range(image_index + 1):
+                confusion = calc_segmentation_confusion(
+                    output[j], masks[j], nb_classes)
+
+                metrics = calc_segmentation_metrics(confusion)
+                dice = metrics['dice']
+                result_image = get_imageset(
+                    images[j], output[j], masks[j], put_text=f'dice: {dice}')
+
+                data_index = batch_index * batch_size + j
+                *input_file, _ = dataset.annotations[data_index]
+                save_image_name = os.path.basename(input_file[0])
+                save_image_path = os.path.join(save_dir, save_image_name)
+
+                result_image_out = result_image[:,:,::-1]   # RGB => BGR
+                cv2.imwrite(save_image_path, result_image_out)
+
+                confusion_all += confusion
+
+            images[:] = 0
+            masks[:] = 0
+
+    return calc_segmentation_metrics(confusion_all)

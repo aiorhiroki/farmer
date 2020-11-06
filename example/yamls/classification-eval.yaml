@@ -7,23 +7,15 @@ test_dirs:
 training: no
 task: classification
 
-
 train_params: 
-    backbone: 
     activation: softmax
     optimizer: adam
-    loss:  # no need to set value. only categorical for classification
-    loss_params: 
-        alpha: 
-        beta: 
-        gamma: 
     batch_size: 8 
     learning_rate: 0.001
     model_name: xception
-    weights_info:
-        classes: 
-        weights: 
-    augmentation:
+    loss:
+      functions:
+        CategoricalCrossentropy:
 
 epochs: 2
 width: 80

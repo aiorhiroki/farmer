@@ -6,7 +6,7 @@ import warnings
 from ..utils import PostClient, MatPlotManager
 from ..metrics import iou_dice_val, generate_segmentation_result
 
-from tensorflow.python import keras
+from tensorflow import keras
 
 
 class BatchCheckpoint(keras.callbacks.Callback):
@@ -238,6 +238,26 @@ class PostHistory(keras.callbacks.Callback):
 
     def on_train_end(self, logs={}):
         self._client.close_session()
+
+class PlotLearningRate(keras.callbacks.Callback):
+    def __init__(self, save_dir):
+        self.save_dir = save_dir
+
+    def on_train_begin(self, logs={}):
+        self.plot_manager = MatPlotManager(self.save_dir)
+        self.plot_manager.add_figure(
+            title="learning_rate",
+            xy_labels=("epoch", "learning_rate"),
+            labels=['learning_rate'],
+        )
+
+    def on_epoch_end(self, epoch, logs={}):
+        # update figure
+        figure = self.plot_manager.get_figure("learning_rate")
+        figure.add(
+            [logs.get('lr')],
+            is_update=True
+        )
 
 
 class Callback(object):

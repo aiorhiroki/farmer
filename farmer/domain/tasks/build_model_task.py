@@ -1,12 +1,10 @@
-from segmentation_models import Unet, PSPNet, FPN
-from segmentation_models import metrics
+import segmentation_models
 
 from farmer.ncc.optimizers import AdaBound
 from farmer.ncc import losses, models
 from ..model.task_model import Task
 
 from tensorflow import keras
-import tensorflow as tf
 import tensorflow_addons as tfa
 
 
@@ -103,7 +101,7 @@ class BuildModelTask:
             print('------------------')
 
             if model_name == "unet":
-                model = Unet(
+                model = segmentation_models.Unet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -117,13 +115,13 @@ class BuildModelTask:
                     activation=activation
                 )
             elif model_name == "pspnet":
-                model = PSPNet(
+                model = segmentation_models.PSPNet(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
             elif model_name == "fpn":
-                model = FPN(
+                model = segmentation_models.FPN(
                     backbone_name=backbone,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
@@ -144,7 +142,7 @@ class BuildModelTask:
         optimizer,
         learning_rate,
         task_id,
-        loss_func
+        loss
     ):
         if self.config.framework == "tensorflow":
             print('------------------')
@@ -173,7 +171,8 @@ class BuildModelTask:
                 optimizer = tfa.optimizers.RectifiedAdam(
                     lr=learning_rate,
                     weight_decay=1e-5,
-                    total_steps=int(steps_per_epoch * self.config.epochs * 0.95),
+                    total_steps=int(
+                        steps_per_epoch * self.config.epochs * 0.95),
                     warmup_proportion=0.1,
                     min_lr=learning_rate * 0.01,
                 )
@@ -192,36 +191,47 @@ class BuildModelTask:
                     decay=self.config.train_params.opt_decay
                 )
 
+            loss_funcs = loss["functions"]
+            print('------------------')
+            print('Loss:', loss_funcs.keys())
+            print('------------------')
             if task_id == Task.CLASSIFICATION:
-                model.compile(
-                    optimizer=optimizer,
-                    loss=keras.losses.categorical_crossentropy,
-                    metrics=["acc"],
-                )
-            elif task_id == Task.SEMANTIC_SEGMENTATION:
-                print('------------------')
-                print('Loss:', loss_func)
-                print('------------------')
-                loss_params = self.config.train_params.loss_params
-                loss_params['class_weights'] = [
-                    1.0 for i in range(self.config.nb_classes)]
-                for cls_i, w in self.config.train_params.class_weights.items():
-                    loss_params['class_weights'][cls_i] = w
-                print('class weight:', loss_params['class_weights'])
-                loss = getattr(losses, loss_func)(**loss_params)
-                model.compile(
-                    optimizer=optimizer,
-                    loss=loss,
-                    metrics=[
-                        metrics.IOUScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes))),
-                        metrics.FScore(
-                            class_indexes=list(
-                                range(1, self.config.nb_classes)))
-                    ],
-                )
-            else:
-                raise NotImplementedError
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if i == 0:
+                        if params is None:
+                            loss = getattr(keras.losses, loss_name)()
+                        else:
+                            loss = getattr(keras.losses, loss_name)(**params)
+                    else:
+                        if params is None:
+                            loss += getattr(keras.losses, loss_name)()
+                        else:
+                            loss += getattr(keras.losses, loss_name)(**params)
+                metrics = ["acc"]
 
+            elif task_id == Task.SEMANTIC_SEGMENTATION:
+                for i, loss_func in enumerate(loss_funcs.items()):
+                    loss_name, params = loss_func
+                    if params is not None and params.get("class_weights"):
+                        params["class_weights"] = list(
+                            params["class_weights"].values())
+                    if i == 0:
+                        if params is None:
+                            loss = getattr(losses, loss_name)()
+                        else:
+                            loss = getattr(losses, loss_name)(**params)
+                    else:
+                        if params is None:
+                            loss += getattr(losses, loss_name)()
+                        else:
+                            loss += getattr(losses, loss_name)(**params)
+                metrics = [
+                    segmentation_models.metrics.IOUScore(
+                        class_indexes=list(range(1, self.config.nb_classes))),
+                    segmentation_models.metrics.FScore(
+                        class_indexes=list(range(1, self.config.nb_classes)))
+                    ],
+
+            model.compile(optimizer, loss, metrics)
         return model

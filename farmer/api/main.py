@@ -37,8 +37,7 @@ def fit():
         config.update(
             {k: v for (k, v) in run_config.items() if k != "config_paths"}
         )
-        train_params = TrainParams(**config.get("train_params"))
-        config.update(dict(config_path=config_path, train_params=train_params))
+        config.update(dict(config_path=config_path))
         if secret_config:
             config.update(secret_config)
         trainer = Trainer(**config)
@@ -148,6 +147,9 @@ def optuna_command(trainer):
     pruner_params = trainer.pruner_params
     pruner = getattr(pruners, trainer.pruner)(**pruner_params)
     study = optuna.create_study(
+        storage=f"sqlite:////optuna_study.db",
+        load_if_exists=True,
+        study_name=trainer.result_path,
         direction='maximize',
         pruner=pruner
     )

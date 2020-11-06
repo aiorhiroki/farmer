@@ -15,21 +15,33 @@ train_params:
     backbone: mobilenetv2
     activation: softmax
     optimizer: adam
-    loss: categorical_focal_loss
-    loss_params: 
-        alpha: 0.45
-        beta: 0.55
-        gamma: 5.0
+    loss:
+      functions:
+        CategoricalFocalLoss:
+            alpha: 0.45
+            gamma: 5.0
+            class_weights: 
+                0: 0.0
+                1: 1.0
+                2: 2.0
+                3: 3.0
+        DiceLoss:
+            beta: 0.1
+            class_weights: 
+                0: 0.0
+                1: 1.0
+                2: 2.0
+                3: 3.0
+    scheduler:
+        functions:
+            CosineDecay:
+                lr_max: 0.001
+                lr_min: 0.0001
     batch_size: 8 
     learning_rate: 0.001
     weights_info: 
         classes: # assign only when you use backbone weights
         weights: 
-    class_weights: 
-        0: 0.0
-        1: 1.0
-        2: 2.0
-        3: 3.0
     augmentation:
         HorizontalFlip:
         IAAPerspective:

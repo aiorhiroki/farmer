@@ -9,6 +9,7 @@ from ..tasks.predict_segmentation_task import PredictSegmentationTask
 from ..tasks.evaluation_task import EvaluationTask
 from ..tasks.output_result_task import OutputResultTask
 from ..model.task_model import Task
+import tensorflow as tf
 
 
 class TrainWorkflow(AbstractImageAnalyzer):
@@ -49,7 +50,11 @@ class TrainWorkflow(AbstractImageAnalyzer):
             # this flow is skipped for object detection at this moment
             # keras-retina command build model in model execution flow
             return None, None
-        model = BuildModelTask(self._config).command()
+        if self._config.multi_gpu:
+            with tf.distribute.MirroredStrategy().scope():
+                model = BuildModelTask(self._config).command()
+        else:
+            model = BuildModelTask(self._config).command()
         print("DONE\n")
         return model
 

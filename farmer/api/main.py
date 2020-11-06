@@ -145,7 +145,11 @@ def optuna_command(trainer):
     optuna.logging.enable_default_handler()  # Stop showing logs in sys.stderr.
 
     pruner_params = trainer.pruner_params
-    pruner = getattr(pruners, trainer.pruner)(**pruner_params)
+    if pruner_params is None:
+        pruner = getattr(pruners, trainer.pruner)(
+                     n_startup_trials=3, n_warmup_steps=10, interval_steps=1)
+    else:
+        pruner = getattr(pruners, trainer.pruner)(**pruner_params)
     study = optuna.create_study(
         storage=f"sqlite:////optuna_study.db",
         load_if_exists=True,

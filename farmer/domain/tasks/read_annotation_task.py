@@ -26,9 +26,9 @@ class ReadAnnotationTask:
         data_list = list()
         for data in dirs_list:
             if data.endswith('*'):
-                glob_dirs = glob.glob(f'{self.config.target_dir}/{data}')
+                dirs = glob.glob(f'{self.config.target_dir}/{data}')
                 data_list += [
-                    d.replace(f'{self.config.target_dir}/', '') for d in glob_dirs]
+                    d.replace(f'{self.config.target_dir}/', '') for d in dirs]
             else:
                 data_list += [data]
 

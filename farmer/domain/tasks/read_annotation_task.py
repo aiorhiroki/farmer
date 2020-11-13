@@ -9,15 +9,15 @@ class ReadAnnotationTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, phase):
-        annotation_set = self._do_read_annotation_set_task(phase)
+    def command(self, phase, step=None):
+        annotation_set = self._do_read_annotation_set_task(phase, step)
         self._do_write_annotations_task(phase, annotation_set)
 
         return annotation_set
 
-    def _do_read_annotation_set_task(self, phase: str):
+    def _do_read_annotation_set_task(self, phase: str, step=None):
         if phase == "train":
-            dirs_list = self.config.train_dirs
+            dirs_list = self.config.train_dirs[step]["dirs"]
         elif phase == "validation":
             dirs_list = self.config.val_dirs
         elif phase == "test":

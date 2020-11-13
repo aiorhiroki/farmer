@@ -214,8 +214,9 @@ class BuildModelTask:
                 for i, loss_func in enumerate(loss_funcs.items()):
                     loss_name, params = loss_func
                     if params is not None and params.get("class_weights"):
-                        params["class_weights"] = list(
-                            params["class_weights"].values())
+                        if type(params["class_weights"]) is dict:
+                            params["class_weights"] = list(
+                                params["class_weights"].values())
                     if i == 0:
                         if params is None:
                             loss = getattr(losses, loss_name)()

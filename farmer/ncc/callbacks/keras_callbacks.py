@@ -97,7 +97,7 @@ class GenerateSampleResult(keras.callbacks.Callback):
             return
 
         save_dir = f"{self.val_save_dir}/epoch_{epoch + 1}"
-        os.mkdir(save_dir)
+        os.makedirs(save_dir, exist_ok=True)
         generate_segmentation_result(
             nb_classes=self.nb_classes,
             dataset=self.valid_dataset,

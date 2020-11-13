@@ -1,14 +1,14 @@
-gpu: -1
+gpu: 0
 config_paths:
     # classification images
-    - yamls/classification.yaml
-    - yamls/classification-eval.yaml
+    # - yamls/classification.yaml
+    # - yamls/classification-eval.yaml
     # classification video frames
-    - yamls/classification-video.yaml
+    # - yamls/classification-video.yaml
     # segmentation
-    - yamls/segmentation.yaml
-    - yamls/segmentation-eval.yaml
-    - yamls/segmentation-optuna.yaml
+    - yamls/curriculum_artery_00_a_run_1.yaml
+    # - yamls/segmentation-eval.yaml
+    # - yamls/segmentation-optuna.yaml
     # detection #bug 
     # - yamls/detection.yaml
     # - yamls/detection-eval.yaml

@@ -1,0 +1,329 @@
+target_dir: /mnt/hdd/input/curriculum/
+result_root_dir: /mnt/cloudy_z/src/matsumoto/farmer/example/result/ureter/curriculum_artery/
+train_dirs:
+    step1:
+        dirs:
+        - class_1/train/001110022
+        - class_1/train/001110044
+        - class_1/train/001110055
+        - class_1/train/001110499
+        - class_1/train/001111201
+        - class_1/train/001111364
+        - class_1/train/001111376
+        - class_1/train/001111385
+        - class_1/train/001111419
+        - class_1/train/001111442
+        - class_1/train/001111486
+        - class_1/train/001111497
+        - class_1/train/001111845
+        - class_1/train/001111863
+        - class_1/train/001111872
+        - class_1/train/001111980
+        - class_1/train/001112046
+        - class_1/train/001112057
+        - class_1/train/001112068
+        - class_1/train/001112084
+        - class_1/train/001112113
+        - class_1/train/001112141
+        - class_1/train/001112152
+        - class_1/train/001112163
+        - class_1/train/001112174
+        - class_1/train/001112185
+        - class_1/train/001112264
+        - class_1/train/001112275
+        - class_1/train/001112286
+        - class_1/train/001112308
+        - class_1/train/001112363
+        - class_1/train/001112481
+        - class_1/train/001112492
+        - class_1/train/001112573
+        - class_1/train/001112606
+        - class_1/train/001112628
+        - class_1/train/001112651
+        - class_1/train/001112662
+        - class_1/train/001112673
+        - class_1/train/001112684
+        - class_1/train/001112695
+        - class_1/train/001112713
+        - class_1/train/001112724
+        - class_1/train/001112757
+        - class_1/train/001112768
+        - class_1/train/001112814
+        - class_1/train/001112847
+        - class_1/train/001112904
+        - class_1/train/001112931
+        - class_1/train/001112942
+        - class_1/train/001112953
+        - class_1/train/001112964
+        - class_1/train/001112975
+        - class_1/train/001113112
+        - class_1/train/001113212
+        - class_1/train/001113234
+        - class_1/train/001113256
+        - class_1/train/001113305
+        - class_1/train/001113363
+        - class_1/train/001113392
+        - class_1/train/001113411
+        - class_1/train/001113424
+        - class_1/train/001113437
+        - class_1/train/001113448
+        - class_1/train/001113483
+        - class_1/train/001113505
+        - class_1/train/001113516
+        - class_1/train/001113538
+        - class_1/train/001113552
+        - class_1/train/001113561
+        - class_1/train/001113572
+        - class_1/train/001113605
+        - class_1/train/001113627
+        - class_1/train/001113692
+        - class_1/train/001113714
+        - class_1/train/001113725
+        - class_1/train/001113736
+        - class_1/train/001113747
+        - class_1/train/001113758
+        - class_1/train/001113769
+        - class_1/train/001113821
+        - class_1/train/001113834
+        - class_1/train/001114628
+        - class_1/train/001114636
+        - class_1/train/001120122
+        - class_1/train/001120256
+        - class_1/train/001120433
+        - class_1/train/001120455
+        - class_1/train/001120533
+        - class_1/train/001121178
+        - class_1/train/001121924
+        - class_1/train/001122135
+        - class_1/train/001122196
+        - class_1/train/001122242
+        - class_1/train/001122385
+        - class_1/train/001122435
+        - class_1/train/001122479
+        - class_1/train/001122503
+        - class_1/train/001122514
+        - class_1/train/001122536
+        - class_1/train/001122562
+        - class_1/train/001122746
+        - class_1/train/001123045
+        - class_1/train/001123101
+        - class_1/train/001123132
+        - class_1/train/001123154
+    step2:
+        dirs:
+        - class_2/train/001110022
+        - class_2/train/001110044
+        - class_2/train/001110055
+        - class_2/train/001110499
+        - class_2/train/001111201
+        - class_2/train/001111364
+        - class_2/train/001111376
+        - class_2/train/001111385
+        - class_2/train/001111419
+        - class_2/train/001111442
+        - class_2/train/001111486
+        - class_2/train/001111497
+        - class_2/train/001111845
+        - class_2/train/001111863
+        - class_2/train/001111872
+        - class_2/train/001111980
+        - class_2/train/001112046
+        - class_2/train/001112057
+        - class_2/train/001112068
+        - class_2/train/001112084
+        - class_2/train/001112113
+        - class_2/train/001112141
+        - class_2/train/001112152
+        - class_2/train/001112163
+        - class_2/train/001112174
+        - class_2/train/001112185
+        - class_2/train/001112264
+        - class_2/train/001112275
+        - class_2/train/001112286
+        - class_2/train/001112308
+        - class_2/train/001112363
+        - class_2/train/001112481
+        - class_2/train/001112492
+        - class_2/train/001112573
+        - class_2/train/001112606
+        - class_2/train/001112628
+        - class_2/train/001112651
+        - class_2/train/001112662
+        - class_2/train/001112673
+        - class_2/train/001112684
+        - class_2/train/001112695
+        - class_2/train/001112713
+        - class_2/train/001112724
+        - class_2/train/001112757
+        - class_2/train/001112768
+        - class_2/train/001112814
+        - class_2/train/001112847
+        - class_2/train/001112904
+        - class_2/train/001112931
+        - class_2/train/001112942
+        - class_2/train/001112953
+        - class_2/train/001112964
+        - class_2/train/001112975
+        - class_2/train/001113112
+        - class_2/train/001113212
+        - class_2/train/001113234
+        - class_2/train/001113256
+        - class_2/train/001113305
+        - class_2/train/001113363
+        - class_2/train/001113392
+        - class_2/train/001113411
+        - class_2/train/001113424
+        - class_2/train/001113437
+        - class_2/train/001113448
+        - class_2/train/001113483
+        - class_2/train/001113505
+        - class_2/train/001113516
+        - class_2/train/001113538
+        - class_2/train/001113552
+        - class_2/train/001113561
+        - class_2/train/001113572
+        - class_2/train/001113605
+        - class_2/train/001113627
+        - class_2/train/001113692
+        - class_2/train/001113714
+        - class_2/train/001113725
+        - class_2/train/001113736
+        - class_2/train/001113747
+        - class_2/train/001113758
+        - class_2/train/001113769
+        - class_2/train/001113821
+        - class_2/train/001113834
+        - class_2/train/001114628
+        - class_2/train/001114636
+        - class_2/train/001120122
+        - class_2/train/001120256
+        - class_2/train/001120433
+        - class_2/train/001120455
+        - class_2/train/001120533
+        - class_2/train/001121178
+        - class_2/train/001121924
+        - class_2/train/001122135
+        - class_2/train/001122196
+        - class_2/train/001122242
+        - class_2/train/001122385
+        - class_2/train/001122435
+        - class_2/train/001122479
+        - class_2/train/001122503
+        - class_2/train/001122514
+        - class_2/train/001122536
+        - class_2/train/001122562
+        - class_2/train/001122746
+        - class_2/train/001123045
+        - class_2/train/001123101
+        - class_2/train/001123132
+        - class_2/train/001123154
+
+val_dirs:
+    - class_1/test/001111508
+    - class_1/test/001112541
+    - class_1/test/001112702
+    - class_1/test/001112781
+    - class_1/test/001113001
+    - class_1/test/001113143
+    - class_1/test/001113261
+    - class_1/test/001113638
+    - class_1/test/001120422
+    - class_1/test/001122319
+    - class_1/test/001122332
+    - class_1/test/001122551
+    - class_1/test/001122825
+    - class_2/test/001111508
+    - class_2/test/001112541
+    - class_2/test/001112702
+    - class_2/test/001112781
+    - class_2/test/001113001
+    - class_2/test/001113143
+    - class_2/test/001113261
+    - class_2/test/001113638
+    - class_2/test/001120422
+    - class_2/test/001122319
+    - class_2/test/001122332
+    - class_2/test/001122551
+    - class_2/test/001122825
+
+test_dirs:
+    - class_1/test/001111508
+    - class_1/test/001112541
+    - class_1/test/001112702
+    - class_1/test/001112781
+    - class_1/test/001113001
+    - class_1/test/001113143
+    - class_1/test/001113261
+    - class_1/test/001113638
+    - class_1/test/001120422
+    - class_1/test/001122319
+    - class_1/test/001122332
+    - class_1/test/001122551
+    - class_1/test/001122825
+    - class_2/test/001111508
+    - class_2/test/001112541
+    - class_2/test/001112702
+    - class_2/test/001112781
+    - class_2/test/001113001
+    - class_2/test/001113143
+    - class_2/test/001113261
+    - class_2/test/001113638
+    - class_2/test/001120422
+    - class_2/test/001122319
+    - class_2/test/001122332
+    - class_2/test/001122551
+    - class_2/test/001122825
+
+training: yes
+task: segmentation
+
+train_params: 
+    model_name: deeplab_v3
+    backbone: xception
+    activation: softmax
+    optimizer: radam
+    loss: 
+        functions: 
+            FocalTverskyLoss: 
+                alpha: 0.19081615185580714
+                beta: 0.7943269567028718
+                gamma: 0.86775
+    batch_size: 6 
+    learning_rate: 0.00036656400016332475
+    weights_info: 
+        classes: # assign only when you use backbone weights
+        weights: 
+    augmentation:
+        CropNonEmptyMaskIfExists:
+            height: 540
+            width: 960
+        ShiftScaleRotate:
+            shift_limit: 0.1
+            scale_limit: 0.5
+            rotate_limit: 15
+            border_mode: 0
+
+# curriculum: True
+# curriculum_model_path:
+
+segmentation_val_step: 50
+n_trials:
+epochs: 5
+# initial_epoch:
+width: 512
+height: 256
+
+input_dir: movieframe
+label_dir: label
+trained_path:
+result_dir: curriculum_artery_00_a/run_1
+class_names:
+    - background
+    - ureter
+    - artery
+train_colors:
+    - 0
+    - 206: 1
+    - 209: 1
+    - 108: 2
+    - 109: 2

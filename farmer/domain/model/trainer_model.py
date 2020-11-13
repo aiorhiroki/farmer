@@ -75,8 +75,8 @@ class Trainer(Config, ImageLoader):
         self.image_path = os.path.join(self.result_path, self.image_dir)
         self.video_path = os.path.join(self.result_path, self.video_dir)
         self.tfboard_path = os.path.join(self.result_path, self.tfboard_dir)
-        self.get_train_dirs()
-        self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
+        # self.get_train_dirs()
+        # self.train_dirs = [str(train_dir) for train_dir in self.train_dirs]
         self.val_dirs = [str(val_dir) for val_dir in self.val_dirs if val_dir]
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
         self.class_names = self.get_class_names()

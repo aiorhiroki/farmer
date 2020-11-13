@@ -18,21 +18,24 @@ class TrainWorkflow(AbstractImageAnalyzer):
 
     def command(self, trial=None):
         self.set_env_flow(trial)
-        annotation_set = self.read_annotation_flow()
-        self.eda_flow(annotation_set)
-        model = self.build_model_flow()
-        result = self.model_execution_flow(annotation_set, model, trial)
-        return self.output_flow(result)
+        print(self._config.train_dirs.keys())
+        for step in self._config.train_dirs.keys():
+            print(step)
+            annotation_set = self.read_annotation_flow(step)
+            self.eda_flow(annotation_set)
+            model = self.build_model_flow()
+            result = self.model_execution_flow(annotation_set, model, trial)
+            self.output_flow(result)
 
     def set_env_flow(self, trial):
         print("SET ENV FLOW ... ", end="")
         self._config = SetTrainEnvTask(self._config).command(trial)
         print("DONE")
 
-    def read_annotation_flow(self):
+    def read_annotation_flow(self, step):
         print("READ ANNOTATION FLOW ... ")
         read_annotation = ReadAnnotationTask(self._config)
-        train_set = read_annotation.command("train")
+        train_set = read_annotation.command("train", step)
         validation_set = read_annotation.command("validation")
         test_set = read_annotation.command("test")
         print("DONE")

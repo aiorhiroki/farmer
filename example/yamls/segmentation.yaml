@@ -1,8 +1,14 @@
 target_dir: data/segmentation
 result_root_dir: result/segmentation
 train_dirs:
-    - train_1
-    - train_2
+    step1:
+        dirs:
+            - train_1
+            - train_2
+    step2:
+        dirs:
+            - train_2
+
 val_dirs:
     - validation
 test_dirs:

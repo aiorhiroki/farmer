@@ -33,10 +33,11 @@ class Trainer(Config, ImageLoader):
     seed: int = 1
     n_trials: int = 10
     timeout: int = None
-    trial_number: int = None
-    trial_params: dict = None
     train_params: TrainParams = None
     optuna_params: TrainParams = None
+    trial_number: int = None
+    trial_params: dict = None
+    trial_result_path: str = None
     pruner: str = "MedianPruner"
     pruner_params: dict = None
 

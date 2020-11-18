@@ -5,6 +5,7 @@ import dataclasses
 import multiprocessing as mp
 import numpy as np
 import copy
+import yaml
 
 import tensorflow as tf
 from farmer.domain.model import TrainParams
@@ -86,19 +87,20 @@ class SetTrainEnvTask:
             self.config.trial_number = trial.number
             self.config.trial_params = trial.params
             # result_dir/trial#/learning/
-            trial_result_path = f'{self.config.result_path}/trial{trial.number}'
+            self.config.trial_result_path = f'{self.config.result_path}/trial{trial.number}'
             self.config.learning_path = os.path.join(
-                trial_result_path, self.config.learning_dir)
+                self.config.trial_result_path, self.config.learning_dir)
             self.config.model_path = os.path.join(
-                trial_result_path, self.config.model_dir)
+                self.config.trial_result_path, self.config.model_dir)
             self.config.image_path = os.path.join(
-                trial_result_path, self.config.image_dir)
+                self.config.trial_result_path, self.config.image_dir)
             self.config.tfboard_path = os.path.join(
-                trial_result_path, self.config.tfboard_dir)
+                self.config.trial_result_path, self.config.tfboard_dir)
 
             # set train params to params setted by optuna
             train_params_dict = copy.deepcopy(self.config.optuna_params)
             set_train_params(train_params_dict)
+
         else:
             train_params_dict = self.config.train_params
 
@@ -132,3 +134,9 @@ class SetTrainEnvTask:
             if os.path.exists(dir_path):
                 shutil.rmtree(dir_path)
             os.makedirs(dir_path)
+
+        # save training parameters
+        if self.config.optuna:
+            param_path = os.path.join(self.config.trial_result_path, "train_params.yaml")
+            with open(param_path, mode="w") as configfile:
+                yaml.dump(self.config.train_params, configfile)

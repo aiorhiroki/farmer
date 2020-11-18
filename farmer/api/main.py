@@ -151,7 +151,7 @@ def optuna_command(trainer):
     else:
         pruner = getattr(pruners, trainer.pruner)(**pruner_params)
     study = optuna.create_study(
-        storage=f"sqlite:////optuna_study.db",
+        storage=f"sqlite:///optuna_study.db",
         load_if_exists=True,
         study_name=trainer.result_path,
         direction='maximize',

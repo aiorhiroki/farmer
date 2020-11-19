@@ -34,3 +34,9 @@ def cosine_decay(epoch, lr_min, lr_max, n_epoch):
     lr = lr_min
     lr += 1/2*(lr_max-lr_min)*(1+np.cos(epoch/n_epoch*np.pi))
     return lr
+
+def exponential_cosine_decay(epoch, n_epochs, lr_min, lr_max, frequency, gamma=0.99):
+    lr = lr_min
+    lr += (gamma ** epoch) * (lr_max - lr_min) / 2 * \
+        (1 + np.cos(epoch / n_epochs * (2 * frequency - 1) * np.pi))
+    return lr

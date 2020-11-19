@@ -32,6 +32,21 @@ def categorical_focal_loss(gt, pr, gamma=2.0, alpha=0.25, class_weights=1.):
     return tf.reduce_mean(loss)
 
 
+def log_cosh_dice_loss(gt, pr, beta=1, class_weights=1.):
+    x = dice_loss(gt, pr, beta, class_weights)
+    return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
+
+
+def log_cosh_tversky_loss(gt, pr, alpha=0.3, beta=0.7, class_weights=1.):
+    x = tversky_loss(gt, pr, alpha, beta, class_weights)
+    return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
+
+
+def log_cosh_focal_tversky_loss(gt, pr, alpha=0.3, beta=0.7, gamma=1.3, class_weights=1.):
+    x = focal_tversky_loss(gt, pr, alpha, beta, gamma, class_weights=)
+    return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
+    
+
 def _tp_fp_fn(gt, pr):
     pr = tf.clip_by_value(pr, SMOOTH, 1 - SMOOTH)
     reduce_axes = [0, 1, 2]

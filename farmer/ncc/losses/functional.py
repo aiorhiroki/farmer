@@ -43,7 +43,7 @@ def log_cosh_tversky_loss(gt, pr, alpha=0.3, beta=0.7, class_weights=1.):
 
 
 def log_cosh_focal_tversky_loss(gt, pr, alpha=0.3, beta=0.7, gamma=1.3, class_weights=1.):
-    x = focal_tversky_loss(gt, pr, alpha, beta, gamma, class_weights=)
+    x = focal_tversky_loss(gt, pr, alpha, beta, gamma, class_weights)
     return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
     
 

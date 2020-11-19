@@ -1,4 +1,3 @@
-import tensorflow as tf
 import segmentation_models
 from segmentation_models.base import Loss
 from segmentation_models.losses import CategoricalCELoss

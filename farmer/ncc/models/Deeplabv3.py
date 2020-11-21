@@ -229,7 +229,8 @@ def Deeplabv3(weights_info={}, input_tensor=None, input_shape=(512, 512, 3), cla
                                     WEIGHTS_PATH_MOBILE,
                                     cache_subdir='models')
         model.load_weights(weights_path, by_name=True)
-    
+        print('load weights:', weights)
+        
     elif weights == 'cityscapes':
         if backbone == 'xception':
             weights_path = get_file('deeplabv3_xception_tf_dim_ordering_tf_kernels_cityscapes.h5',
@@ -240,9 +241,11 @@ def Deeplabv3(weights_info={}, input_tensor=None, input_shape=(512, 512, 3), cla
                                     WEIGHTS_PATH_MOBILE_CS,
                                     cache_subdir='models')
         model.load_weights(weights_path, by_name=True)
-    
+        print('load weights:', weights)
+
     elif os.path.exists(weights):
         if weights_info.get("classes") is None:
             model.load_weights(weights)
-    
+            print('load weights:', weights)
+
     return model

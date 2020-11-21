@@ -1,6 +1,5 @@
 from __future__ import division
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.layers import Activation
 from tensorflow.python.keras.layers import BatchNormalization
@@ -9,8 +8,6 @@ from tensorflow.python.keras.layers import DepthwiseConv2D
 from tensorflow.python.keras.layers import ZeroPadding2D
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras import backend as K
-import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import unary_from_labels
 
 
 def SepConv_BN(x, filters, prefix, stride=1, kernel_size=3, rate=1, depth_activation=False, epsilon=1e-3):
@@ -121,15 +118,9 @@ class Subpixel(Conv2D):
 
     def get_config(self):
         config = super(Conv2D, self).get_config()
-        config.pop('rank')
-        config.pop('dilation_rate')
         config['filters'] = int(config['filters'] / self.r * self.r)
         config['r'] = self.r
         return config
-
-
-def icnr_weights(init=tf.keras.initializers.glorot_normal(), scale=2, shape=[3, 3, 32, 4], dtype=tf.float32):
-    return ICNR(init, scale=scale)(shape=shape, dtype=dtype)
 
 
 class ICNR(tf.keras.initializers.Initializer):
@@ -163,23 +154,3 @@ class ICNR(tf.keras.initializers.Initializer):
         x = tf.transpose(x, perm=[1, 2, 0, 3])
 
         return x
-
-
-def do_crf(im, mask, zero_unsure=True):
-    colors, labels = np.unique(mask, return_inverse=True)
-    image_size = mask.shape[:2]
-    n_labels = len(set(labels.flat))
-    d = dcrf.DenseCRF2D(image_size[1], image_size[0], n_labels)  # width, height, nlabels
-    U = unary_from_labels(labels, n_labels, gt_prob=.7, zero_unsure=zero_unsure)
-    d.setUnaryEnergy(U)
-    # This adds the color-independent term, features are the locations only.
-    d.addPairwiseGaussian(sxy=(3, 3), compat=3)
-    # This adds the color-dependent term, i.e. features are (x,y,r,g,b).
-    # im is an image-array, e.g. im.dtype == np.uint8 and im.shape == (640,480,3)
-    d.addPairwiseBilateral(sxy=80, srgb=13, rgbim=im.astype('uint8'), compat=10)
-    Q = d.inference(5)  # 5 - num of iterations
-    MAP = np.argmax(Q, axis=0).reshape(image_size)
-    unique_map = np.unique(MAP)
-    for u in unique_map:  # get original labels back
-        np.putmask(MAP, MAP == u, colors[u])
-    return MAP

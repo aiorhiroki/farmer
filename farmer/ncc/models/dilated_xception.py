@@ -125,18 +125,18 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
 
         elif weights_info["weights"] in {'pascal_voc', 'cityscapes', None}:
             weights = weights_info["weights"]
-        
+
         elif os.path.exists(weights_info["weights"]):
             weights = weights_info["weights"]
             if weights_info.get("classes") is not None:
                 classes = int(weights_info["classes"])
-        
+
         else:
             raise ValueError('The `weights` should be either '
-                            '`None` (random initialization), `pascal_voc`, `cityscapes`, '
-                            'original weights path (pre-training on original data), '
-                            'or the path to the weights file to be loaded and'
-                            '`classes` should be number of original weights output units')
+                             '`None` (random initialization), `pascal_voc`, `cityscapes`, '
+                             'original weights path (pre-training on original data), '
+                             'or the path to the weights file to be loaded and'
+                             '`classes` should be number of original weights output units')
     else:
         weights = None
         if classes is None:
@@ -157,7 +157,7 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
         exit_block_rates = (1, 2)
 
     x = Conv2D(32, (3, 3), strides=(2, 2),
-                name='entry_flow_conv1_1', use_bias=False, padding='same')(img_input)
+               name='entry_flow_conv1_1', use_bias=False, padding='same')(img_input)
     x = BatchNormalization(name='entry_flow_conv1_1_BN')(x)
     x = Activation('relu')(x)
 
@@ -166,30 +166,30 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
     x = Activation('relu')(x)
 
     x, _ = _xception_block(x, [128, 128, 128], 'entry_flow_block1',
-                        skip_connection_type='conv', stride=2,
-                        depth_activation=False)
+                           skip_connection_type='conv', stride=2,
+                           depth_activation=False)
     x, skip = _xception_block(x, [256, 256, 256], 'entry_flow_block2',
-                                skip_connection_type='conv', stride=2,
-                                depth_activation=False)
+                              skip_connection_type='conv', stride=2,
+                              depth_activation=False)
 
     x, _ = _xception_block(x, [728, 728, 728], 'entry_flow_block3',
-                        skip_connection_type='conv', stride=entry_block3_stride,
-                        depth_activation=False)
+                           skip_connection_type='conv', stride=entry_block3_stride,
+                           depth_activation=False)
     for i in range(16):
         x, _ = _xception_block(x, [728, 728, 728], 'middle_flow_unit_{}'.format(i + 1),
-                            skip_connection_type='sum', stride=1, rate=middle_block_rate,
-                            depth_activation=False)
+                               skip_connection_type='sum', stride=1, rate=middle_block_rate,
+                               depth_activation=False)
 
     x, _ = _xception_block(x, [728, 1024, 1024], 'exit_flow_block1',
-                        skip_connection_type='conv', stride=1, rate=exit_block_rates[0],
-                        depth_activation=False)
+                           skip_connection_type='conv', stride=1, rate=exit_block_rates[0],
+                           depth_activation=False)
     x, _ = _xception_block(x, [1536, 1536, 2048], 'exit_flow_block2',
-                        skip_connection_type='none', stride=1, rate=exit_block_rates[1],
-                        depth_activation=True)
+                           skip_connection_type='none', stride=1, rate=exit_block_rates[1],
+                           depth_activation=True)
 
     x = GlobalAveragePooling2D()(x)
     x = Dense(classes, activation='softmax')(x)
-    
+
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
     if input_tensor is not None:
@@ -208,14 +208,15 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
     # get model before FC layer
     if not include_top:
         model = Model(
-            inputs=model.input, 
+            inputs=model.input,
             outputs=model.get_layer(index=-3).output
         )
-    
+
     if return_skip:
         return model, skip
     else:
         return model
+
 
 def dilated_xception(nb_classes, height=512, width=512, weights_info=None):
     base_model = DilatedXception(
@@ -230,4 +231,3 @@ def dilated_xception(nb_classes, height=512, width=512, weights_info=None):
     model = Model(base_model.input, predictions)
 
     return model
-

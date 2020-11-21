@@ -128,12 +128,11 @@ class Subpixel(Conv2D):
         return config
 
 
-def icnr_weights(init=tf.compat.v1.glorot_normal_initializer(), scale=2, shape=[3, 3, 32, 4], dtype=tf.float32):
-    sess = tf.compat.v1.Session()
-    return sess.run(ICNR(init, scale=scale)(shape=shape, dtype=dtype))
+def icnr_weights(init=tf.keras.initializers.glorot_normal(), scale=2, shape=[3, 3, 32, 4], dtype=tf.float32):
+    return ICNR(init, scale=scale)(shape=shape, dtype=dtype)
 
 
-class ICNR:
+class ICNR(tf.keras.initializers.Initializer):
     """ICNR initializer for checkerboard artifact free sub pixel convolution
     Ref:
      [1] Andrew Aitken et al. Checkerboard artifact free sub-pixel convolution
@@ -143,17 +142,19 @@ class ICNR:
     scale: scale factor of sub pixel convolution
     """
 
-    def __init__(self, initializer, scale=1):
+    def __init__(self,
+                 initializer=tf.keras.initializers.glorot_normal(),
+                 scale=1):
         self.scale = scale
         self.initializer = initializer
 
-    def __call__(self, shape, dtype, partition_info=None):
+    def __call__(self, shape, dtype):
         shape = list(shape)
         if self.scale == 1:
             return self.initializer(shape)
 
         new_shape = shape[:3] + [shape[3] // (self.scale ** 2)]
-        x = self.initializer(new_shape, dtype, partition_info)
+        x = self.initializer(new_shape, dtype)
         x = tf.transpose(x, perm=[2, 0, 1, 3])
         x = tf.compat.v1.image.resize(
             x, size=(shape[0] * self.scale, shape[1] * self.scale),

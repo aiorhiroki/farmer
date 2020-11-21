@@ -88,9 +88,9 @@ class CosineDecay:
 
 
 class ExponentialCosineDecay:
-    def __init__(self, n_epochs, lr_min, lr_max, frequency, gamma, **kwargs):
+    def __init__(self, n_epoch, base_lr, lr_min, frequency, gamma, **kwargs):
         self.n_epoch = n_epoch
-        self.lr_max = lr_max
+        self.lr_max = base_lr
         self.lr_min = lr_min
         self.frequency = frequency
         self.gamma = gamma
@@ -98,7 +98,7 @@ class ExponentialCosineDecay:
     def __call__(self, epoch):
         return F.exponential_cosine_decay(
             epoch,
-            self.n_epochs,
+            self.n_epoch,
             self.lr_min,
             self.lr_max,
             self.frequency,

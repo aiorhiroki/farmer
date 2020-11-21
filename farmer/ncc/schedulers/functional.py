@@ -6,6 +6,7 @@ def step_lr(epoch, base_lr, step_size, gamma):
     lr = base_lr * (gamma ** reduce_num)
     return lr
 
+
 def multi_step_lr(epoch, base_lr, milestones, milestone_num, gamma):
     for i, milestone in enumerate(milestones):
         if epoch >= milestone:
@@ -13,9 +14,11 @@ def multi_step_lr(epoch, base_lr, milestones, milestone_num, gamma):
     lr = base_lr * (gamma ** milestone_num)
     return lr
 
+
 def exponential_lr(epoch, base_lr, gamma):
     lr = base_lr * (gamma ** epoch)
     return lr
+
 
 def cyclical_lr(epoch, lr_max, lr_min, step_size):
     max_min_diff = lr_max - lr_min
@@ -30,13 +33,15 @@ def cyclical_lr(epoch, lr_max, lr_min, step_size):
         lr -= max_min_diff * (remainder / step_size)
     return lr
 
+
 def cosine_decay(epoch, lr_min, lr_max, n_epoch):
     lr = lr_min
-    lr += 1/2*(lr_max-lr_min)*(1+np.cos(epoch/n_epoch*np.pi))
+    lr += 1 / 2 * (lr_max - lr_min) * (1 + np.cos(epoch / n_epoch * np.pi))
     return lr
 
-def exponential_cosine_decay(epoch, n_epochs, lr_min, lr_max, frequency, gamma=0.99):
+
+def exponential_cosine_decay(epoch, n_epoch, lr_min, lr_max, frequency, gamma=0.99):
     lr = lr_min
     lr += (gamma ** epoch) * (lr_max - lr_min) / 2 * \
-        (1 + np.cos(epoch / n_epochs * (2 * frequency - 1) * np.pi))
+        (1 + np.cos(epoch / n_epoch * (2 * frequency - 1) * np.pi))
     return lr

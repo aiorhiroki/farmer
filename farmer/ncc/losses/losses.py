@@ -1,3 +1,4 @@
+import tensorflow as tf
 import segmentation_models
 from segmentation_models.base import Loss
 from segmentation_models.losses import CategoricalCELoss
@@ -136,3 +137,14 @@ class LogCoshFocalTverskyLoss(Loss):
             gamma=self.gamma,
             class_weights=self.class_weights
         )
+
+
+class LogCoshLoss(Loss):
+    def __init__(self, base_loss, **kwargs):
+        super().__init__(name=f'log_cosh_{base_loss}')
+        self.loss = getattr(F, base_loss)
+        self.kwargs = kwargs
+
+    def __call__(self, gt, pr):
+        x = self.loss(gt, pr, **self.kwargs)
+        return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)

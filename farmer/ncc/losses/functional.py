@@ -45,7 +45,7 @@ def log_cosh_tversky_loss(gt, pr, alpha=0.3, beta=0.7, class_weights=1.):
 def log_cosh_focal_tversky_loss(gt, pr, alpha=0.3, beta=0.7, gamma=1.3, class_weights=1.):
     x = focal_tversky_loss(gt, pr, alpha, beta, gamma, class_weights)
     return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
-    
+
 
 def _tp_fp_fn(gt, pr):
     pr = tf.clip_by_value(pr, SMOOTH, 1 - SMOOTH)
@@ -73,4 +73,4 @@ def _iou_index(gt, pr):
 
 def _tversky_index(gt, pr, alpha, beta):
     tp, fp, fn = _tp_fp_fn(gt, pr)
-    return (tp + SMOOTH) / (tp + alpha*fp + beta*fn + SMOOTH)
+    return (tp + SMOOTH) / (tp + alpha * fp + beta * fn + SMOOTH)

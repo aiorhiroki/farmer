@@ -16,6 +16,7 @@ optuna = "^2.0.0"
 pandas = "^1.0.5"
 tensorflow-addons = "0.11.2"
 tensorboard-plugin-profile = "^2.3.0"
+pydensecrf = "^1.0rc3"
 
 [tool.poetry.dev-dependencies]
 

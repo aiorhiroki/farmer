@@ -504,6 +504,14 @@ python-versions = "*"
 six = ">=1.9"
 
 [[package]]
+name = "pydensecrf"
+version = "1.0rc3"
+description = "A python interface to Philipp Krähenbühl's fully-connected (dense) CRF code."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyparsing"
 version = "2.4.7"
 description = "Python parsing module"
@@ -817,7 +825,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.9"
-content-hash = "77bae07977a86bd1a1399cfeedc70980113b3bd6680834ada0452dc59d9b2833"
+content-hash = "0f265e287fc7fae245d70a7b5a3f72f0637f96f281cd6a94aa3ef645df1d2990"
 
 [metadata.files]
 albumentations = [
@@ -1166,6 +1174,9 @@ protobuf = [
     {file = "protobuf-3.13.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:e7662437ca1e0c51b93cadb988f9b353fa6b8013c0385d63a70c8a77d84da5f9"},
     {file = "protobuf-3.13.0-py2.py3-none-any.whl", hash = "sha256:d69697acac76d9f250ab745b46c725edf3e98ac24763990b24d58c16c642947a"},
     {file = "protobuf-3.13.0.tar.gz", hash = "sha256:6a82e0c8bb2bf58f606040cc5814e07715b2094caeba281e2e7d0b0e2e397db5"},
+]
+pydensecrf = [
+    {file = "pydensecrf-1.0rc3.tar.gz", hash = "sha256:08be1603af2bede05c7697b6018e8e3059de7cc181e4e784b334889dcc749aa5"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},

@@ -26,22 +26,17 @@ import os
 import tensorflow as tf
 
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras import layers
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.layers import Activation
 from tensorflow.python.keras.layers import Concatenate
-from tensorflow.python.keras.layers import Add
 from tensorflow.python.keras.layers import Dropout
 from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Conv2D
-from tensorflow.python.keras.layers import DepthwiseConv2D
-from tensorflow.python.keras.layers import ZeroPadding2D
 from tensorflow.python.keras.layers import GlobalAveragePooling2D
 from tensorflow.python.keras.utils.layer_utils import get_source_inputs
 from tensorflow.python.keras.utils.data_utils import get_file
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
 from .functional import SepConv_BN
@@ -99,12 +94,12 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     if not (backbone in {'xception', 'mobilenetv2'}):
         raise ValueError('The `backbone` argument should be either '
                          '`xception`  or `mobilenetv2` ')
-    
+
     if weights_info.get("weights") is None:
         weights = 'pascal_voc'
     else:
         weights = weights_info["weights"]
-    
+
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
@@ -117,29 +112,27 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     if backbone == 'xception':
         base_model, skip1 = DilatedXception(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
-            return_skip=True, 
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
+            return_skip=True,
             include_top=False
         )
 
     else:
         base_model = MobileNetV2(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
             include_top=False
         )
-    
-    x = base_model.output
 
+    x = base_model.output
     # end of feature extractor
 
     # branching for Atrous Spatial Pyramid Pooling
-
     # Image Feature branch
     shape_before = tf.shape(x)
     b4 = GlobalAveragePooling2D()(x)
@@ -181,8 +174,8 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     x = BatchNormalization(name='concat_projection_BN', epsilon=1e-5)(x)
     x = Activation('relu')(x)
     x = Dropout(0.1)(x)
-    # DeepLab v.3+ decoder
 
+    # DeepLab v.3+ decoder
     if backbone == 'xception':
         # Feature projection
         # x4 (x2) block
@@ -252,13 +245,3 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         if weights_info.get("classes") is None:
             model.load_weights(weights)
     return model
-
-
-def preprocess_input(x):
-    """Preprocesses a numpy array encoding a batch of images.
-    # Arguments
-        x: a 4D numpy array consists of RGB values within [0, 255].
-    # Returns
-        Input array scaled to [-1.,1.]
-    """
-    return preprocess_input(x, mode='tf')

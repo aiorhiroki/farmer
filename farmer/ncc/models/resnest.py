@@ -2,7 +2,6 @@ import tensorflow as tf
 # tf.enable_eager_execution()
 # tf.compat.v1.enable_eager_execution()
 from tensorflow.keras import models
-from tensorflow.keras.activations import softmax
 from tensorflow.keras.utils import get_custom_objects
 from tensorflow.keras.layers import (
     Activation,
@@ -106,7 +105,7 @@ class ResNest:
     def __init__(self, verbose=False, input_shape=(224, 224, 3), active="relu", nb_classes=81,
                  dropout_rate=0.2, fc_activation=None, blocks_set=[3, 4, 6, 3], radix=2, groups=1,
                  bottleneck_width=64, deep_stem=True, stem_width=32, block_expansion=4, avg_down=True,
-                 avd=True, avd_first=False, preact=False, using_basic_block=False,using_cb=False):
+                 avd=True, avd_first=False, preact=False, using_basic_block=False, using_cb=False):
         self.channel_axis = -1  # not for change
         self.verbose = verbose
         self.active = active  # default relu
@@ -352,7 +351,7 @@ class ResNest:
                 # print(i,x.shape)
         return x
 
-    def _make_Composite_layer(self,input_tensor,filters=256,kernel_size=1,stride=1,upsample=True):
+    def _make_Composite_layer(self, input_tensor, filters=256, kernel_size=1, stride=1, upsample=True):
         x = input_tensor
         x = Conv2D(filters, kernel_size, strides=stride, use_bias=False)(x)
         x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
@@ -379,36 +378,39 @@ class ResNest:
         if self.preact is True:
             x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
             x = Activation(self.active)(x)
-        
+
         if self.using_cb:
             second_x = x
             second_x = self._make_layer(x, blocks=self.blocks_set[0], filters=64, stride=1, is_first=False)
-            second_x_tmp = self._make_Composite_layer(second_x,filters=x.shape[-1],upsample=False)
-            if self.verbose: print('layer 0 db_com',second_x_tmp.shape)
+            second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1], upsample=False)
+            if self.verbose:
+                print('layer 0 db_com', second_x_tmp.shape)
             x = Add()([second_x_tmp, x])
         x = self._make_layer(x, blocks=self.blocks_set[0], filters=64, stride=1, is_first=False)
         if self.verbose:
             print("-" * 5, "layer 0 out", x.shape, "-" * 5)
 
-        b1_b3_filters = [64,128,256,512]
+        b1_b3_filters = [64, 128, 256, 512]
         for i in range(3):
-            idx = i+1
+            idx = i + 1
             if self.using_cb:
                 second_x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
-                second_x_tmp = self._make_Composite_layer(second_x,filters=x.shape[-1])
-                if self.verbose: print('layer {} db_com out {}'.format(idx,second_x_tmp.shape))
+                second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1])
+                if self.verbose:
+                    print('layer {} db_com out {}'.format(idx, second_x_tmp.shape))
                 x = Add()([second_x_tmp, x])
             x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
-            if self.verbose: print('----- layer {} out {} -----'.format(idx,x.shape))
+            if self.verbose:
+                print('----- layer {} out {} -----'.format(idx, x.shape))
 
-        x = GlobalAveragePooling2D(name='avg_pool')(x) 
+        x = GlobalAveragePooling2D(name='avg_pool')(x)
         if self.verbose:
-            print("pool_out:", x.shape) # remove the concats var
+            print("pool_out:", x.shape)  # remove the concats var
 
         if self.dropout_rate > 0:
             x = Dropout(self.dropout_rate, noise_shape=None)(x)
 
-        fc_out = Dense(self.nb_classes, kernel_initializer="he_normal", use_bias=False, name="fc_NObias")(x) # replace concats to x
+        fc_out = Dense(self.nb_classes, kernel_initializer="he_normal", use_bias=False, name="fc_NObias")(x)  # replace concats to x
         if self.verbose:
             print("fc_out:", fc_out.shape)
 
@@ -426,7 +428,7 @@ class ResNest:
 
 
 def resnest(model_name='ResNest50', height=224, width=224, nb_classes=81,
-                verbose=False, dropout_rate=0, fc_activation=None, **kwargs):
+            verbose=False, dropout_rate=0, fc_activation=None, **kwargs):
     '''fetch_resnest
     input_shape: (h,w,c)
     fc_activation: sigmoid,softmax
@@ -434,33 +436,32 @@ def resnest(model_name='ResNest50', height=224, width=224, nb_classes=81,
     model_name = model_name.lower()
 
     resnest_parameters = {
-        'resnest50':{
-            'blocks_set': [3,4,6,3],
+        'resnest50': {
+            'blocks_set': [3, 4, 6, 3],
             'stem_width': 32,
         },
-        'resnest101':{
-            'blocks_set': [3,4,23,3],
+        'resnest101': {
+            'blocks_set': [3, 4, 23, 3],
             'stem_width': 64,
         },
-        'resnest200':{
-            'blocks_set': [3,24,36,3],
+        'resnest200': {
+            'blocks_set': [3, 24, 36, 3],
             'stem_width': 64,
         },
-        'resnest269':{
-            'blocks_set': [3,30,48,8],
+        'resnest269': {
+            'blocks_set': [3, 30, 48, 8],
             'stem_width': 64,
         },
     }
 
     if model_name in resnest_parameters.keys():
         model = ResNest(
-                    verbose=verbose, input_shape=(height, width, 3),
-                    nb_classes=nb_classes, dropout_rate=dropout_rate, fc_activation=fc_activation,
-                    blocks_set=resnest_parameters[model_name]['blocks_set'],
-                    radix=2, groups=1, bottleneck_width=64, deep_stem=True,
-                    stem_width=resnest_parameters[model_name]['stem_width'],
-                    avg_down=True, avd=True, avd_first=False,**kwargs
+            verbose=verbose, input_shape=(height, width, 3),
+            nb_classes=nb_classes, dropout_rate=dropout_rate, fc_activation=fc_activation,
+            blocks_set=resnest_parameters[model_name]['blocks_set'],
+            radix=2, groups=1, bottleneck_width=64, deep_stem=True,
+            stem_width=resnest_parameters[model_name]['stem_width'],
+            avg_down=True, avd=True, avd_first=False, **kwargs
         ).build()
-
 
     return model

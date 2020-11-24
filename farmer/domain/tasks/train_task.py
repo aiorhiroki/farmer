@@ -1,7 +1,10 @@
 import os
 import numpy as np
-from tensorflow.python import keras
+from tensorflow import keras
+import tensorflow as tf
 from farmer import ncc
+from farmer.ncc import schedulers
+from optuna.integration import TFKerasPruningCallback
 
 
 class TrainTask:
@@ -66,27 +69,19 @@ class TrainTask:
         # Save Model Checkpoint
         # result_dir/model/
         model_save_file = os.path.join(self.config.model_path, "best_model.h5")
-
-        if self.config.multi_gpu:
-            checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
-                filepath=model_save_file,
-                base_model=base_model,
-                save_best_only=True,
-            )
-        else:
-            checkpoint = keras.callbacks.ModelCheckpoint(
-                filepath=model_save_file, save_best_only=True
-            )
+        checkpoint = keras.callbacks.ModelCheckpoint(
+            filepath=model_save_file, save_best_only=True
+        )
 
         # Learning Rate Schedule
-        if self.config.train_params.cosine_decay:
-            ncc_scheduler = ncc.schedulers.Scheduler(
-                self.config.train_params.cosine_lr_max,
-                self.config.train_params.cosine_lr_min,
-                self.config.epochs
-            )
+        if self.config.train_params.scheduler:
+            funcs = self.config.train_params.scheduler["functions"]
+            scheduler_name = next(iter(funcs.keys()))
+            scheduler_params = next(iter(funcs.values()))
+            scheduler_params["n_epoch"] = self.config.epochs
+            scheduler_params["base_lr"] = self.config.train_params.learning_rate
             scheduler = keras.callbacks.LearningRateScheduler(
-                ncc_scheduler.cosine_decay)
+                getattr(schedulers, scheduler_name)(**scheduler_params))
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
@@ -100,7 +95,9 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        plot_learning_rate = ncc.callbacks.PlotLearningRate(learning_path)
+
+        callbacks = [checkpoint, scheduler, plot_history, plot_learning_rate]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History
@@ -108,6 +105,7 @@ class TrainTask:
                 save_dir=learning_path,
                 valid_dataset=valid_dataset,
                 class_names=self.config.class_names,
+                batch_size=self.config.train_params.batch_size
             )
 
             # Predict validation
@@ -118,6 +116,7 @@ class TrainTask:
                 val_save_dir=val_save_dir,
                 valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
+                batch_size=self.config.train_params.batch_size,
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
@@ -125,7 +124,7 @@ class TrainTask:
             if self.config.optuna:
                 # Trial prune for Optuna
                 callbacks.append(
-                    ncc.callbacks.KerasPruningCallback(trial, 'val_f1-score'))
+                    TFKerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
@@ -145,7 +144,7 @@ class TrainTask:
             if self.config.optuna:
                 # Trial prune for Optuna
                 callbacks.append(
-                    ncc.callbacks.KerasPruningCallback(trial, 'val_acc'))
+                    TFKerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
@@ -157,7 +156,7 @@ class TrainTask:
                 logger_file=file_name,
                 token=self.config.slack_token,
                 channel=self.config.slack_channel,
-                title=self.config.model_name,
+                title=self.config.train_params.model_name,
             )
             callbacks.append(slack_logging)
 
@@ -173,22 +172,33 @@ class TrainTask:
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_dataset, validation_dataset, callbacks
+        self, model, train_dataset, val_dataset, callbacks
     ):
-        train_gen = ncc.generators.Dataloder(
-            train_dataset,
-            batch_size=self.config.train_params.batch_size,
-            shuffle=True
-        )
-        valid_gen = ncc.generators.Dataloder(
-            validation_dataset,
-            batch_size=self.config.train_params.batch_size,
-            shuffle=False
-        )
+        if self.config.generator:
+            train_gen = ncc.generators.Dataloder(
+                train_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=True
+            )
+            valid_gen = ncc.generators.Dataloder(
+                val_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=False
+            )
+        else:
+            val_data = [d for d in val_dataset]
+            train_data = [d for d in train_dataset]
+            val = [np.stack(samples, axis=0) for samples in zip(*val_data)]
+            train = [np.stack(samples, axis=0) for samples in zip(*train_data)]
+            valid_ds = tf.data.Dataset.from_tensor_slices((val[0], val[1]))
+            train_ds = tf.data.Dataset.from_tensor_slices((train[0], train[1]))
 
-        class_weights = None
-        if self.config.task != ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            class_weights = self.config.train_params.class_weights
+            train_gen = train_ds.shuffle(len(train_dataset)).batch(
+                    self.config.train_params.batch_size
+            )
+            valid_gen = valid_ds.batch(self.config.train_params.batch_size)
+
+        class_weights = self.config.train_params.classification_class_weight
 
         try:
             model.fit(

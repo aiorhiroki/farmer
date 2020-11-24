@@ -1,9 +1,11 @@
 import shutil
 from farmer import ncc
 import os
+import json
 import numpy as np
 import cv2
 import random
+from tqdm import trange
 
 
 class EdaTask:
@@ -11,17 +13,9 @@ class EdaTask:
         self.config = config
 
     def command(self, annotation_set):
-        train_set, _, _ = annotation_set
+        self._do_compute_mean_std(annotation_set)
         self._do_save_params_task()
         self._do_post_config_task()
-        if self.config.input_data_type == 'image':
-            if len(train_set) > 2000:
-                sample_train_set = random.sample(train_set, 2000)
-            elif len(train_set) > 0:
-                sample_train_set = train_set
-            else:
-                return
-            self._do_compute_mean_std(sample_train_set)
 
     def _do_save_params_task(self):
         shutil.copy(self.config.config_path, self.config.info_path)
@@ -40,6 +34,13 @@ class EdaTask:
                 fw.write("class_name,class_id\n")
                 for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
+        with open(f"{self.config.info_path}/mean_std.json", "w") as fw:
+            json.dump(
+                dict(
+                    mean=list(self.config.mean),
+                    std=list(self.config.std)
+                ), fw, indent=2
+            )
 
     def _do_post_config_task(self):
         # milk側にconfigを送る
@@ -61,19 +62,29 @@ class EdaTask:
         )
         milk_client.close_session()
 
-    def _do_compute_mean_std(self, train_set):
+    def _do_compute_mean_std(self, annotation_set):
         """train set全体の平均と標準偏差をchannelごとに計算
         """
-        if self.config.mean is not None and self.config.std is not None:
-            return
-        bgr_images = []
-        for input_file, label in train_set:
-            x = cv2.imread(input_file)
-            x = cv2.resize(x, (self.config.width, self.config.height))
-            x = x / 255.  # 正規化してからmean,stdを計算する
-            bgr_images.append(x)
-        mean = np.mean(bgr_images, axis=(0, 1, 2))
-        std = np.std(bgr_images, axis=(0, 1, 2))
-        # convert BGR to RGB
-        self.config.mean = mean[::-1]
-        self.config.std = std[::-1]
+        train_set, _, _ = annotation_set
+        if self.config.input_data_type == 'image' and self.config.mean_std:
+            if len(train_set) == 0:
+                return
+            elif len(self.config.mean) > 0 and len(self.config.std) > 0:
+                return
+
+            means = []
+            pix_pow = np.zeros(3)
+            for i in trange(len(train_set)):
+                input_file, label = train_set[i]
+                x = cv2.imread(input_file)
+                x = cv2.resize(x, (self.config.width, self.config.height))
+                x = x / 255.  # 正規化してからmean,stdを計算する
+                means.append(np.mean(x, axis=(0, 1)))
+                pix_pow += np.sum(np.power(x, 2), axis=(0, 1))
+            pix_num = self.config.height *  self.config.width * len(train_set)
+            mean = np.mean(means, axis=(0))
+            var_pix = (pix_pow / pix_num) - np.power(mean, 2)
+            std = np.sqrt(var_pix)
+            # convert BGR to RGB
+            self.config.mean = mean[::-1]
+            self.config.std = std[::-1]

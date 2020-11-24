@@ -11,3 +11,4 @@ from .predictions import *
 from .preprocessing import *
 from .tasks import *
 from .schedulers import *
+from .losses import *

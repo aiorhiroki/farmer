@@ -19,23 +19,55 @@ train_params:
     optimizer: 
         - adam
         - sgd
-    loss: 
-        - categorical_focal_loss
-        - categorical_focal_dice_loss
-    loss_params: 
-        alpha: 
-            - 0.1
-            - 1.0
-            - 0.05
-        beta: 
-            - 0.1
-            - 1.0
-            - 0.05
-        gamma:  # focal
-            - 1.0
-            - 5.0
-            - 0.05
-    batch_size: 
+    loss:
+        - name: Categorical Focal Loss
+          functions:
+            CategoricalFocalLoss:
+        - name: Categorical Focal Dice Loss
+          functions:
+            CategoricalFocalLoss: 
+                alpha: 
+                    - 0.1
+                    - 1.0
+                    - 0.05
+                gamma:  # focal
+                    - 1.0
+                    - 5.0
+                    - 0.05
+            DiceLoss:
+                beta: 
+                    - 0.1
+                    - 1.0
+                    - 0.05
+                class_weights:
+                    0: 1
+                    1: 1
+                    2: 2
+                    3: 2
+    scheduler:
+        - name: Cyclical LR
+          functions:
+            CyclicalLR:
+                cyc_freq: 
+                    - 2
+                    - 10
+                    - 1
+                lr_max: 
+                    - 0.0005
+                    - 0.001
+                lr_min: 
+                    - 0.0001
+                    - 0.0005
+        - name: Cosine Decay
+          functions:
+            CosineDecay: 
+                lr_max: 
+                    - 0.0005
+                    - 0.001
+                lr_min: 
+                    - 0.0001
+                    - 0.0005
+    batch_size:
         - 2 # min
         - 8 # max
         - 2 # step
@@ -48,7 +80,6 @@ train_params:
     augmentation:
         # - horizontal_flip
         # - zoom
-    class_weights: 
 
 epochs: 2
 segmentation_val_step: 2

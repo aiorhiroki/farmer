@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict
 
 
 @dataclass
@@ -8,15 +8,12 @@ class TrainParams:
     model_name: str = None
     backbone: str = None
     activation: str = "softmax"
-    loss: str = None
-    loss_params: Dict[str, float] = field(default_factory=dict)
-    batch_size: int = None
-    cosine_decay: bool = False
-    cosine_lr_max: int = 0.01
-    cosine_lr_min: int = 0.001
+    loss: Dict[str, dict] = field(default_factory=dict)
+    classification_class_weight: Dict[str, float] = field(default_factory=dict)
+    batch_size: int = 1
     weights_info: Dict[str, str] = field(default_factory=dict)
-    class_weights: Dict[int, float] = field(default_factory=dict)
     learning_rate: float = None
     optimizer: str = None
-    augmentation: List[str] = field(default_factory=list)
-    augmix: bool = False
+    augmentation: Dict[str, int] = field(default_factory=dict)
+    opt_decay: float = 0.001
+    scheduler: dict = None

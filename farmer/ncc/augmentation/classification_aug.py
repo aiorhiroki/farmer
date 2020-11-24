@@ -1,6 +1,6 @@
 from tensorflow.keras.preprocessing import image
 import numpy as np
-from .augment_and_mix import augment_and_mix, dual_augment_and_mix
+from .augment_and_mix import augment_and_mix
 import albumentations
 
 
@@ -20,15 +20,15 @@ def classification_aug(
         if augmix:
             augmented['image'] = augment_and_mix(
                 augmented['image'],
-                augmented["mask"],
                 transforms,
                 mean,
                 std
             )
-        return augmented['image'], augmented["mask"]
+        return augmented['image']
 
     else:
         return input_image, label
+
 
 def get_aug(augmentation_dict):
     transforms = list()

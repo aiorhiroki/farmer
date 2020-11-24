@@ -1,7 +1,6 @@
 import os
 import shutil
 import random as rn
-import dataclasses
 import multiprocessing as mp
 import numpy as np
 import copy
@@ -86,15 +85,15 @@ class SetTrainEnvTask:
             self.config.trial_number = trial.number
             self.config.trial_params = trial.params
             # result_dir/trial#/learning/
-            trial_result_path = f'{self.config.result_path}/trial{trial.number}'
+            trial_result_dir = f'{self.config.result_path}/trial{trial.number}'
             self.config.learning_path = os.path.join(
-                trial_result_path, self.config.learning_dir)
+                trial_result_dir, self.config.learning_dir)
             self.config.model_path = os.path.join(
-                trial_result_path, self.config.model_dir)
+                trial_result_dir, self.config.model_dir)
             self.config.image_path = os.path.join(
-                trial_result_path, self.config.image_dir)
+                trial_result_dir, self.config.image_dir)
             self.config.tfboard_path = os.path.join(
-                trial_result_path, self.config.tfboard_dir)
+                trial_result_dir, self.config.tfboard_dir)
 
             # set train params to params setted by optuna
             train_params_dict = copy.deepcopy(self.config.optuna_params)
@@ -103,7 +102,6 @@ class SetTrainEnvTask:
             train_params_dict = self.config.train_params
 
         self.config.train_params = TrainParams(**train_params_dict)
-
 
     def _do_create_dirs_task(self):
         # 結果を保存するディレクトリを目的別に作ります。

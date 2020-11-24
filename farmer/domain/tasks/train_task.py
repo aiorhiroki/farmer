@@ -79,7 +79,8 @@ class TrainTask:
             scheduler_name = next(iter(funcs.keys()))
             scheduler_params = next(iter(funcs.values()))
             scheduler_params["n_epoch"] = self.config.epochs
-            scheduler_params["base_lr"] = self.config.train_params.learning_rate
+            base_lr = self.config.train_params.learning_rate
+            scheduler_params["base_lr"] = base_lr
             scheduler = keras.callbacks.LearningRateScheduler(
                 getattr(schedulers, scheduler_name)(**scheduler_params))
         else:
@@ -193,9 +194,12 @@ class TrainTask:
             valid_ds = tf.data.Dataset.from_tensor_slices((val[0], val[1]))
             train_ds = tf.data.Dataset.from_tensor_slices((train[0], train[1]))
 
-            train_gen = train_ds.shuffle(len(train_dataset)).batch(
-                    self.config.train_params.batch_size
-            )
+            train_gen = train_ds.shuffle(
+                len(train_dataset), reshuffle_each_iteration=True
+                ).repeat(
+                ).batch(
+                self.config.train_params.batch_size
+                )
             valid_gen = valid_ds.batch(self.config.train_params.batch_size)
 
         class_weights = self.config.train_params.classification_class_weight

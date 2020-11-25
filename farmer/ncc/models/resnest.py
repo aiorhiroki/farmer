@@ -109,7 +109,8 @@ class ResNest:
     def __init__(self, verbose=False, input_shape=(224, 224, 3), active="relu", nb_classes=81,
                  dropout_rate=0.2, fc_activation=None, blocks_set=[3, 4, 6, 3], radix=2, groups=1,
                  bottleneck_width=64, deep_stem=True, stem_width=32, block_expansion=4, avg_down=True,
-                 avd=True, avd_first=False, preact=False, using_basic_block=False, using_cb=False, include_top=True):
+                 avd=True, avd_first=False, preact=False, using_basic_block=False, using_cb=False,
+                 include_top=True, return_skip=False):
         self.channel_axis = -1  # not for change
         self.verbose = verbose
         self.active = active  # default relu
@@ -136,6 +137,7 @@ class ResNest:
         self.using_basic_block = using_basic_block
         self.using_cb = using_cb
         self.include_top = include_top
+        self.return_skip = return_skip
 
     def _make_stem(self, input_tensor, stem_width=64, deep_stem=False):
         x = input_tensor
@@ -328,7 +330,7 @@ class ResNest:
         m2 = Add()([x, short_cut])
         return m2
 
-    def _make_layer(self, input_tensor, blocks=4, filters=64, stride=2, is_first=True):
+    def _make_layer(self, input_tensor, blocks=4, filters=64, stride=2, is_first=True, return_skip=False):
         x = input_tensor
         if self.using_basic_block is True:
             x = self._make_block_basic(x, first_block=True, filters=filters, stride=stride, radix=self.radix,
@@ -338,6 +340,8 @@ class ResNest:
                 x = self._make_block_basic(
                     x, first_block=False, filters=filters, stride=1, radix=self.radix, avd=self.avd, avd_first=self.avd_first
                 )
+                if i == 1:
+                    skip = x
 
         elif self.using_basic_block is False:
             x = self._make_block(x, first_block=True, filters=filters, stride=stride, radix=self.radix, avd=self.avd,
@@ -347,6 +351,11 @@ class ResNest:
                 x = self._make_block(
                     x, first_block=False, filters=filters, stride=1, radix=self.radix, avd=self.avd, avd_first=self.avd_first
                 )
+                if i == 1:
+                    skip = x
+
+        if return_skip:
+            return x, skip
         return x
 
     def _make_Composite_layer(self, input_tensor, filters=256, kernel_size=1, stride=1, upsample=True):
@@ -384,7 +393,7 @@ class ResNest:
             if self.verbose:
                 print('layer 0 db_com', second_x_tmp.shape)
             x = Add()([second_x_tmp, x])
-        x = self._make_layer(x, blocks=self.blocks_set[0], filters=64, stride=1, is_first=False)
+        x, skip = self._make_layer(x, blocks=self.blocks_set[0], filters=64, stride=1, is_first=False, return_skip=True)
         if self.verbose:
             print("-" * 5, "layer 0 out", x.shape, "-" * 5)
 
@@ -416,13 +425,15 @@ class ResNest:
             if self.fc_activation:
                 x = Activation(self.fc_activation)(x)
 
-        model = models.Model(inputs=input_sig, outputs=x)
+        model = models.Model(inputs=input_sig, outputs=x, name='resnest')
 
         if self.verbose:
             print("Resnest builded with input {}, output{}".format(input_sig.shape, x.shape))
             print("-------------------------------------------")
             print("")
 
+        if self.return_skip:
+            return model, skip
         return model
 
 

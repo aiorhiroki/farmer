@@ -42,6 +42,7 @@ from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 from .functional import SepConv_BN
 from .dilated_xception import DilatedXception
 from .mobilenetv2 import MobileNetV2
+from .resnest import resnest
 
 WEIGHTS_PATH_X = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5"
 WEIGHTS_PATH_MOBILE = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5"
@@ -49,7 +50,7 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
@@ -91,14 +92,11 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     """
 
-    if not (backbone in {'xception', 'mobilenetv2'}):
+    if not (backbone in {'xception', 'resnest50', 'mobilenetv2'}):
         raise ValueError('The `backbone` argument should be either '
                          '`xception`  or `mobilenetv2` ')
 
-    if weights_info.get("weights") is None:
-        weights = 'pascal_voc'
-    else:
-        weights = weights_info["weights"]
+    weights = weights_info["weights"]
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -120,7 +118,7 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
             include_top=False
         )
 
-    else:
+    elif backbone == 'mobilenetv2':
         base_model = MobileNetV2(
             input_tensor=img_input,
             input_shape=input_shape,
@@ -128,6 +126,19 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
             OS=OS,
             include_top=False
         )
+
+    elif backbone.startswith('resnest'):
+        height, width = input_shape[0:2]
+        base_model = resnest(
+            model_name=backbone,
+            height=height,
+            width=width,
+            include_top=False
+        )
+
+    else:
+        raise ValueError('The `backbone` argument should be either '
+                         '`xception`, `mobilenetv2` or `resnest50`')
 
     x = base_model.output
     # end of feature extractor
@@ -153,7 +164,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     b0 = Activation('relu', name='aspp0_activation')(b0)
 
     # there are only 2 branches in mobilenetV2. not sure why
-    if backbone == 'xception':
+    if backbone == 'mobilenetv2':
+        x = Concatenate()([b4, b0])
+    else:
         # rate = 6 (12)
         b1 = SepConv_BN(x, 256, 'aspp1',
                         rate=atrous_rates[0], depth_activation=True, epsilon=1e-5)
@@ -163,11 +176,8 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         # rate = 18 (36)
         b3 = SepConv_BN(x, 256, 'aspp3',
                         rate=atrous_rates[2], depth_activation=True, epsilon=1e-5)
-
         # concatenate ASPP branches & project
         x = Concatenate()([b4, b0, b1, b2, b3])
-    else:
-        x = Concatenate()([b4, b0])
 
     x = Conv2D(256, (1, 1), padding='same',
                use_bias=False, name='concat_projection')(x)
@@ -244,4 +254,5 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     elif os.path.exists(weights):
         if weights_info.get("classes") is None:
             model.load_weights(weights)
+
     return model

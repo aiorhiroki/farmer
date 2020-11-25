@@ -129,11 +129,12 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
 
     elif backbone.startswith('resnest'):
         height, width = input_shape[0:2]
-        base_model = resnest(
+        base_model, skip1 = resnest(
             model_name=backbone,
             height=height,
             width=width,
-            include_top=False
+            include_top=False, 
+            return_skip=True,
         )
 
     else:
@@ -141,6 +142,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
                          '`xception`, `mobilenetv2` or `resnest50`')
 
     x = base_model.output
+    print(x, skip1)
     # end of feature extractor
 
     # branching for Atrous Spatial Pyramid Pooling
@@ -186,7 +188,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
     x = Dropout(0.1)(x)
 
     # DeepLab v.3+ decoder
-    if backbone == 'xception':
+    if backbone == 'xception' or backbone.startswith('resnest'):
         # Feature projection
         # x4 (x2) block
         size_before2 = tf.keras.backend.int_shape(x)

@@ -92,11 +92,14 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
 
     """
 
-    if not (backbone in {'xception', 'resnest50', 'mobilenetv2'}):
-        raise ValueError('The `backbone` argument should be either '
-                         '`xception`  or `mobilenetv2` ')
+    # if not (backbone in {'xception', 'resnest50', 'mobilenetv2'}):
+    #     raise ValueError('The `backbone` argument should be either '
+    #                      '`xception`  or `mobilenetv2` ')
 
-    weights = weights_info["weights"]
+    if weights_info is None:
+        weights = None
+    else:
+        weights = weights_info["weights"]
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -133,7 +136,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
             model_name=backbone,
             height=height,
             width=width,
-            include_top=False, 
+            include_top=False,
             return_skip=True,
         )
 
@@ -231,6 +234,9 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
         x = Activation(activation)(x)
 
     model = Model(inputs, x, name='deeplabv3plus')
+
+    if weights is None:
+        return model
 
     # load weights
     if weights == 'pascal_voc':

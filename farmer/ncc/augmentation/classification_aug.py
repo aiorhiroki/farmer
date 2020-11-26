@@ -6,7 +6,6 @@ import albumentations
 
 def classification_aug(
         input_image,
-        label,
         mean,
         std,
         augmentation_dict,
@@ -16,8 +15,8 @@ def classification_aug(
 
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
-        augmented = aug(image=input_image, mask=label)
-        if augmix:
+        augmented = aug(image=input_image)
+        if augmix is True:
             augmented['image'] = augment_and_mix(
                 augmented['image'],
                 transforms,
@@ -27,7 +26,7 @@ def classification_aug(
         return augmented['image']
 
     else:
-        return input_image, label
+        return input_image
 
 
 def get_aug(augmentation_dict):

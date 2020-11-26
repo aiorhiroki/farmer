@@ -23,7 +23,6 @@ class PredictClassificationTask:
             input_shape=(self.config.height, self.config.width),
             nb_classes=self.config.nb_classes,
             augmentation=[],
-            augmix=self.config.augmix,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )

@@ -77,7 +77,7 @@ def dual_augment_and_mix(image, mask, transforms, mean, std, width=3, depth=-1, 
     return image_mixed, mask_mixed
 
 
-def augment_and_mix(image, label, transforms, mean, std, severity=3, width=3, depth=-1, alpha=1., augall=False):
+def augment_and_mix(image, transforms, mean, std, severity=3, width=3, depth=-1, alpha=1., augall=False):
     """Perform AugMix augmentations and compute mixture.
 
     Args:
@@ -96,10 +96,9 @@ def augment_and_mix(image, label, transforms, mean, std, severity=3, width=3, de
     m = np.float32(np.random.beta(alpha, alpha))
 
     image_mix = np.zeros_like(image)
-    label_mix = np.zeros_like(label, dtype=np.float)
 
     for i in range(width):
-        image_aug, label_aug = image.copy(), label.copy()
+        image_aug = image.copy()
 
         depth = np.random.randint(1, depth + 1 if depth > 0 else 4)
         for _ in range(depth):

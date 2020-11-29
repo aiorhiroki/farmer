@@ -37,10 +37,9 @@ from tensorflow.python.keras.layers import GlobalAveragePooling2D
 from tensorflow.python.keras.utils.layer_utils import get_source_inputs
 from tensorflow.python.keras.utils.data_utils import get_file
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
 from .functional import SepConv_BN
-from .dilated_xception import DilatedXception
+from .aligned_xception import AlignedXception
 from .mobilenetv2 import MobileNetV2
 from .resnest import resnest
 
@@ -112,7 +111,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
         atrous_rates = (6, 12, 18)
 
     if backbone == 'xception':
-        base_model, skip1 = DilatedXception(
+        base_model, skip1 = AlignedXception(
             input_tensor=img_input,
             input_shape=input_shape,
             weights_info=weights_info,
@@ -136,16 +135,16 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
             model_name=backbone,
             height=height,
             width=width,
+            dilated=True,
             include_top=False,
             return_skip=True,
         )
 
     else:
         raise ValueError('The `backbone` argument should be either '
-                         '`xception`, `mobilenetv2` or `resnest50`')
+                         '`xception`, `mobilenetv2` or `resnest`')
 
     x = base_model.output
-    print(x, skip1)
     # end of feature extractor
 
     # branching for Atrous Spatial Pyramid Pooling
@@ -191,10 +190,11 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
     x = Dropout(0.1)(x)
 
     # DeepLab v.3+ decoder
-    if backbone == 'xception' or backbone.startswith('resnest'):
+    if backbone == 'xception':
         # Feature projection
         # x4 (x2) block
         size_before2 = tf.keras.backend.int_shape(x)
+        # (32, 32, 256) -> (128, 128, 256)
         x = Lambda(lambda xx: tf.compat.v1.image.resize(xx,
                                                         size_before2[1:3] *
                                                         tf.constant(OS // 4),
@@ -205,7 +205,21 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
         dec_skip1 = BatchNormalization(
             name='feature_projection0_BN', epsilon=1e-5)(dec_skip1)
         dec_skip1 = Activation('relu')(dec_skip1)
-        x = Concatenate()([x, dec_skip1])
+        x = Concatenate()([x, dec_skip1])  # [(128, 128, 2048), (128, 128, 256)]
+        x = SepConv_BN(x, 256, 'decoder_conv0',
+                       depth_activation=True, epsilon=1e-5)
+        x = SepConv_BN(x, 256, 'decoder_conv1',
+                       depth_activation=True, epsilon=1e-5)
+
+    elif backbone.startswith('resnest'):
+        # Feature projection
+        dec_skip1 = Conv2D(48, (1, 1), padding='same',
+                           use_bias=False, name='feature_projection0')(skip1)
+        dec_skip1 = BatchNormalization(
+            name='feature_projection0_BN', epsilon=1e-5)(dec_skip1)
+        dec_skip1 = Activation('relu')(dec_skip1)
+
+        x = Concatenate()([x, dec_skip1])  # [(128, 128, 2048), (128, 128, 256)]
         x = SepConv_BN(x, 256, 'decoder_conv0',
                        depth_activation=True, epsilon=1e-5)
         x = SepConv_BN(x, 256, 'decoder_conv1',

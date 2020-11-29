@@ -109,8 +109,8 @@ class ResNest:
     def __init__(self, verbose=False, input_shape=(224, 224, 3), active="relu", nb_classes=81,
                  dropout_rate=0.2, fc_activation=None, blocks_set=[3, 4, 6, 3], radix=2, groups=1,
                  bottleneck_width=64, deep_stem=True, stem_width=32, block_expansion=4, avg_down=True,
-                 avd=True, avd_first=False, preact=False, using_basic_block=False, using_cb=False,
-                 include_top=True, return_skip=False):
+                 avd=True, avd_first=False, dilated=False, preact=False, using_basic_block=False, using_cb=False,
+                 include_top=True, OS=None, return_skip=False):
         self.channel_axis = -1  # not for change
         self.verbose = verbose
         self.active = active  # default relu
@@ -132,11 +132,12 @@ class ResNest:
         self.avd_first = avd_first
 
         # self.cardinality = 1
-        self.dilation = 1
+        self.dilated = dilated
         self.preact = preact
         self.using_basic_block = using_basic_block
         self.using_cb = using_cb
         self.include_top = include_top
+        self.OS = None
         self.return_skip = return_skip
 
     def _make_stem(self, input_tensor, stem_width=64, deep_stem=False):
@@ -218,14 +219,14 @@ class ResNest:
         return out
 
     def _make_block(
-        self, input_tensor, first_block=True, filters=64, stride=2, radix=1, avd=False, avd_first=False, is_first=False
+        self, input_tensor, first_block=True, filters=64, stride=2, dilation=1, radix=1, avd=False, avd_first=False, is_first=False
     ):
         x = input_tensor
         inplanes = input_tensor.shape[-1]
         if stride != 1 or inplanes != filters * self.block_expansion:
             short_cut = input_tensor
             if self.avg_down:
-                if self.dilation == 1:
+                if dilation == 1:
                     short_cut = AveragePooling2D(pool_size=stride, strides=stride, padding="same", data_format="channels_last")(
                         short_cut
                     )
@@ -258,11 +259,11 @@ class ResNest:
             x = avd_layer(x)
 
         if radix >= 1:
-            x = self._SplAtConv2d(x, filters=group_width, kernel_size=3, stride=stride, dilation=self.dilation,
+            x = self._SplAtConv2d(x, filters=group_width, kernel_size=3, stride=stride, dilation=dilation,
                                   groups=self.cardinality, radix=radix)
         else:
             x = Conv2D(group_width, kernel_size=3, strides=stride, padding="same", kernel_initializer="he_normal",
-                       dilation_rate=self.dilation, use_bias=False, data_format="channels_last")(x)
+                       dilation_rate=dilation, use_bias=False, data_format="channels_last")(x)
             x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
             x = Activation(self.active)(x)
 
@@ -270,7 +271,7 @@ class ResNest:
             x = avd_layer(x)
 
         x = Conv2D(filters * self.block_expansion, kernel_size=1, strides=1, padding="same", kernel_initializer="he_normal",
-                   dilation_rate=self.dilation, use_bias=False, data_format="channels_last")(x)
+                   dilation_rate=dilation, use_bias=False, data_format="channels_last")(x)
         x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
 
         m2 = Add()([x, short_cut])
@@ -278,7 +279,7 @@ class ResNest:
         return m2
 
     def _make_block_basic(
-        self, input_tensor, first_block=True, filters=64, stride=2, radix=1, avd=False, avd_first=False, is_first=False
+        self, input_tensor, first_block=True, filters=64, stride=2, dilation=1, radix=1, avd=False, avd_first=False, is_first=False
     ):
         """Conv2d_BN_Relu->Bn_Relu_Conv2d
         """
@@ -290,7 +291,7 @@ class ResNest:
         inplanes = input_tensor.shape[-1]
         if stride != 1 or inplanes != filters * self.block_expansion:
             if self.avg_down:
-                if self.dilation == 1:
+                if dilation == 1:
                     short_cut = AveragePooling2D(pool_size=stride, strides=stride, padding="same", data_format="channels_last")(
                         short_cut
                     )
@@ -314,11 +315,11 @@ class ResNest:
             x = avd_layer(x)
 
         if radix >= 1:
-            x = self._SplAtConv2d(x, filters=group_width, kernel_size=3, stride=stride, dilation=self.dilation,
+            x = self._SplAtConv2d(x, filters=group_width, kernel_size=3, stride=stride, dilation=dilation,
                                   groups=self.cardinality, radix=radix)
         else:
             x = Conv2D(filters, kernel_size=3, strides=stride, padding="same", kernel_initializer="he_normal",
-                       dilation_rate=self.dilation, use_bias=False, data_format="channels_last")(x)
+                       dilation_rate=dilation, use_bias=False, data_format="channels_last")(x)
 
         if avd and not avd_first:
             x = avd_layer(x)
@@ -326,31 +327,33 @@ class ResNest:
         x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
         x = Activation(self.active)(x)
         x = Conv2D(filters, kernel_size=3, strides=1, padding="same", kernel_initializer="he_normal",
-                   dilation_rate=self.dilation, use_bias=False, data_format="channels_last")(x)
+                   dilation_rate=dilation, use_bias=False, data_format="channels_last")(x)
         m2 = Add()([x, short_cut])
         return m2
 
-    def _make_layer(self, input_tensor, blocks=4, filters=64, stride=2, is_first=True, return_skip=False):
+    def _make_layer(self, input_tensor, blocks=4, filters=64, stride=2, dilation=1, is_first=True, return_skip=False):
         x = input_tensor
         if self.using_basic_block is True:
-            x = self._make_block_basic(x, first_block=True, filters=filters, stride=stride, radix=self.radix,
-                                       avd=self.avd, avd_first=self.avd_first, is_first=is_first)
+            x = self._make_block_basic(
+                x, first_block=True, filters=filters, stride=stride, dilation=1 if dilation == 1 or dilation == 2 else 2,
+                radix=self.radix, savd=self.avd, avd_first=self.avd_first, is_first=is_first)
 
             for i in range(1, blocks):
                 x = self._make_block_basic(
-                    x, first_block=False, filters=filters, stride=1, radix=self.radix, avd=self.avd, avd_first=self.avd_first
-                )
+                    x, first_block=False, filters=filters, stride=1, dilation=dilation,
+                    radix=self.radix, avd=self.avd, avd_first=self.avd_first)
                 if i == 1:
                     skip = x
 
         elif self.using_basic_block is False:
-            x = self._make_block(x, first_block=True, filters=filters, stride=stride, radix=self.radix, avd=self.avd,
-                                 avd_first=self.avd_first, is_first=is_first)
+            x = self._make_block(
+                x, first_block=True, filters=filters, stride=stride, dilation=1 if dilation == 1 or dilation == 2 else 2,
+                radix=self.radix, avd=self.avd, avd_first=self.avd_first, is_first=is_first)
 
             for i in range(1, blocks):
                 x = self._make_block(
-                    x, first_block=False, filters=filters, stride=1, radix=self.radix, avd=self.avd, avd_first=self.avd_first
-                )
+                    x, first_block=False, filters=filters, stride=1, dilation=dilation,
+                    radix=self.radix, avd=self.avd, avd_first=self.avd_first)
                 if i == 1:
                     skip = x
 
@@ -395,20 +398,43 @@ class ResNest:
             x = Add()([second_x_tmp, x])
         x, skip = self._make_layer(x, blocks=self.blocks_set[0], filters=64, stride=1, is_first=False, return_skip=True)
         if self.verbose:
-            print("-" * 5, "layer 0 out", x.shape, "-" * 5)
+            print('----- layer 0 out {} -----'.format(x.shape))
 
         b1_b3_filters = [64, 128, 256, 512]
-        for i in range(3):
-            idx = i + 1
-            if self.using_cb:
-                second_x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
-                second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1])
+        if self.OS == 16:
+            for i in range(2):
+                idx = i + 1
+                x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
                 if self.verbose:
-                    print('layer {} db_com out {}'.format(idx, second_x_tmp.shape))
-                x = Add()([second_x_tmp, x])
-            x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
+                    print('----- layer {} out {} -----'.format(idx, x.shape))
+            # last 1 blocksをstride=1, AtrousConvに置き換える
+            idx += 1
+            x = self._make_layer(x, blocks=self.blocks_set[idx] - 1, filters=b1_b3_filters[idx], stride=1)
             if self.verbose:
                 print('----- layer {} out {} -----'.format(idx, x.shape))
+
+        else:
+            for i in range(3):
+                idx = i + 1
+                if self.using_cb:
+                    second_x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
+                    second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1])
+                    if self.verbose:
+                        print('layer {} db_com out {}'.format(idx, second_x_tmp.shape))
+                    x = Add()([second_x_tmp, x])
+                if self.dilated:
+                    # for semantic segmentation
+                    if idx == 2:
+                        # layer 3
+                        x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=2)
+                    elif idx == 3:
+                        # layer 4
+                        x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=4)
+                else:
+                    # for classification
+                    x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
+                if self.verbose:
+                    print('----- layer {} out {} -----'.format(idx, x.shape))
 
         if self.include_top:
             x = GlobalAveragePooling2D(name='avg_pool')(x)

@@ -101,7 +101,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
         weights = weights_info["weights"]
 
     if input_tensor is None:
-        img_input = Input(shape=input_shape)
+        img_input = Input(shape=input_shape, name="image_input")
     else:
         img_input = input_tensor
 
@@ -139,6 +139,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
             include_top=False,
             return_skip=True,
         )
+        img_input = base_model.inputs[0]
 
     else:
         raise ValueError('The `backbone` argument should be either '

@@ -44,6 +44,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.activations import relu
 from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
+from tensorflow.keras.applications import efficientnet
 from .functional import SepConv_BN
 from .dilated_xception import DilatedXception
 from .mobilenetv2 import MobileNetV2
@@ -54,7 +55,7 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
@@ -96,15 +97,17 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     """
 
-    if not (backbone in {'xception', 'mobilenetv2'}):
+    if not (backbone in {'xception', 'mobilenetv2',
+                         'efficientnetb0', 'efficientnetb1', 'efficientnetb2', 'efficientnetb3',
+                         'efficientnetb4', 'efficientnetb5', 'efficientnetb6', 'efficientnetb7'}):
         raise ValueError('The `backbone` argument should be either '
-                         '`xception`  or `mobilenetv2` ')
-    
-    if weights_info.get("weights") is None:
-        weights = 'pascal_voc'
+                         '`xception`  or `mobilenetv2` or `efficientnetb#`')
+
+    if weights_info is None:
+        weights = None
     else:
         weights = weights_info["weights"]
-    
+
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
@@ -117,23 +120,32 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     if backbone == 'xception':
         base_model, skip1 = DilatedXception(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
-            return_skip=True, 
-            include_top=False
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
+            return_skip=True,
+            include_top=False,
+        )
+
+    elif backbone.startswith('efficientnet'):
+        model_name = backbone.replace('efficientnetb', 'EfficientNetB')
+        base_model = getattr(efficientnet, model_name)(
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights='imagenet',
+            include_top=False,
         )
 
     else:
         base_model = MobileNetV2(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
-            include_top=False
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
+            include_top=False,
         )
-    
+
     x = base_model.output
 
     # end of feature extractor
@@ -160,7 +172,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     b0 = Activation('relu', name='aspp0_activation')(b0)
 
     # there are only 2 branches in mobilenetV2. not sure why
-    if backbone == 'xception':
+    if backbone == 'mobilenetv2':
+        x = Concatenate()([b4, b0])
+    else:
         # rate = 6 (12)
         b1 = SepConv_BN(x, 256, 'aspp1',
                         rate=atrous_rates[0], depth_activation=True, epsilon=1e-5)
@@ -173,8 +187,6 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
         # concatenate ASPP branches & project
         x = Concatenate()([b4, b0, b1, b2, b3])
-    else:
-        x = Concatenate()([b4, b0])
 
     x = Conv2D(256, (1, 1), padding='same',
                use_bias=False, name='concat_projection')(x)
@@ -226,6 +238,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         x = Activation(activation)(x)
 
     model = Model(inputs, x, name='deeplabv3plus')
+
+    if weights is None:
+        return model
 
     # load weights
     if weights == 'pascal_voc':

@@ -401,40 +401,27 @@ class ResNest:
             print('----- layer 0 out {} -----'.format(x.shape))
 
         b1_b3_filters = [64, 128, 256, 512]
-        if self.OS == 16:
-            for i in range(2):
-                idx = i + 1
-                x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
+        for i in range(3):
+            idx = i + 1
+            if self.using_cb:
+                second_x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
+                second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1])
                 if self.verbose:
-                    print('----- layer {} out {} -----'.format(idx, x.shape))
-            # last 1 blocksをstride=1, AtrousConvに置き換える
-            idx += 1
-            x = self._make_layer(x, blocks=self.blocks_set[idx] - 1, filters=b1_b3_filters[idx], stride=1)
+                    print('layer {} db_com out {}'.format(idx, second_x_tmp.shape))
+                x = Add()([second_x_tmp, x])
+            if self.dilated:
+                # for semantic segmentation
+                if idx == 2:
+                    # layer 3
+                    x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=2)
+                elif idx == 3:
+                    # layer 4
+                    x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=4)
+            else:
+                # for classification
+                x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
             if self.verbose:
                 print('----- layer {} out {} -----'.format(idx, x.shape))
-
-        else:
-            for i in range(3):
-                idx = i + 1
-                if self.using_cb:
-                    second_x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
-                    second_x_tmp = self._make_Composite_layer(second_x, filters=x.shape[-1])
-                    if self.verbose:
-                        print('layer {} db_com out {}'.format(idx, second_x_tmp.shape))
-                    x = Add()([second_x_tmp, x])
-                if self.dilated:
-                    # for semantic segmentation
-                    if idx == 2:
-                        # layer 3
-                        x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=2)
-                    elif idx == 3:
-                        # layer 4
-                        x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=1, dilation=4)
-                else:
-                    # for classification
-                    x = self._make_layer(x, blocks=self.blocks_set[idx], filters=b1_b3_filters[idx], stride=2)
-                if self.verbose:
-                    print('----- layer {} out {} -----'.format(idx, x.shape))
 
         if self.include_top:
             x = GlobalAveragePooling2D(name='avg_pool')(x)

@@ -91,9 +91,9 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
 
     """
 
-    # if not (backbone in {'xception', 'resnest50', 'mobilenetv2'}):
-    #     raise ValueError('The `backbone` argument should be either '
-    #                      '`xception`  or `mobilenetv2` ')
+    if not (backbone in {'xception', 'mobilenetv2', 'resnest50', 'resnest101', 'resnest200'}):
+        raise ValueError('The `backbone` argument should be either '
+                         '`xception` , `mobilenetv2` , `resnest50` , `resnest101` or `resnest200`')
 
     if weights_info is None:
         weights = None

@@ -106,7 +106,7 @@ def augment_and_mix(image, transforms, mean, std, severity=3, width=3, depth=-1,
                 augmentations_all if augall else augmentations)
             image_aug = apply_op(image_aug, op, severity)
         # Preprocessing commutes since all coefficients are convex
-        mix += ws[i] * normalize(image_aug, mean, std)
+        image_mix += ws[i] * normalize(image_aug, mean, std)
 
-    mixed = (1 - m) * normalize(image, mean, std) + m * mix
+    mixed = (1 - m) * normalize(image, mean, std) + m * image_mix
     return mixed

@@ -52,7 +52,7 @@ def flooding(loss, b=0.02):
     arXiv: https://arxiv.org/pdf/2002.08709.pdf
     b is flooding level {0.00, 0.01, 0.02, ..., 0.20}
     """
-    return (loss - b).abs() + b
+    return tf.math.abs(loss - b) + b
 
 
 def _tp_fp_fn(gt, pr):

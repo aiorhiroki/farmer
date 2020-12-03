@@ -47,6 +47,14 @@ def log_cosh_focal_tversky_loss(gt, pr, alpha=0.3, beta=0.7, gamma=1.3, class_we
     return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)
 
 
+def flooding(loss, b=0.02):
+    """Flooding
+    arXiv: https://arxiv.org/pdf/2002.08709.pdf
+    b is flooding level {0.00, 0.01, 0.02, ..., 0.20}
+    """
+    return (loss - b).abs() + b
+
+
 def _tp_fp_fn(gt, pr):
     pr = tf.clip_by_value(pr, SMOOTH, 1 - SMOOTH)
     reduce_axes = [0, 1, 2]

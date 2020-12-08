@@ -248,21 +248,29 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
             weights_path = get_file('deeplabv3_xception_tf_dim_ordering_tf_kernels.h5',
                                     WEIGHTS_PATH_X,
                                     cache_subdir='models')
-        else:
+        elif backbone == 'mobilenetv2':
             weights_path = get_file('deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5',
                                     WEIGHTS_PATH_MOBILE,
                                     cache_subdir='models')
+        else:
+            return model
         model.load_weights(weights_path, by_name=True)
+        print("loaded weights of pascal voc")
+
     elif weights == 'cityscapes':
         if backbone == 'xception':
             weights_path = get_file('deeplabv3_xception_tf_dim_ordering_tf_kernels_cityscapes.h5',
                                     WEIGHTS_PATH_X_CS,
                                     cache_subdir='models')
-        else:
+        elif backbone == 'mobilenetv2':
             weights_path = get_file('deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5',
                                     WEIGHTS_PATH_MOBILE_CS,
                                     cache_subdir='models')
+        else:
+            return model
         model.load_weights(weights_path, by_name=True)
+        print("loaded weights of cityscapes")
+    
     elif os.path.exists(weights):
         if weights_info.get("classes") is None:
             model.load_weights(weights)

@@ -1,3 +1,9 @@
+"""HRNetV2
+arXiv: https://arxiv.org/pdf/1904.04514.pdf
+from this repository:
+https://github.com/niecongchong/HRNet-keras-semantic-segmentation
+"""
+
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation
 from tensorflow.keras.layers import UpSampling2D, add, concatenate

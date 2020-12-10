@@ -126,6 +126,11 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
+            elif model_name == "hrnet_v2":
+                model = models.HRNetV2(
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
         else:
             raise NotImplementedError
 

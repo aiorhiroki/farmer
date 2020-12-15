@@ -8,6 +8,7 @@ from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
 from farmer.domain.model import Trainer, TrainParams
 from farmer.domain.workflows.train_workflow import TrainWorkflow
+from collections import OrderedDict
 
 import optuna
 import numpy as np

@@ -37,7 +37,6 @@ class Trainer(Config, ImageLoader):
     optuna_params: TrainParams = None
     trial_number: int = None
     trial_params: dict = None
-    trial_result_path: str = None
     pruner: str = "MedianPruner"
     pruner_params: dict = None
 
@@ -84,7 +83,6 @@ class Trainer(Config, ImageLoader):
         self.get_mean_std()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):

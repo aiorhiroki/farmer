@@ -4,7 +4,7 @@ import os
 import json
 import numpy as np
 import cv2
-import random
+import yaml
 from tqdm import trange
 
 
@@ -12,13 +12,18 @@ class EdaTask:
     def __init__(self, config):
         self.config = config
 
-    def command(self, annotation_set):
+    def command(self, annotation_set, trial):
         self._do_compute_mean_std(annotation_set)
-        self._do_save_params_task()
+        self._do_save_params_task(trial)
         self._do_post_config_task()
 
-    def _do_save_params_task(self):
+    def _do_save_params_task(self, trial):
         shutil.copy(self.config.config_path, self.config.info_path)
+        # save training parameters
+        if self.config.optuna:
+            param_path = f"{self.config.result_path}/trial{trial.number}"
+            with open(f"{param_path}/params.yaml", mode="w") as configfile:
+                yaml.dump(self.config.train_params, configfile)
         with open(f"{self.config.info_path}/classes.csv", "w") as fw:
             if self.config.train_colors:
                 fw.write("class_name,class_id,color_id\n")

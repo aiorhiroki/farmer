@@ -87,15 +87,15 @@ class SetTrainEnvTask:
             self.config.trial_number = trial.number
             self.config.trial_params = trial.params
             # result_dir/trial#/learning/
-            self.config.trial_result_path = f'{self.config.result_path}/trial{trial.number}'
+            trial_result_dir = f'{self.config.result_path}/trial{trial.number}'
             self.config.learning_path = os.path.join(
-                self.config.trial_result_path, self.config.learning_dir)
+                trial_result_dir, self.config.learning_dir)
             self.config.model_path = os.path.join(
-                self.config.trial_result_path, self.config.model_dir)
+                trial_result_dir, self.config.model_dir)
             self.config.image_path = os.path.join(
-                self.config.trial_result_path, self.config.image_dir)
+                trial_result_dir, self.config.image_dir)
             self.config.tfboard_path = os.path.join(
-                self.config.trial_result_path, self.config.tfboard_dir)
+                trial_result_dir, self.config.tfboard_dir)
 
             # set train params to params setted by optuna
             train_params_dict = copy.deepcopy(self.config.optuna_params)
@@ -105,7 +105,6 @@ class SetTrainEnvTask:
             train_params_dict = self.config.train_params
 
         self.config.train_params = TrainParams(**train_params_dict)
-
 
     def _do_create_dirs_task(self):
         # 結果を保存するディレクトリを目的別に作ります。
@@ -134,9 +133,3 @@ class SetTrainEnvTask:
             if os.path.exists(dir_path):
                 shutil.rmtree(dir_path)
             os.makedirs(dir_path)
-
-        # save training parameters
-        if self.config.optuna:
-            param_path = os.path.join(self.config.trial_result_path, "train_params.yaml")
-            with open(param_path, mode="w") as configfile:
-                yaml.dump(self.config.train_params, configfile)

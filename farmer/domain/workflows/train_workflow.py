@@ -19,7 +19,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
     def command(self, trial=None):
         self.set_env_flow(trial)
         annotation_set = self.read_annotation_flow()
-        self.eda_flow(annotation_set)
+        self.eda_flow(annotation_set, trial)
         model = self.build_model_flow()
         result = self.model_execution_flow(annotation_set, model, trial)
         return self.output_flow(result)

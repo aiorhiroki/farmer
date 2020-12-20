@@ -57,8 +57,8 @@ class BuildModelTask:
                     height=height,
                     width=width
                 )
-            elif model_name == "dilated_xception" and xception_shape_condition:
-                model = models.dilated_xception(
+            elif model_name == "aligned_xception" and xception_shape_condition:
+                model = models.aligned_xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
@@ -231,7 +231,7 @@ class BuildModelTask:
                         class_indexes=list(range(1, self.config.nb_classes))),
                     segmentation_models.metrics.FScore(
                         class_indexes=list(range(1, self.config.nb_classes)))
-                    ],
+                ],
 
             model.compile(optimizer, loss, metrics)
         return model

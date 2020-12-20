@@ -26,27 +26,22 @@ import os
 import tensorflow as tf
 
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras import layers
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.layers import Activation
 from tensorflow.python.keras.layers import Concatenate
-from tensorflow.python.keras.layers import Add
 from tensorflow.python.keras.layers import Dropout
 from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Conv2D
-from tensorflow.python.keras.layers import DepthwiseConv2D
-from tensorflow.python.keras.layers import ZeroPadding2D
 from tensorflow.python.keras.layers import GlobalAveragePooling2D
 from tensorflow.python.keras.utils.layer_utils import get_source_inputs
 from tensorflow.python.keras.utils.data_utils import get_file
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.activations import relu
-from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
 from .functional import SepConv_BN
-from .dilated_xception import DilatedXception
+from .aligned_xception import AlignedXception
 from .mobilenetv2 import MobileNetV2
+from .resnest import resnest
 
 WEIGHTS_PATH_X = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5"
 WEIGHTS_PATH_MOBILE = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.1/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels.h5"
@@ -54,7 +49,7 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
@@ -96,17 +91,17 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     """
 
-    if not (backbone in {'xception', 'mobilenetv2'}):
+    if not (backbone in {'xception', 'mobilenetv2', 'resnest50', 'resnest101', 'resnest200'}):
         raise ValueError('The `backbone` argument should be either '
-                         '`xception`  or `mobilenetv2` ')
-    
-    if weights_info.get("weights") is None:
-        weights = 'pascal_voc'
+                         '`xception` , `mobilenetv2` , `resnest50` , `resnest101` or `resnest200`')
+
+    if weights_info is None:
+        weights = None
     else:
         weights = weights_info["weights"]
-    
+
     if input_tensor is None:
-        img_input = Input(shape=input_shape)
+        img_input = Input(shape=input_shape, name="image_input")
     else:
         img_input = input_tensor
 
@@ -116,30 +111,44 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         atrous_rates = (6, 12, 18)
 
     if backbone == 'xception':
-        base_model, skip1 = DilatedXception(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
-            return_skip=True, 
+        base_model, skip1 = AlignedXception(
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
+            return_skip=True,
             include_top=False
         )
+
+    elif backbone == 'mobilenetv2':
+        base_model = MobileNetV2(
+            input_tensor=img_input,
+            input_shape=input_shape,
+            weights_info=weights_info,
+            OS=OS,
+            include_top=False
+        )
+
+    elif backbone.startswith('resnest'):
+        height, width = input_shape[0:2]
+        base_model, skip1 = resnest(
+            model_name=backbone,
+            height=height,
+            width=width,
+            dilated=True,
+            include_top=False,
+            return_skip=True,
+        )
+        img_input = base_model.inputs[0]
 
     else:
-        base_model = MobileNetV2(
-            input_tensor=img_input, 
-            input_shape=input_shape, 
-            weights_info=weights_info, 
-            OS=OS, 
-            include_top=False
-        )
-    
-    x = base_model.output
+        raise ValueError('The `backbone` argument should be either '
+                         '`xception`, `mobilenetv2` or `resnest`')
 
+    x = base_model.output
     # end of feature extractor
 
     # branching for Atrous Spatial Pyramid Pooling
-
     # Image Feature branch
     shape_before = tf.shape(x)
     b4 = GlobalAveragePooling2D()(x)
@@ -160,7 +169,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     b0 = Activation('relu', name='aspp0_activation')(b0)
 
     # there are only 2 branches in mobilenetV2. not sure why
-    if backbone == 'xception':
+    if backbone == 'mobilenetv2':
+        x = Concatenate()([b4, b0])
+    else:
         # rate = 6 (12)
         b1 = SepConv_BN(x, 256, 'aspp1',
                         rate=atrous_rates[0], depth_activation=True, epsilon=1e-5)
@@ -170,23 +181,21 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         # rate = 18 (36)
         b3 = SepConv_BN(x, 256, 'aspp3',
                         rate=atrous_rates[2], depth_activation=True, epsilon=1e-5)
-
         # concatenate ASPP branches & project
         x = Concatenate()([b4, b0, b1, b2, b3])
-    else:
-        x = Concatenate()([b4, b0])
 
     x = Conv2D(256, (1, 1), padding='same',
                use_bias=False, name='concat_projection')(x)
     x = BatchNormalization(name='concat_projection_BN', epsilon=1e-5)(x)
     x = Activation('relu')(x)
     x = Dropout(0.1)(x)
-    # DeepLab v.3+ decoder
 
+    # DeepLab v.3+ decoder
     if backbone == 'xception':
         # Feature projection
         # x4 (x2) block
         size_before2 = tf.keras.backend.int_shape(x)
+        # (32, 32, 256) -> (128, 128, 256)
         x = Lambda(lambda xx: tf.compat.v1.image.resize(xx,
                                                         size_before2[1:3] *
                                                         tf.constant(OS // 4),
@@ -197,7 +206,21 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         dec_skip1 = BatchNormalization(
             name='feature_projection0_BN', epsilon=1e-5)(dec_skip1)
         dec_skip1 = Activation('relu')(dec_skip1)
-        x = Concatenate()([x, dec_skip1])
+        x = Concatenate()([x, dec_skip1])  # [(128, 128, 2048), (128, 128, 256)]
+        x = SepConv_BN(x, 256, 'decoder_conv0',
+                       depth_activation=True, epsilon=1e-5)
+        x = SepConv_BN(x, 256, 'decoder_conv1',
+                       depth_activation=True, epsilon=1e-5)
+
+    elif backbone.startswith('resnest'):
+        # Feature projection
+        dec_skip1 = Conv2D(48, (1, 1), padding='same',
+                           use_bias=False, name='feature_projection0')(skip1)
+        dec_skip1 = BatchNormalization(
+            name='feature_projection0_BN', epsilon=1e-5)(dec_skip1)
+        dec_skip1 = Activation('relu')(dec_skip1)
+
+        x = Concatenate()([x, dec_skip1])  # [(128, 128, 2048), (128, 128, 256)]
         x = SepConv_BN(x, 256, 'decoder_conv0',
                        depth_activation=True, epsilon=1e-5)
         x = SepConv_BN(x, 256, 'decoder_conv1',
@@ -227,6 +250,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
 
     model = Model(inputs, x, name='deeplabv3plus')
 
+    if weights is None:
+        return model
+
     # load weights
     if weights == 'pascal_voc':
         if backbone == 'xception':
@@ -251,14 +277,5 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     elif os.path.exists(weights):
         if weights_info.get("classes") is None:
             model.load_weights(weights)
+
     return model
-
-
-def preprocess_input(x):
-    """Preprocesses a numpy array encoding a batch of images.
-    # Arguments
-        x: a 4D numpy array consists of RGB values within [0, 255].
-    # Returns
-        Input array scaled to [-1.,1.]
-    """
-    return preprocess_input(x, mode='tf')

@@ -4,7 +4,6 @@ import os
 import json
 import numpy as np
 import cv2
-import random
 from tqdm import trange
 
 

@@ -1,5 +1,4 @@
 import dataclasses
-import copy
 import os
 from datetime import datetime
 from .config_model import Config

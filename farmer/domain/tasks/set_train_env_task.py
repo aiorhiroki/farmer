@@ -1,11 +1,9 @@
 import os
 import shutil
 import random as rn
-import dataclasses
 import multiprocessing as mp
 import numpy as np
 import copy
-import yaml
 
 import tensorflow as tf
 from farmer.domain.model import TrainParams

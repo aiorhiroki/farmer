@@ -47,13 +47,13 @@ class Trainer(Config, ImageLoader):
         self.multi_gpu = self.nb_gpu > 1
         if self.multi_gpu:
             self.generator = False
-            if type(self.train_params.batch_size) == list:
-                self.train_params.batch_size = [
+            if type(self.train_params["batch_size"]) == list:
+                self.train_params["batch_size"] = [
                     b_size * self.nb_gpu for b_size
-                    in self.train_params.batch_size
+                    in self.train_params["batch_size"]
                 ]
             else:
-                self.train_params.batch_size *= self.nb_gpu
+                self.train_params["batch_size"] *= self.nb_gpu
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M%S")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
@@ -81,7 +81,7 @@ class Trainer(Config, ImageLoader):
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
         self.class_names = self.get_class_names()
         self.get_mean_std()
-        self.mean_std = True if self.train_params.augmix else self.mean_std
+        self.mean_std = True if self.train_params["augmix"] else self.mean_std
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
 

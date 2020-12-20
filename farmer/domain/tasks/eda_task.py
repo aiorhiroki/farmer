@@ -66,6 +66,9 @@ class EdaTask:
         """train set全体の平均と標準偏差をchannelごとに計算
         """
         train_set, _, _ = annotation_set
+        if self.train_params.augmix:
+            self.mean_std = True
+
         if self.config.input_data_type == 'image' and self.config.mean_std:
             if len(train_set) == 0:
                 return

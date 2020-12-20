@@ -12,7 +12,7 @@ class OutputResultTask:
         self.config.result = result
         param_path = self.config.info_path
         if self.config.optuna:
-            param_path = self.config.trial_result_path
+            param_path = f"{self.config.result_path}/trial{trial.number}"
 
         with open(f"{param_path}/parameter.yaml", mode="w") as configfile:
             yaml.dump(self.config, configfile)

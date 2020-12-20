@@ -1,8 +1,10 @@
 import os
 import numpy as np
-from tensorflow.python import keras
-from optuna.integration import KerasPruningCallback
+from tensorflow import keras
+import tensorflow as tf
 from farmer import ncc
+from farmer.ncc import schedulers
+from optuna.integration import TFKerasPruningCallback
 
 
 class TrainTask:
@@ -10,18 +12,18 @@ class TrainTask:
         self.config = config
 
     def command(
-            self, model, base_model, training_set, validation_set, trial):
+            self, model, training_set, validation_set, trial):
 
         train_dataset, valid_dataset = self._do_generate_batch_task(
             training_set, validation_set
         )
         callbacks = self._do_set_callbacks_task(
-            base_model, train_dataset, valid_dataset, trial
+            model, train_dataset, valid_dataset, trial
         )
         trained_model = self._do_model_optimization_task(
             model, train_dataset, valid_dataset, callbacks
         )
-        save_model = self._do_save_model_task(trained_model, base_model)
+        save_model = self._do_save_model_task(trained_model)
 
         return save_model
 
@@ -32,13 +34,13 @@ class TrainTask:
             nb_classes=self.config.nb_classes,
             mean=self.config.mean,
             std=self.config.std,
-            augmentation=self.config.augmentation,
+            augmentation=self.config.train_params.augmentation,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
 
         if self.config.task == ncc.tasks.Task.CLASSIFICATION:
-            train_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+            train_set = ncc.generators.ClassificationDataset(**sequence_args)
 
             sequence_args.update(
                 annotations=validation_set,
@@ -46,10 +48,10 @@ class TrainTask:
                 std=np.ones(3),
                 augmentation=[]
             )
-            validation_dataset = ncc.generators.ClassificationDataset(**sequence_args)
+            valid_set = ncc.generators.ClassificationDataset(**sequence_args)
 
         elif self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
-            train_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+            train_set = ncc.generators.SegmentationDataset(**sequence_args)
 
             sequence_args.update(
                 annotations=validation_set,
@@ -57,9 +59,9 @@ class TrainTask:
                 std=np.ones(3),
                 augmentation=[]
             )
-            validation_dataset = ncc.generators.SegmentationDataset(**sequence_args)
+            valid_set = ncc.generators.SegmentationDataset(**sequence_args)
 
-        return train_dataset, validation_dataset
+        return train_set, valid_set
 
     def _do_set_callbacks_task(
             self, base_model, train_dataset, valid_dataset, trial):
@@ -67,27 +69,19 @@ class TrainTask:
         # Save Model Checkpoint
         # result_dir/model/
         model_save_file = os.path.join(self.config.model_path, "best_model.h5")
-
-        if self.config.multi_gpu:
-            checkpoint = ncc.callbacks.MultiGPUCheckpointCallback(
-                filepath=model_save_file,
-                base_model=base_model,
-                save_best_only=True,
-            )
-        else:
-            checkpoint = keras.callbacks.ModelCheckpoint(
-                filepath=model_save_file, save_best_only=True
-            )
+        checkpoint = keras.callbacks.ModelCheckpoint(
+            filepath=model_save_file, save_best_only=True
+        )
 
         # Learning Rate Schedule
-        if self.config.cosine_decay:
-            ncc_scheduler = ncc.schedulers.Scheduler(
-                self.config.cosine_lr_max,
-                self.config.cosine_lr_min,
-                self.config.epochs
-            )
+        if self.config.train_params.scheduler:
+            funcs = self.config.train_params.scheduler["functions"]
+            scheduler_name = next(iter(funcs.keys()))
+            scheduler_params = next(iter(funcs.values()))
+            scheduler_params["n_epoch"] = self.config.epochs
+            scheduler_params["base_lr"] = self.config.train_params.learning_rate
             scheduler = keras.callbacks.LearningRateScheduler(
-                ncc_scheduler.cosine_decay)
+                getattr(schedulers, scheduler_name)(**scheduler_params))
         else:
             scheduler = keras.callbacks.ReduceLROnPlateau(
                 factor=0.5, patience=10, verbose=1)
@@ -101,7 +95,9 @@ class TrainTask:
             ['loss', 'acc', 'iou_score', 'f1-score']
         )
 
-        callbacks = [checkpoint, scheduler, plot_history]
+        plot_learning_rate = ncc.callbacks.PlotLearningRate(learning_path)
+
+        callbacks = [checkpoint, scheduler, plot_history, plot_learning_rate]
 
         if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
             # Plot IoU History
@@ -109,6 +105,7 @@ class TrainTask:
                 save_dir=learning_path,
                 valid_dataset=valid_dataset,
                 class_names=self.config.class_names,
+                batch_size=self.config.train_params.batch_size
             )
 
             # Predict validation
@@ -119,18 +116,21 @@ class TrainTask:
                 val_save_dir=val_save_dir,
                 valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
+                batch_size=self.config.train_params.batch_size,
                 segmentation_val_step=self.config.segmentation_val_step
             )
             callbacks.extend([iou_history, generate_sample_result])
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'val_f1-score'))
+                callbacks.append(
+                    TFKerasPruningCallback(trial, 'val_f1-score'))
 
         elif self.config.task == ncc.tasks.Task.CLASSIFICATION:
             if self.config.input_data_type == "video":
                 # result_dir/model/
-                batch_model_path = os.path.join(self.config.model_path, "batch_model.h5")
+                batch_model_path = os.path.join(
+                    self.config.model_path, "batch_model.h5")
 
                 batch_checkpoint = ncc.callbacks.BatchCheckpoint(
                     learning_path,
@@ -143,7 +143,8 @@ class TrainTask:
 
             if self.config.optuna:
                 # Trial prune for Optuna
-                callbacks.append(KerasPruningCallback(trial, 'val_acc'))
+                callbacks.append(
+                    TFKerasPruningCallback(trial, 'val_acc'))
 
         if self.config.slack_channel and self.config.slack_token:
             if self.config.task == ncc.tasks.Task.SEMANTIC_SEGMENTATION:
@@ -155,18 +156,49 @@ class TrainTask:
                 logger_file=file_name,
                 token=self.config.slack_token,
                 channel=self.config.slack_channel,
-                title=self.config.model_name,
+                title=self.config.train_params.model_name,
             )
             callbacks.append(slack_logging)
+
+        # Early Stoppoing
+        if self.config.early_stopping:
+            early_stopping = keras.callbacks.EarlyStopping(
+                monitor=self.config.monitor,
+                patience=self.config.patience,
+                mode='auto'
+            )
+            callbacks.append(early_stopping)
+
         return callbacks
 
     def _do_model_optimization_task(
-        self, model, train_dataset, validation_dataset, callbacks
+        self, model, train_dataset, val_dataset, callbacks
     ):
-        train_gen = ncc.generators.Dataloder(
-            train_dataset, batch_size=self.config.train_params['batch_size'], shuffle=True)
-        valid_gen = ncc.generators.Dataloder(
-            validation_dataset, batch_size=self.config.train_params['batch_size'], shuffle=False)
+        if self.config.generator:
+            train_gen = ncc.generators.Dataloder(
+                train_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=True
+            )
+            valid_gen = ncc.generators.Dataloder(
+                val_dataset,
+                batch_size=self.config.train_params.batch_size,
+                shuffle=False
+            )
+        else:
+            val_data = [d for d in val_dataset]
+            train_data = [d for d in train_dataset]
+            val = [np.stack(samples, axis=0) for samples in zip(*val_data)]
+            train = [np.stack(samples, axis=0) for samples in zip(*train_data)]
+            valid_ds = tf.data.Dataset.from_tensor_slices((val[0], val[1]))
+            train_ds = tf.data.Dataset.from_tensor_slices((train[0], train[1]))
+
+            train_gen = train_ds.shuffle(len(train_dataset)).batch(
+                    self.config.train_params.batch_size
+            )
+            valid_gen = valid_ds.batch(self.config.train_params.batch_size)
+
+        class_weights = self.config.train_params.classification_class_weight
 
         try:
             model.fit(
@@ -179,6 +211,7 @@ class TrainTask:
                 workers=16 if self.config.multi_gpu else 1,
                 max_queue_size=32 if self.config.multi_gpu else 10,
                 use_multiprocessing=self.config.multi_gpu,
+                class_weight=class_weights,
             )
         except KeyboardInterrupt:
             import sys
@@ -189,14 +222,8 @@ class TrainTask:
 
         return model
 
-    def _do_save_model_task(self, model, base_model):
+    def _do_save_model_task(self, model):
         # result_dir/model/
         model_path = os.path.join(self.config.model_path, "last_model.h5")
-
-        # Last model save
-        if self.config.multi_gpu:
-            base_model.save(model_path)
-            return base_model
-        else:
-            model.save(model_path)
-            return model
+        model.save(model_path)
+        return model

@@ -6,7 +6,7 @@ import warnings
 from ..utils import PostClient, MatPlotManager
 from ..metrics import iou_dice_val, generate_segmentation_result
 
-from tensorflow.python import keras
+from tensorflow import keras
 
 
 class BatchCheckpoint(keras.callbacks.Callback):
@@ -82,12 +82,14 @@ class GenerateSampleResult(keras.callbacks.Callback):
         val_save_dir,
         valid_dataset,
         nb_classes,
+        batch_size,
         segmentation_val_step=3
     ):
         self.val_save_dir = val_save_dir
         self.valid_dataset = valid_dataset
         self.nb_classes = nb_classes
         self.segmentation_val_step = segmentation_val_step
+        self.batch_size = batch_size
 
     def on_epoch_end(self, epoch, logs={}):
         # display sample predict
@@ -101,6 +103,7 @@ class GenerateSampleResult(keras.callbacks.Callback):
             dataset=self.valid_dataset,
             model=self.model,
             save_dir=save_dir,
+            batch_size=self.batch_size
         )
 
 
@@ -173,10 +176,12 @@ class IouHistory(keras.callbacks.Callback):
         save_dir,
         valid_dataset,
         class_names,
+        batch_size
     ):
         self.save_dir = save_dir
         self.valid_dataset = valid_dataset
         self.class_names = class_names
+        self.batch_size = batch_size
 
     def on_train_begin(self, logs={}):
         self.plot_manager = MatPlotManager(self.save_dir)
@@ -200,6 +205,7 @@ class IouHistory(keras.callbacks.Callback):
             nb_classes,
             self.valid_dataset,
             self.model,
+            self.batch_size
         )
         iou_figure.add(
             iou_dice['iou'],
@@ -238,6 +244,26 @@ class PostHistory(keras.callbacks.Callback):
 
     def on_train_end(self, logs={}):
         self._client.close_session()
+
+class PlotLearningRate(keras.callbacks.Callback):
+    def __init__(self, save_dir):
+        self.save_dir = save_dir
+
+    def on_train_begin(self, logs={}):
+        self.plot_manager = MatPlotManager(self.save_dir)
+        self.plot_manager.add_figure(
+            title="learning_rate",
+            xy_labels=("epoch", "learning_rate"),
+            labels=['learning_rate'],
+        )
+
+    def on_epoch_end(self, epoch, logs={}):
+        # update figure
+        figure = self.plot_manager.get_figure("learning_rate")
+        figure.add(
+            [logs.get('lr')],
+            is_update=True
+        )
 
 
 class Callback(object):

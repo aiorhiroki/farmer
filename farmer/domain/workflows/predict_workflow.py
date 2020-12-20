@@ -39,11 +39,11 @@ class PredictWorkflow(AbstractImageAnalyzer):
         self, annotation_set, model, base_model, validation_set
     ):
         if self._config.task == Task.CLASSIFICATION:
-            prediction = PredictClassificationTask(self._config).command(
+            eval_report = PredictClassificationTask(self._config).command(
                 annotation_set, model
             )
         elif self._config.task == Task.SEMANTIC_SEGMENTATION:
-            prediction = PredictSegmentationTask(self._cofing).command(
+            eval_report = PredictSegmentationTask(self._cofing).command(
                 annotation_set, model
             )
         return prediction

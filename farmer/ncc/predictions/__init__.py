@@ -1,1 +1,1 @@
-from .yolov3 import YOLO
+from .predictor import Classifier, Segmenter

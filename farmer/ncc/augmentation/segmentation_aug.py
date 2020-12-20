@@ -1,5 +1,4 @@
 from tensorflow.keras.preprocessing import image
-import numpy as np
 from .aug_utils import get_aug
 from .augment_and_mix import dual_augment_and_mix
 import albumentations

@@ -14,6 +14,7 @@
 # ==============================================================================
 """Reference implementation of AugMix's data augmentation method in numpy."""
 from .augmentation import augmentations, augmentations_all
+import albumentations
 import numpy as np
 from PIL import Image
 
@@ -32,14 +33,17 @@ def apply_op(image, op, severity):
     return np.asarray(pil_img) / 255.
 
 
-def dual_augment_and_mix(image, mask, transforms, mean, std, width=3, depth=-1, alpha=1.):
+def dual_augment_and_mix(
+        image, mask, transforms, mean, std, width=3, depth=-1, alpha=1.):
     """Perform AugMix augmentations and compute mixture.
     Args:
       image: Raw input image(0-255) as uint8 `np.ndarray` of shape (h, w, c)
       mask: Onehot encoded mask as `np.ndarray` of shape (h, w, c)
-      transforms: albumentations augmentations as `list` with parameterized intensity
+      transforms: albumentations augmentations as `list`
+                  with parameterized intensity
       width: Width of augmentation chain
-      depth: Depth of augmentation chain. -1 enables stochastic depth uniformly from [1, 3]
+      depth: Depth of augmentation chain.
+             -1 enables stochastic depth uniformly from [1, 3]
       alpha: Probability coefficient for Beta and Dirichlet distributions.
     Returns:
       image_mixed: Augmented and mixed image.
@@ -60,7 +64,7 @@ def dual_augment_and_mix(image, mask, transforms, mean, std, width=3, depth=-1, 
         op_depth = [np.random.choice(transforms) for _ in range(depth)]
 
         # apply augmentation
-        augmentations = albu.Compose(op_depth, p=1)
+        augmentations = albumentations.Compose(op_depth, p=1)
         sample = augmentations(image=image_aug, mask=mask_aug)
         image_aug, mask_aug = sample['image'], sample['mask']
 
@@ -77,12 +81,14 @@ def dual_augment_and_mix(image, mask, transforms, mean, std, width=3, depth=-1, 
     return image_mixed, mask_mixed
 
 
-def augment_and_mix(image, transforms, mean, std, severity=3, width=3, depth=-1, alpha=1., augall=False):
+def augment_and_mix(
+        image, transforms, mean, std,
+        severity=3, width=3, depth=-1, alpha=1., augall=False):
     """Perform AugMix augmentations and compute mixture.
 
     Args:
       image: Raw input image as float32 np.ndarray of shape (h, w, c)
-      severity: Severity of underlying augmentation operators (between 1 to 10).
+      severity: Severity of underlying augmentation operators (between 1 to 10)
       width: Width of augmentation chain
       depth: Depth of augmentation chain. -1 enables stochastic depth uniformly
         from [1, 3]

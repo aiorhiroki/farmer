@@ -35,6 +35,7 @@ class TrainTask:
             mean=self.config.mean,
             std=self.config.std,
             augmentation=self.config.train_params.augmentation,
+            augmix=self.augmix,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
@@ -78,8 +79,12 @@ class TrainTask:
             funcs = self.config.train_params.scheduler["functions"]
             scheduler_name = next(iter(funcs.keys()))
             scheduler_params = next(iter(funcs.values()))
-            scheduler_params["n_epoch"] = self.config.epochs
-            scheduler_params["base_lr"] = self.config.train_params.learning_rate
+            scheduler_params.update(
+                dict(
+                    n_epoch=self.config.epochs,
+                    base_lr=self.config.train_params.learning_rate
+                )
+            )
             scheduler = keras.callbacks.LearningRateScheduler(
                 getattr(schedulers, scheduler_name)(**scheduler_params))
         else:

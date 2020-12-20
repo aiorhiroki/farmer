@@ -3,7 +3,7 @@ import cv2
 
 import tensorflow
 import numpy as np
-from ..augmentation import segmentation_aug, augment_and_mix
+from ..augmentation import segmentation_aug
 from ..tasks import Task
 from ..utils import ImageUtil
 

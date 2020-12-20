@@ -18,7 +18,7 @@ class SegmentationDataset:
             mean: np.ndarray = np.zeros(3),
             std: np.ndarray = np.ones(3),
             augmentation: list = list(),
-            augmix: bool = None,
+            augmix: bool = False,
             train_colors: list = list(),
             **kwargs
     ):

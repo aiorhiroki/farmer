@@ -28,10 +28,10 @@ docker build -t farmer:v2.0 .
 ## Run docker container
 You need to be in `WORKDIR` of this repository
 
-check current path as below
+check the current path
 ```bash
-$ echo $PWD
-/home/USER/farmer
+echo $PWD
+$ /PATH/TO/farmer
 ```
 
 ### Start container for farmer
@@ -153,5 +153,6 @@ dogrun Godfarmer
 
 ## add package
 ```
-docker exec -it farmer bash -c "poetry add pandas"
+# cd PATH/TO/farmer/
+docker exec -it farmer bash -c "cd $PWD && poetry add pandas"
 ```

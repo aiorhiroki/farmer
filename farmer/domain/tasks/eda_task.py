@@ -81,7 +81,7 @@ class EdaTask:
                 x = x / 255.  # 正規化してからmean,stdを計算する
                 means.append(np.mean(x, axis=(0, 1)))
                 pix_pow += np.sum(np.power(x, 2), axis=(0, 1))
-            pix_num = self.config.height *  self.config.width * len(train_set)
+            pix_num = self.config.height * self.config.width * len(train_set)
             mean = np.mean(means, axis=(0))
             var_pix = (pix_pow / pix_num) - np.power(mean, 2)
             std = np.sqrt(var_pix)

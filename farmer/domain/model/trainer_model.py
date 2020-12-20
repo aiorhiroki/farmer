@@ -81,9 +81,9 @@ class Trainer(Config, ImageLoader):
         self.test_dirs = [str(test_dir) for test_dir in self.test_dirs]
         self.class_names = self.get_class_names()
         self.get_mean_std()
+        self.mean_std = True if self.train_params.augmix else self.mean_std
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):

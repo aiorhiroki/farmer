@@ -1,4 +1,3 @@
-from tensorflow.keras.preprocessing import image
 from .aug_utils import get_aug
 from .augment_and_mix import augment_and_mix
 import albumentations

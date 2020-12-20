@@ -1,4 +1,3 @@
-from tensorflow.keras.preprocessing import image
 from .aug_utils import get_aug
 from .augment_and_mix import dual_augment_and_mix
 import albumentations
@@ -16,15 +15,12 @@ def segmentation_aug(
 
     if len(transforms) > 0:
         aug = albumentations.Compose(transforms, p=1)
-        augmented = aug(image=input_image, mask=label)
+        augmentation = aug(image=input_image, mask=label)
+        image, mask = augmentation["image"], augmentation["mask"]
         if augmix:
-            augmented = dual_augment_and_mix(
-                augmented['image'],
-                augmented['mask'],
-                transforms,
-                mean, std
-            )
-        return augmented['image'], augmented["mask"]
+            image, mask = dual_augment_and_mix(
+                image, mask, transforms, mean, std)
+        return image, mask
 
     else:
         return input_image, label

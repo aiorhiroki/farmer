@@ -67,7 +67,7 @@ class EdaTask:
         """
         train_set, _, _ = annotation_set
         if self.config.train_params.augmix:
-            self.mean_std = True
+            self.config.mean_std = True
 
         if self.config.input_data_type == 'image' and self.config.mean_std:
             if len(train_set) == 0:

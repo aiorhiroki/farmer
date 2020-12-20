@@ -35,7 +35,7 @@ class TrainTask:
             mean=self.config.mean,
             std=self.config.std,
             augmentation=self.config.train_params.augmentation,
-            augmix=self.augmix,
+            augmix=self.config.augmix,
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )

@@ -24,6 +24,7 @@ class Trainer(Config, ImageLoader):
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    cross_val: int = 0
     batch_period: int = 100
     early_stopping: bool = False
     patience: int = 10

@@ -6,6 +6,7 @@ import optuna
 import numpy as np
 from tensorflow.keras.backend import clear_session
 import logging
+from copy import deepcopy
 
 from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
@@ -38,7 +39,7 @@ def fit():
         config.update(dict(config_path=config_path))
         if secret_config:
             config.update(secret_config)
-        trainer = Trainer(**config)
+        trainer = Trainer(**deepcopy(config))
         val_dirs = trainer.val_dirs
         if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation
@@ -64,6 +65,7 @@ def fit():
             print("cross validation dirs: ", cross_val_dirs)
             result_path = trainer.result_path
             for k in range(n_splits):
+                trainer = Trainer(**deepcopy(config))
                 if type(trainer.cross_val) is int and k != trainer.cross_val:
                     continue
                 print(f"cross validation step: {k}")
@@ -76,8 +78,16 @@ def fit():
                             continue
                         trainer.train_dirs += cross_val_dirs[val_i]
                 elif trainer.cross_val == "step":
+                    if k >= (n_splits - 1):
+                        continue
                     for val_i in range(n_splits):
                         if val_i <= k:
+                            trainer.val_dirs += cross_val_dirs[val_i]
+                        else:
+                            trainer.train_dirs += cross_val_dirs[val_i]
+                elif type(trainer.cross_val) is int:
+                    for val_i in range(n_splits):
+                        if val_i == k:
                             trainer.val_dirs += cross_val_dirs[k]
                         else:
                             trainer.train_dirs += cross_val_dirs[val_i]

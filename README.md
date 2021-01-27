@@ -41,13 +41,13 @@ docker run \
     --gpus all \
     -itd \
     -v /mnt:/mnt \
-    --name farmer \
+    --name CONTAINER_NAME \
     farmer:v2.0
 ```
 
 ### Install farmer in container
 ```bash
-bash install_farmer.sh
+bash install_farmer.sh CONTAINER_NAME
 ```
 
 ### (Optional) Check farmer's path which is used in container

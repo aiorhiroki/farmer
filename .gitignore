@@ -119,3 +119,4 @@ result/
 develop/
 example/yamls/logs/
 *.out
+*optuna_study.db

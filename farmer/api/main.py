@@ -39,7 +39,7 @@ def fit():
         config.update(dict(config_path=config_path))
         if secret_config:
             config.update(secret_config)
-        trainer = Trainer(config)
+        trainer = Trainer(**config)
         val_dirs = trainer.val_dirs
         if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation

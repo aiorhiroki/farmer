@@ -24,6 +24,7 @@ class Trainer(Config, ImageLoader):
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    cross_val: int = 0
     batch_period: int = 100
     early_stopping: bool = False
     patience: int = 10
@@ -64,6 +65,8 @@ class Trainer(Config, ImageLoader):
                 self.trained_model_path = os.path.join(
                     self.trained_path, "model/last_model.h5"
                 )
+        if self.n_splits > len(self.train_dirs):
+            self.n_splits = len(self.train_dirs)
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
         if os.path.exists(self.result_path) and not self.overwrite:

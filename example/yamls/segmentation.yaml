@@ -3,8 +3,13 @@ result_root_dir: result/segmentation
 train_dirs:
     - train_1
     - train_2
-val_dirs:
     - validation
+    - test
+
+# key: cross_val, args: 0,1,2,3,4,all,step
+# all=0->1->2->..., step=0->0+1->0+1+2->...
+cross_val: 0
+
 test_dirs:
     - test
 training: yes

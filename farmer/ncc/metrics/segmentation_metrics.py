@@ -5,6 +5,7 @@ from tqdm import tqdm
 from ..utils import get_imageset
 import matplotlib.pyplot as plt
 import cv2
+import json
 
 
 def calc_segmentation_metrics(confusion):
@@ -42,7 +43,6 @@ def iou_dice_val(
             images = np.zeros((batch_size,) + image.shape, dtype=image.dtype)
             masks = np.zeros((batch_size,) + mask.shape, dtype=mask.dtype)
 
-        batch_index = i // batch_size
         image_index = i % batch_size
 
         images[image_index] = image
@@ -184,7 +184,7 @@ def generate_segmentation_result(
     batch_size
 ):
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-
+    dice_list = list()
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
         if i == 0:
@@ -212,13 +212,15 @@ def generate_segmentation_result(
                 *input_file, _ = dataset.annotations[data_index]
                 save_image_name = os.path.basename(input_file[0])
                 save_image_path = os.path.join(save_dir, save_image_name)
-
-                result_image_out = result_image[:,:,::-1]   # RGB => BGR
+                dice_list.append([save_image_path, dice])
+                result_image_out = result_image[:, :, ::-1]   # RGB => BGR
                 cv2.imwrite(save_image_path, result_image_out)
 
                 confusion_all += confusion
 
             images[:] = 0
             masks[:] = 0
+    with open(f"{save_dir}/dice.json", "w") as fw:
+        json.dump(dice_list, fw, ensure_ascii=True, indent=4)
 
     return calc_segmentation_metrics(confusion_all)

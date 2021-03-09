@@ -47,6 +47,10 @@ class BuildModelTask:
         backbone="resnet50",
         activation="softmax"
     ):
+        weights_info = None
+        if 'weights' in self.config.train_params.weights_info:
+            if self.config.train_params.weights_info['weights']:
+                weights_info = self.config.train_params.weights_info
         if task == Task.CLASSIFICATION:
             xception_shape_condition = height >= 71 and width >= 71
             mobilenet_shape_condition = height >= 32 and width >= 32
@@ -62,7 +66,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.train_params.weights_info
+                    weights_info=weights_info
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = models.mobilenet(
@@ -75,7 +79,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=self.config.train_params.weights_info
+                    weights_info=weights_info
                 )
             elif model_name.startswith("efficientnetb"):
                 model = models.EfficientNet(
@@ -108,7 +112,7 @@ class BuildModelTask:
                 )
             elif model_name == "deeplab_v3":
                 model = models.Deeplabv3(
-                    weights_info=self.config.train_params.weights_info,
+                    weights_info=weights_info,
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                     backbone=backbone,

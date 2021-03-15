@@ -55,7 +55,7 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
@@ -104,7 +104,7 @@ def Deeplabv3(weights_info={"weights": "pascal_voc"}, input_tensor=None, input_s
                          '`xception`  or `mobilenetv2` or `efficientnetb#`')
 
     if weights_info is None:
-        weights = None
+        weights = 'pascal_voc'
     else:
         weights = weights_info["weights"]
 

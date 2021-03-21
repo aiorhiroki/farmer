@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from pathlib import Path
 import itertools
 from tqdm import tqdm
 from ..utils import get_imageset
@@ -185,7 +186,7 @@ def generate_segmentation_result(
 ):
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
     image_dice_list = list()
-    dice_list  = list()
+    dice_list = list()
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
         if i == 0:
@@ -211,8 +212,10 @@ def generate_segmentation_result(
 
                 data_index = batch_index * batch_size + j
                 *input_file, _ = dataset.annotations[data_index]
-                save_image_name = os.path.basename(input_file[0])
-                save_image_path = os.path.join(save_dir, save_image_name)
+                image_path = Path(input_file[0])
+                save_image_dir = Path(save_dir) / image_path.parent.name
+                save_image_dir.mkdir(exist_ok=True)
+                save_image_path = save_image_dir / image_path.name
                 image_dice_list.append([save_image_path, dice])
                 dice_list.append(dice)
                 result_image_out = result_image[:, :, ::-1]   # RGB => BGR

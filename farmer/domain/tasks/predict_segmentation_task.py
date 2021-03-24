@@ -9,7 +9,7 @@ class PredictSegmentationTask:
     def command(self, annotation_set, model):
         dataset = self._do_generate_batch_task(annotation_set)
         eval_report = self._do_segmentation_predict_task(dataset, model)
-        self._do_predict_on_video(model)
+        self._do_predict_on_video(model, annotation_set)
         return eval_report
 
     def _do_generate_batch_task(self, annotation_set):
@@ -36,9 +36,11 @@ class PredictSegmentationTask:
         )
         return eval_report
 
-    def _do_predict_on_video(self, model):
+    def _do_predict_on_video(self, model, annotation_set):
         if len(self.config.predict_videos) == 0:
-            return
+            video_name, start_frame, end_frame = ncc.utils.representive_sequence(annotation_set)
+            video_path = str(Path(video_folder_path) / f"{video_name}.mp4")
+
         segmenter = ncc.predictions.Segmenter(model)
         for predict_video in self.config.predict_videos:
             video_path = predict_video["name"]

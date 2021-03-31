@@ -135,6 +135,11 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
+            elif model_name == "nested_unet":
+                model = models.NestedUnet(
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
         else:
             raise NotImplementedError
 

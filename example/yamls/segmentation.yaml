@@ -5,11 +5,19 @@ train_dirs:
     - train_2
     - validation
     - test
-
-# key: cross_val, args: 0,1,2,3,4,all,step
-# all=0->1->2->..., step=0->0+1->0+1+2->...
-cross_val: 0
-
+train_count:
+    - 100
+    - 200
+    -
+        - 0
+        - 100
+        - 200
+    -
+        - 0
+        - 100
+        - 200
+val_dirs:
+    - val
 test_dirs:
     - test
 training: yes

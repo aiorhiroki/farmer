@@ -1,4 +1,6 @@
 import numpy as np
+from glob import glob
+import os
 
 
 def cross_val_split(dirs, counts, k=5, n_iter=15, mix_step=5):
@@ -49,3 +51,18 @@ def cross_val_split(dirs, counts, k=5, n_iter=15, mix_step=5):
         cross_val_dirs.append(val_dirs)
 
     return cross_val_dirs
+
+
+def limit_train_dirs(trainer, count_list):
+    train_dirs = list()
+    for dirs, count in zip(trainer.train_dirs, count_list):
+        frame_count = 0
+        dirs_unpack = glob(os.path.join(trainer.target_dir, dirs))
+        for item in dirs_unpack:
+            if frame_count < count:
+                train_dirs.append(os.path.relpath(item, trainer.target_dir))
+                frame_count += len(os.listdir(
+                    os.path.join(item, trainer.label_dir)))
+            else: break
+        
+    return train_dirs

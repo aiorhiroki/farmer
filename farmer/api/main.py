@@ -2,17 +2,16 @@ import yaml
 from collections import OrderedDict
 import os
 from glob import glob
-
-from optuna import pruners
-from farmer.ncc.utils import cross_val_split
-from farmer.domain.model.task_model import Task
-from farmer.domain.model import Trainer, TrainParams
-from farmer.domain.workflows.train_workflow import TrainWorkflow
-
 import optuna
 import numpy as np
 from tensorflow.keras.backend import clear_session
 import logging
+from copy import deepcopy
+
+from farmer.ncc.utils import cross_val_split, limit_train_dirs
+from farmer.domain.model.task_model import Task
+from farmer.domain.model import Trainer
+from farmer.domain.workflows.train_workflow import TrainWorkflow
 
 
 def fit():
@@ -66,13 +65,32 @@ def fit():
             print("cross validation dirs: ", cross_val_dirs)
             result_path = trainer.result_path
             for k in range(n_splits):
+                trainer = Trainer(**deepcopy(config))
+                if type(trainer.cross_val) is int and k != trainer.cross_val:
+                    continue
                 print(f"cross validation step: {k}")
-                trainer.val_dirs = cross_val_dirs[k]
                 trainer.train_dirs = list()
-                for val_i in range(n_splits):
-                    if val_i == k:
+                trainer.val_dirs = list()
+                if trainer.cross_val == "all":
+                    trainer.val_dirs = cross_val_dirs[k]
+                    for val_i in range(n_splits):
+                        if val_i == k:
+                            continue
+                        trainer.train_dirs += cross_val_dirs[val_i]
+                elif trainer.cross_val == "step":
+                    if k >= (n_splits - 1):
                         continue
-                    trainer.train_dirs += cross_val_dirs[val_i]
+                    for val_i in range(n_splits):
+                        if val_i <= k:
+                            trainer.val_dirs += cross_val_dirs[val_i]
+                        else:
+                            trainer.train_dirs += cross_val_dirs[val_i]
+                elif type(trainer.cross_val) is int:
+                    for val_i in range(n_splits):
+                        if val_i == k:
+                            trainer.val_dirs += cross_val_dirs[k]
+                        else:
+                            trainer.train_dirs += cross_val_dirs[val_i]
                 # cross validation folder path
                 k_result = result_path + f"/cv_{k}"
                 trainer.result_path = k_result
@@ -87,6 +105,39 @@ def fit():
                 else:
                     train_workflow = TrainWorkflow(trainer)
                     train_workflow.command()
+        
+        elif trainer.train_count:
+            # limit size of train data
+            for item in trainer.train_count:
+                if type(item) is int: train_count_len = 1
+                elif type(item) is list:
+                    train_count_len = len(item)
+                    break
+            if train_count_len == 1:
+                count_list = trainer.train_count
+                trainer.train_dirs = limit_train_dirs(trainer, count_list)
+                # start training
+                train_workflow = TrainWorkflow(trainer)
+                train_workflow.command()
+            else:
+                for i, count in enumerate(trainer.train_count):
+                    if type(count) is int:
+                        trainer.train_count[i] = [count] * train_count_len
+                for k, count_list in enumerate(zip(*trainer.train_count)):
+                    trainer = Trainer(**deepcopy(config))
+                    print(f"train count step: {k}")
+                    trainer.train_dirs = limit_train_dirs(trainer, count_list)
+                    # separate folder_path
+                    k_result = trainer.result_path + f"/count_{k}"
+                    trainer.result_path = k_result
+                    trainer.info_path = f"{k_result}/{trainer.info_dir}"
+                    trainer.model_path = f"{k_result}/{trainer.model_dir}"
+                    trainer.learning_path = f"{k_result}/{trainer.learning_dir}"
+                    trainer.image_path = f"{k_result}/{trainer.image_dir}"
+                    # start training
+                    train_workflow = TrainWorkflow(trainer)
+                    train_workflow.command()                   
+
         else:
             if trainer.optuna:
                 optuna_command(trainer)
@@ -146,18 +197,18 @@ def optuna_command(trainer):
 
     pruner_params = trainer.pruner_params
     if pruner_params is None:
-        pruner = getattr(pruners, trainer.pruner)(
+        pruner = getattr(optuna.pruners, trainer.pruner)(
                      n_startup_trials=3, n_warmup_steps=10, interval_steps=1)
     else:
-        pruner = getattr(pruners, trainer.pruner)(**pruner_params)
+        pruner = getattr(optuna.pruners, trainer.pruner)(**pruner_params)
     study = optuna.create_study(
-        storage=f"sqlite:////optuna_study.db",
+        storage=f"sqlite:///optuna_study.db",
         load_if_exists=True,
         study_name=trainer.result_path,
         direction='maximize',
         pruner=pruner
     )
-    
+
     study.optimize(
         Objective(trainer),
         n_trials=trainer.n_trials,

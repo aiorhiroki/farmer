@@ -89,7 +89,7 @@ height: 256
 input_dir: image
 label_dir: label
 trained_path:
-result_dir: segmentation_result
+result_dir: segmentation_result_optuna
 class_names:
     - background
     - hoge

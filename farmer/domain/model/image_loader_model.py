@@ -21,6 +21,7 @@ class ImageLoader:
     train_dirs: List[str] = field(default_factory=list)
     val_dirs: List[str] = field(default_factory=list)
     test_dirs: List[str] = field(default_factory=list)
+    train_count: List[List[int]] = None
     height: int = None
     width: int = None
     mean_std: bool = False

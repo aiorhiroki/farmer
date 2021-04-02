@@ -26,7 +26,8 @@ class PredictClassificationTask:
             train_colors=self.config.train_colors,
             input_data_type=self.config.input_data_type
         )
-        generator = ncc.generators.Dataloder(dataset, batch_size=1, shuffle=False)
+        generator = ncc.generators.Dataloder(
+            dataset, batch_size=1, shuffle=False)
         return dataset, generator
 
     def _do_classification_predict_task(self, model, dataset, generator):

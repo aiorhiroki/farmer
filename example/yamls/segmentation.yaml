@@ -1,12 +1,25 @@
 target_dir: data/segmentation
 result_root_dir: result/segmentation
 train_dirs:
-    - train_1
-    - train_2
+    - train_1/*
+    - train_2/*
+    - validation/*
+    - test/*
+train_count:
+    - 100
+    - 200
+    -
+        - 0
+        - 100
+        - 200
+    -
+        - 0
+        - 100
+        - 200
 val_dirs:
-    - validation
+    - validation/*
 test_dirs:
-    - test
+    - test/*
 training: yes
 task: segmentation # classification or segmentation is supported
 
@@ -61,7 +74,7 @@ train_params:
             MotionBlur:
                 p: 1  # percentage of function inside 'OneOf'
             p: 1  # percetage of 'OneOf'
-
+    augmix: yes            
 epochs: 2
 segmentation_val_step: 2
 n_trials: 3

@@ -1,10 +1,10 @@
 target_dir: data/segmentation
 result_root_dir: result/segmentation
 train_dirs:
-    - train_1
-    - train_2
-    - validation
-    - test
+    - train_1/*
+    - train_2/*
+    - validation/*
+    - test/*
 train_count:
     - 100
     - 200
@@ -17,9 +17,9 @@ train_count:
         - 100
         - 200
 val_dirs:
-    - val
+    - validation/*
 test_dirs:
-    - test
+    - test/*
 training: yes
 task: segmentation # classification or segmentation is supported
 

@@ -7,3 +7,4 @@ from .efficientnet import EfficientNet
 from .resnest import resnest
 from .HRNetV2 import HRNetV2
 from .NestedUnet import NestedUnet
+from .U2net import U2net

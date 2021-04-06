@@ -140,6 +140,11 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
+            elif model_name == "u2net":
+                model = models.U2net(
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
         else:
             raise NotImplementedError
 

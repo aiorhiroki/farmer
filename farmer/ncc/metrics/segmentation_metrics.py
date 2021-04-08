@@ -5,6 +5,7 @@ from tqdm import tqdm
 from ..utils import get_imageset
 import matplotlib.pyplot as plt
 import cv2
+from scipy.spatial.distance import directed_hausdorff
 
 
 def calc_segmentation_metrics(confusion):
@@ -176,6 +177,35 @@ def plot_confusion_matrix(cm, classes,
     plt.savefig('{}.png'.format(save_file))
 
 
+def calc_hausdorff(y_pred, y_true, nb_classes):
+    y_pred = np.argmax(y_pred, axis=-1)
+    y_pred = np.identity(nb_classes)[y_pred]
+    y_pred, y_true = y_pred.astype(np.uint8), y_true.astype(np.uint8)
+
+    hausdorff = list()
+    for i in range(nb_classes):
+        contours_pred, _ = cv2.findContours(
+            y_pred[...,i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+        )
+        contours_true, _ = cv2.findContours(
+            y_true[...,i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+        )
+
+        if len(contours_pred) == 0 or len(contours_true) == 0:
+            hausdorff_single = 0
+        else:
+            contours_pred = np.squeeze(np.concatenate(contours_pred))
+            contours_true = np.squeeze(np.concatenate(contours_true))
+
+            hausdorff_single = max(
+                directed_hausdorff(contours_true, contours_pred)[0],
+                directed_hausdorff(contours_pred, contours_true)[0]
+            )
+        hausdorff.append(hausdorff_single)
+
+    return np.array(hausdorff)
+
+
 def generate_segmentation_result(
     nb_classes,
     dataset,
@@ -184,6 +214,7 @@ def generate_segmentation_result(
     batch_size
 ):
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
+    hausdorff_all = list()
 
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
@@ -203,10 +234,14 @@ def generate_segmentation_result(
                 confusion = calc_segmentation_confusion(
                     output[j], masks[j], nb_classes)
 
+                hausdorff = calc_hausdorff(output[j], masks[j], nb_classes)
+                hausdorff_all.append(hausdorff)
+
                 metrics = calc_segmentation_metrics(confusion)
                 dice = metrics['dice']
                 result_image = get_imageset(
-                    images[j], output[j], masks[j], put_text=f'dice: {dice}')
+                    images[j], output[j], masks[j],
+                    put_text=f'dice: {dice} hausdorff: {hausdorff}')
 
                 data_index = batch_index * batch_size + j
                 *input_file, _ = dataset.annotations[data_index]
@@ -220,5 +255,8 @@ def generate_segmentation_result(
 
             images[:] = 0
             masks[:] = 0
-
-    return calc_segmentation_metrics(confusion_all)
+    
+    segmentation_metrics = calc_segmentation_metrics(confusion_all)
+    segmentation_metrics['hausdorff'] = np.mean(hausdorff_all, axis=0) 
+    
+    return segmentation_metrics

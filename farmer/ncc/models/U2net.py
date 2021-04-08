@@ -119,7 +119,7 @@ def u2net_builder(encoder, decoder, input_shape=(256, 256, 3), num_classes=2):
     return Model(outputs=out, inputs=x)
 
 
-def U2net(input_shape=(256, 256, 3), classes=2):
+def U2net(input_shape=(256, 256, 3), num_classes=2):
     encoder = [
         ["resu7", 32, 64],
         ["resu6", 64, 128],

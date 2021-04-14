@@ -11,6 +11,8 @@ jobs:
 
       - name: Godfarmer
         run: |
+          chown root:root /tmp
+          chmod ugo+rwXt /tmp
           apt-get update --fix-missing
           apt-get install -y libgl1-mesa-dev
           pip install poetry

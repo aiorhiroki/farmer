@@ -16,7 +16,7 @@ training: yes
 task: segmentation # classification or segmentation is supported
 
 train_params: 
-    model_name: deeplab_v3
+    model_name: nested_unet
     backbone: mobilenetv2
     activation: softmax
     optimizer: adam
@@ -42,7 +42,7 @@ train_params:
             CosineDecay:
                 lr_max: 0.001
                 lr_min: 0.0001
-    batch_size: 8 
+    batch_size: 2 
     learning_rate: 0.001
     weights_info: 
         classes: # assign only when you use backbone weights

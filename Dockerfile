@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.3.0-gpu
+FROM tensorflow/tensorflow:2.4.1-gpu
 
 RUN apt-get update
 RUN apt-get install -y python3-venv vim libgl1-mesa-dev

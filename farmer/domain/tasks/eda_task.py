@@ -5,6 +5,7 @@ import json
 import numpy as np
 import cv2
 from tqdm import trange
+from ..model.task_model import Task
 
 
 class EdaTask:
@@ -30,7 +31,8 @@ class EdaTask:
                         class_name = self.config.class_names[class_id]
                     fw.write(f"{class_name},{cls_id},{color_id}\n")
             else:
-                fw.write("class_name,class_id\n")
+                if self.config.task != Task.OBJECT_DETECTION:
+                    fw.write("class_name,class_id\n")
                 for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
         with open(f"{self.config.info_path}/mean_std.json", "w") as fw:

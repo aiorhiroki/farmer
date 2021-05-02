@@ -11,12 +11,12 @@ jobs:
 
       - name: Godfarmer
         run: |
-          apt-get update --fix-missing
+          apt-get update
           apt-get install -y libgl1-mesa-dev
+          python -m pip install pip==21.0.1
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root
-          pip install tensorflow==2.3.0
           python setup.py install
           cd example
           Godfarmer

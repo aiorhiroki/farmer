@@ -4,7 +4,6 @@ train_dirs:
     - train_1
     - train_2
     - validation
-    - test
 
 # key: cross_val, args: 0,1,2,3,4,all,step
 # all=0->1->2->..., step=0->0+1->0+1+2->...
@@ -23,7 +22,11 @@ train_params:
     loss:
       functions:
         CategoricalFocalLoss:
-            alpha: 0.45
+            alpha: 
+                0: 1.0
+                1: 1.0
+                2: 2.0
+                3: 3.0
             gamma: 5.0
             class_weights: 
                 0: 0.0
@@ -31,7 +34,11 @@ train_params:
                 2: 2.0
                 3: 3.0
         DiceLoss:
-            beta: 0.1
+            beta:
+                0: 1.0
+                1: 1.0
+                2: 2.0
+                3: 3.0
             class_weights: 
                 0: 0.0
                 1: 1.0

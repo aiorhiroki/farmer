@@ -1,3 +1,5 @@
+import numpy as np
+
 import segmentation_models
 
 from farmer.ncc.optimizers import AdaBound
@@ -232,9 +234,18 @@ class BuildModelTask:
             elif task_id == Task.SEMANTIC_SEGMENTATION:
                 for i, loss_func in enumerate(loss_funcs.items()):
                     loss_name, params = loss_func
-                    if params is not None and params.get("class_weights"):
-                        params["class_weights"] = list(
-                            params["class_weights"].values())
+                    if params is not None:
+                        if params.get("class_weights"):
+                            params["class_weights"] = list(
+                                params["class_weights"].values())
+                        if ( params.get("alpha") and 
+                            isinstance(params["alpha"], dict) ):
+                            params["alpha"] = np.array(
+                                list(params["alpha"].values()) )
+                        if ( params.get("beta") and 
+                            isinstance(params["beta"], dict) ):
+                            params["beta"] = np.array(
+                                list(params["beta"].values()) )
                     if i == 0:
                         if params is None:
                             loss = getattr(losses, loss_name)()

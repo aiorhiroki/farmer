@@ -74,7 +74,10 @@ class ClassificationDataset:
             annotations: list,
             input_shape: Tuple[int, int],
             nb_classes: int,
+            mean: np.ndarray = np.zeros(3),
+            std: np.ndarray = np.ones(3),
             augmentation: list = list(),
+            augmix: bool = False,
             input_data_type: str = "image",
             **kwargs
     ):
@@ -82,7 +85,10 @@ class ClassificationDataset:
         self.annotations = annotations
         self.input_shape = input_shape
         self.image_util = ImageUtil(nb_classes, input_shape)
+        self.mean = mean
+        self.std = std
         self.augmentation = augmentation
+        self.augmix = augmix
         self.input_data_type = input_data_type
 
     def __getitem__(self, i):
@@ -112,8 +118,8 @@ class ClassificationDataset:
 
         # apply augmentations
         if self.augmentation and len(self.augmentation) > 0:
-            input_image, label = classification_aug(
-                input_image, label,
+            input_image = classification_aug(
+                input_image,
                 self.mean, self.std,
                 self.augmentation,
                 self.augmix

@@ -128,7 +128,7 @@ def MobileNetV2(classes=1000, input_tensor=None, input_shape=(512, 512, 3), weig
                             '`classes` should be number of original weights output units')
 
     else:
-        weights = None
+        weights = 'imagenet'
         if classes is None:
             raise ValueError('`classes` should be any number')
 

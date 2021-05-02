@@ -71,7 +71,6 @@ def fit():
                 print(f"cross validation step: {k}")
                 trainer.train_dirs = list()
                 trainer.val_dirs = list()
-                trainer.test_dirs = list()
                 if trainer.cross_val == "all":
                     trainer.val_dirs = cross_val_dirs[k]
                     for val_i in range(n_splits):

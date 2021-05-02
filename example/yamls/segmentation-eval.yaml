@@ -26,7 +26,7 @@ width: 512
 height: 256
 input_dir: image
 label_dir: label
-trained_path: result/segmentation/segmentation_result
+trained_path: result/segmentation/segmentation_result/cv_0
 result_dir: test_segmentation_result
 class_names:
     - background

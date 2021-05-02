@@ -9,16 +9,20 @@ test_dirs:
 training: yes
 task: detection # classification or segmentation or detection
 train_params: 
+    model_name: xception
     backbone: 
-    activation: 
-    optimizer: 
-    loss: 
-    loss_params: 
-        alpha: 
-        beta: 
-        gamma: 
-    batch_size: 
-    learning_rate: 
+    activation: softmax
+    optimizer: adam
+    loss:
+      functions:
+        CategoricalCrossentropy:
+    batch_size: 4
+    learning_rate: 0.001
+    augmentation:
+    weights_info:
+        classes: 
+        weights: 
+
 epochs: 2
 steps: 3
 width: 320

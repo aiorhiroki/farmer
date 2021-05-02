@@ -1,5 +1,4 @@
 import dataclasses
-import copy
 import os
 from datetime import datetime
 from .config_model import Config
@@ -25,6 +24,7 @@ class Trainer(Config, ImageLoader):
     save_pred: bool = True
     segmentation_val_step: int = 3
     n_splits: int = 5
+    cross_val: int = 0
     batch_period: int = 100
     early_stopping: bool = False
     patience: int = 10
@@ -33,10 +33,10 @@ class Trainer(Config, ImageLoader):
     seed: int = 1
     n_trials: int = 10
     timeout: int = None
-    trial_number: int = None
-    trial_params: dict = None
     train_params: TrainParams = None
     optuna_params: TrainParams = None
+    trial_number: int = None
+    trial_params: dict = None
     pruner: str = "MedianPruner"
     pruner_params: dict = None
 
@@ -47,13 +47,13 @@ class Trainer(Config, ImageLoader):
         self.multi_gpu = self.nb_gpu > 1
         if self.multi_gpu:
             self.generator = False
-            if type(self.train_params.batch_size) == list:
-                self.train_params.batch_size = [
+            if type(self.train_params["batch_size"]) == list:
+                self.train_params["batch_size"] = [
                     b_size * self.nb_gpu for b_size
-                    in self.train_params.batch_size
+                    in self.train_params["batch_size"]
                 ]
             else:
-                self.train_params.batch_size *= self.nb_gpu
+                self.train_params["batch_size"] *= self.nb_gpu
         if self.result_dir is None:
             self.result_dir = datetime.today().strftime("%Y%m%d_%H%M%S")
         self.target_dir = os.path.join(self.root_dir, self.target_dir)
@@ -65,6 +65,8 @@ class Trainer(Config, ImageLoader):
                 self.trained_model_path = os.path.join(
                     self.trained_path, "model/last_model.h5"
                 )
+        if self.n_splits > len(self.train_dirs):
+            self.n_splits = len(self.train_dirs)
         self.result_path = os.path.join(
             self.root_dir, self.result_root_dir, self.result_dir)
         if os.path.exists(self.result_path) and not self.overwrite:
@@ -83,7 +85,6 @@ class Trainer(Config, ImageLoader):
         self.get_mean_std()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):

@@ -4,8 +4,8 @@ import os
 import json
 import numpy as np
 import cv2
-import random
 from tqdm import trange
+from ..model.task_model import Task
 
 
 class EdaTask:
@@ -31,7 +31,8 @@ class EdaTask:
                         class_name = self.config.class_names[class_id]
                     fw.write(f"{class_name},{cls_id},{color_id}\n")
             else:
-                fw.write("class_name,class_id\n")
+                if self.config.task != Task.OBJECT_DETECTION:
+                    fw.write("class_name,class_id\n")
                 for cls_id, class_name in enumerate(self.config.class_names):
                     fw.write(f"{class_name},{cls_id}\n")
         with open(f"{self.config.info_path}/mean_std.json", "w") as fw:
@@ -66,6 +67,9 @@ class EdaTask:
         """train set全体の平均と標準偏差をchannelごとに計算
         """
         train_set, _, _ = annotation_set
+        if self.config.train_params.augmix:
+            self.config.mean_std = True
+
         if self.config.input_data_type == 'image' and self.config.mean_std:
             if len(train_set) == 0:
                 return
@@ -81,7 +85,7 @@ class EdaTask:
                 x = x / 255.  # 正規化してからmean,stdを計算する
                 means.append(np.mean(x, axis=(0, 1)))
                 pix_pow += np.sum(np.power(x, 2), axis=(0, 1))
-            pix_num = self.config.height *  self.config.width * len(train_set)
+            pix_num = self.config.height * self.config.width * len(train_set)
             mean = np.mean(means, axis=(0))
             var_pix = (pix_pow / pix_num) - np.power(mean, 2)
             std = np.sqrt(var_pix)

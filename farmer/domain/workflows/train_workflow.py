@@ -70,6 +70,7 @@ class TrainWorkflow(AbstractImageAnalyzer):
                 train.main(
                     [
                         "--epochs", str(self._config.epochs),
+                        "--batch-size", str(self._config.train_params.batch_size),
                         "--steps", str(self._config.steps),
                         "--snapshot-path", self._config.model_path,
                         "csv", annotations, classes,

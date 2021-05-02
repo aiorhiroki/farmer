@@ -15,6 +15,9 @@ def generate_target_csv(
         else:
             for xml_path in tqdm.tqdm(pathlib.Path(xml_dir).iterdir()):
                 if xml_path.suffix != ".xml":
+                    if xml_path.suffix == ".csv":
+                        with open(xml_path, 'r') as fr:
+                            f.write(fr.read() + '\n')
                     continue
                 tree = ET.parse(str(xml_path))
                 root = tree.getroot()

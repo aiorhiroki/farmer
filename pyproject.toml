@@ -16,9 +16,11 @@ optuna = "^2.0.0"
 pandas = "^1.0.5"
 tensorflow-addons = "0.11.2"
 tensorboard-plugin-profile = "^2.3.0"
+keras = "2.4.0"
+keras-retinanet = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
-tensorflow = "2.3.0"
+tensorflow = "2.4.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

@@ -138,7 +138,7 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
                              'or the path to the weights file to be loaded and'
                              '`classes` should be number of original weights output units')
     else:
-        weights = None
+        weights = 'imagenet'
         if classes is None:
             raise ValueError('`classes` should be any number')
 

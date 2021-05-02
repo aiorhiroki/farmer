@@ -6,6 +6,7 @@ authors = ["Hiroki Matsuzaki"]
 
 [tool.poetry.dependencies]
 python = "3.6.9"
+tensorflow = "2.4.1"
 scikit-learn = "^0.22.2"
 dataclasses = "^0.7"
 opencv-python = "^4.2.0.34"
@@ -18,6 +19,8 @@ tensorflow-addons = "0.11.2"
 tensorboard-plugin-profile = "^2.3.0"
 Cython = "^0.29.21"
 pydensecrf = "^1.0rc3"
+keras = "2.4.0"
+keras-retinanet = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 

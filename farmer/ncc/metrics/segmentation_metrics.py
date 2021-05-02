@@ -1,10 +1,11 @@
 import numpy as np
-import os
+from pathlib import Path
 import itertools
 from tqdm import tqdm
 from ..utils import get_imageset
 import matplotlib.pyplot as plt
 import cv2
+import json
 
 
 def calc_segmentation_metrics(confusion):
@@ -42,7 +43,6 @@ def iou_dice_val(
             images = np.zeros((batch_size,) + image.shape, dtype=image.dtype)
             masks = np.zeros((batch_size,) + mask.shape, dtype=mask.dtype)
 
-        batch_index = i // batch_size
         image_index = i % batch_size
 
         images[image_index] = image
@@ -184,7 +184,8 @@ def generate_segmentation_result(
     batch_size
 ):
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
-
+    image_dice_list = list()
+    dice_list = list()
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
         if i == 0:
@@ -210,15 +211,26 @@ def generate_segmentation_result(
 
                 data_index = batch_index * batch_size + j
                 *input_file, _ = dataset.annotations[data_index]
-                save_image_name = os.path.basename(input_file[0])
-                save_image_path = os.path.join(save_dir, save_image_name)
-
-                result_image_out = result_image[:,:,::-1]   # RGB => BGR
+                image_path = Path(input_file[0])
+                save_image_dir = Path(save_dir) / image_path.parent.name
+                save_image_dir.mkdir(exist_ok=True)
+                save_image_path = str(save_image_dir / image_path.name)
+                image_dice_list.append([save_image_path, dice])
+                dice_list.append(dice)
+                result_image_out = result_image[:, :, ::-1]   # RGB => BGR
                 cv2.imwrite(save_image_path, result_image_out)
 
                 confusion_all += confusion
 
             images[:] = 0
             masks[:] = 0
+    with open(f"{save_dir}/dice.json", "w") as fw:
+        json.dump(image_dice_list, fw, ensure_ascii=True, indent=4)
+
+    dice_class_axis = np.array(dice_list).T.tolist()
+    for i in range(len(dice_class_axis)):
+        plt.figure()
+        plt.hist(dice_class_axis[i])
+        plt.savefig(f"{save_dir}/dice_hist_class_{i}.png")
 
     return calc_segmentation_metrics(confusion_all)

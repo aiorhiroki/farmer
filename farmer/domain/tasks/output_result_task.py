@@ -1,4 +1,3 @@
-import os
 import yaml
 
 
@@ -10,13 +9,15 @@ class OutputResultTask:
         self._do_write_result_task(result, trial)
 
     def _do_write_result_task(self, result, trial):
-        param_path = os.path.join(self.config.info_path, "parameter.yaml")
         self.config.result = result
-        with open(param_path, mode="w") as configfile:
+        param_path = self.config.info_path
+        if self.config.optuna:
+            trial_number = self.config.trial_number
+            param_path = f"{self.config.result_path}/trial{trial_number}"
+
+        with open(f"{param_path}/parameter.yaml", mode="w") as configfile:
             yaml.dump(self.config, configfile)
-            if self.config.trial_number is not None and \
-                    self.config.trial_params is not None:
+            if self.config.optuna:
+                configfile.write(f"\n optuna trial#{trial_number}")
                 configfile.write(
-                    f"\n optuna trial#{self.config.trial_number}\n")
-                configfile.write(
-                    f"optuna set params = {self.config.trial_params}\n")
+                    f"\n optuna params = {self.config.trial_params}")

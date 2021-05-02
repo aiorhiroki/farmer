@@ -91,6 +91,7 @@ def fit():
                             trainer.val_dirs += cross_val_dirs[k]
                         else:
                             trainer.train_dirs += cross_val_dirs[val_i]
+                trainer.test_dirs = trainer.val_dirs
                 # cross validation folder path
                 k_result = result_path + f"/cv_{k}"
                 trainer.result_path = k_result

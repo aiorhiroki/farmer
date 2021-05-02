@@ -12,8 +12,7 @@ jobs:
       - name: Godfarmer
         run: |
           apt-get update
-          apt-get install -y libgl1-mesa-dev
-          python -m pip install pip==21.0.1
+          apt-get install -y libgl1-mesa-dev python3-dev
           pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root

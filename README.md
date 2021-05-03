@@ -21,7 +21,7 @@ exit
 
 ### `build docker`
 ```bash
-docker build -t farmer:v2.0 .
+docker build -t farmer:tf2.4.1 .
 #when it fails, try with --no-cache
 ```
 
@@ -42,7 +42,7 @@ docker run \
     -itd \
     -v /mnt:/mnt \
     --name CONTAINER_NAME \
-    farmer:v2.0
+    farmer:tf2.4.1
 ```
 
 ### Install farmer in container

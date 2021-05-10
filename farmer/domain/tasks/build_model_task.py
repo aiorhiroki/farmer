@@ -147,6 +147,11 @@ class BuildModelTask:
                     input_shape=(height, width, 3),
                     classes=nb_classes,
                 )
+            elif model_name == "erfnet":
+                model = models.ERFNet(
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                )
         else:
             raise NotImplementedError
 

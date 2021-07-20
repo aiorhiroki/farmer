@@ -86,13 +86,15 @@ class FarmerDataset(utils.Dataset):
 
 parser = argparse.ArgumentParser(description='Train Mask R-CNN')
 parser.add_argument('--dataset', required=True,
-                    metavar="/path/to/coco/",
+                    metavar="/path/to/datset/",
                     help='Directory of the train dataset')
 args = parser.parse_args()
 
 config = FarmerConfig()
 config.display()
 model = model.MaskRCNN(mode="training", config=config, model_dir="logs")
+model_path = model.get_imagenet_weights()
+model.load_weights(model_path, by_name=True)
 
 dataset_train = FarmerDataset()
 dataset_train.load_dataset(args.dataset, "train")

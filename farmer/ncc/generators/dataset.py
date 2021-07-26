@@ -1,6 +1,9 @@
 from typing import Tuple
 import numpy as np
+from mrcnn import utils
+from pathlib import Path
 import cv2
+from PIL import Image
 from ..utils import ImageUtil
 from ..augmentation import segmentation_aug, classification_aug
 
@@ -129,3 +132,69 @@ class ClassificationDataset:
 
     def __len__(self):
         return len(self.annotations)
+
+
+class MaskrcnnDataset(utils.Dataset):
+
+    def __init__(
+            self,
+            annotations: list,
+            train_colors: dict,
+            **kwargs
+    ):
+
+        self.annotations = annotations
+        self.train_colors = train_colors # {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
+        self.nb_classes = max(train_colors.values())
+
+        super().__init__()
+
+    def load_dataset(self):
+        for class_id in range(self.nb_classes):
+            self.add_class('Maskrcnn', class_id+1, str(class_id+1))
+
+        for image_path, mask_path in self.annotations:
+            mask = cv2.imread(mask_path)
+            height, width = mask.shape[:2]
+
+            self.add_image(
+                'Maskrcnn',
+                path=str(image_path),
+                image_id=str(image_path),
+                mask_path=mask_path,
+                width=width, height=height
+            )
+
+    def load_image(self, image_id):
+        image_info = self.image_info[image_id]
+        image = Image.open(str(image_info['path']))
+        return np.array(image)
+
+    def load_mask(self, image_id):
+        image_info = self.image_info[image_id]
+        mask = np.array(Image.open(str(image_info['mask_path'])))
+        for train_id, train_color in enumerate(self.train_colors.items()):
+            train_id += 1
+            mask[mask == train_color[0]] = train_id
+        mask[mask > len(self.train_colors)] = 0
+
+        count = len(np.unique(mask)[1:])
+        width, height = image_info['width'], image_info['height']
+        out = np.zeros([height, width, count], dtype=np.uint8)
+
+        mask_ids = list(np.unique(mask)[1:])
+        for nb_mask, mask_id in enumerate(mask_ids):
+            m_o = cv2.resize(np.array(mask == mask_id, dtype=np.uint8), (width, height))
+            out[:, :, nb_mask] = m_o
+
+        class_ids = np.unique(mask)[1:]
+        for train_id, train_color in enumerate(self.train_colors.items()):
+            train_id += 1
+            train_cls_id = train_color[1]
+            if train_cls_id != train_id:
+                class_ids[class_ids == train_id] = train_cls_id
+
+        return out.astype(np.int32), class_ids.astype(np.int32)
+
+    def image_reference(self, image_id):
+        return self.image_info[image_id]

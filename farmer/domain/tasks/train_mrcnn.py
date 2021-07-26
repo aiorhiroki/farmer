@@ -8,100 +8,113 @@ import numpy as np
 from PIL import Image
 import cv2
 
+from farmer.ncc.readers import segmentation_set
+from farmer.ncc.generators import MaskrcnnDataset
 
 """
 docker exec -it maskrcnn_tf2 bash -c "cd $PWD && python farmer/domain/tasks/train_mrcnn.py \
 --dataset=/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
 """
 
+CLASS_IDS = {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
 
-class FarmerConfig(Config):
+class TrainConfig(Config):
     NAME = "farmer"
     NUM_CLASSES = 1 + 3
     IMAGE_MAX_DIM = 640
+    USE_MINI_MASK = False
 
-class FarmerDataset(utils.Dataset):
-    def load_dataset(self, dataset_dir, subset):
-        data_classes = ['linear', 'point', 'grasper']
-        for class_id, data_class in enumerate(data_classes):
-            self.add_class('farmer', class_id+1, data_class)
 
-        # Add images
-        images = sorted((Path(dataset_dir) / subset / "images").glob("*.png"))
-        print("nb images", len(images))
+class InferenceConfig(TrainConfig):
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
 
-        for image_path in images:
-            mask_path = str(image_path).replace("/images/", "/labels/")
-            if not Path(mask_path).exists():
-                continue
-            mask = cv2.imread(mask_path)
-            if np.sum(mask) == 0:
-                continue
+def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
+    ROOT_DIR = os.path.abspath("../../")
+    RESULTS_DIR = os.path.join(ROOT_DIR, "results/forceps/")
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+    submit_dir = "submit_{:%Y%m%dT%H%M%S}".format(datetime.datetime.now())
+    submit_dir = os.path.join(RESULTS_DIR, submit_dir)
+    os.makedirs(submit_dir)
 
-            self.add_image(
-                'farmer', 
-                path=str(image_path), 
-                image_id=str(image_path).rstrip(".jpg"),
-                mask_path=mask_path,
-                width=640, height=640
-            )
+    image_ids = image_ids or dataset.image_ids
+    annotations = list()
+    det_results = list()
+    for i, image_id in tqdm(enumerate(image_ids)):
+        # Load image
+        image, _, gt_class_id, gt_bbox, _ = modellib.load_image_gt(
+            dataset_val, config, image_id)
+        gt_class_id = gt_class_id - 1
+        annotations.append(dict(bboxes=gt_bbox, labels=gt_class_id))
+        # Run detection
+        r = model.detect([image], verbose=0)[0]
+        r['class_ids'] = r['class_ids'] - 1
+        cls1_det = list()
+        cls2_det = list()
+        cls3_det = list()
+        num_det = r['rois'].shape[0]
+        for det_id in range(num_det):
+            class_id = r['class_ids'][det_id]
+            if class_id == 0:
+                cls1_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
+            elif class_id == 1:
+                cls2_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
+            if class_id == 2:
+                cls3_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
+        if len(cls1_det) == 0:
+            cls1_det = np.empty((0, 5))
+        else:
+            cls1_det = np.array(cls1_det)
+        if len(cls2_det) == 0:
+            cls2_det = np.empty((0, 5))
+        else:
+            cls2_det = np.array(cls2_det)
+        if len(cls3_det) == 0:
+            cls3_det = np.empty((0, 5))
+        else:
+            cls3_det = np.array(cls3_det)
+        det_results.append([cls1_det, cls2_det, cls3_det])
 
-    def load_image(self, image_id):
-        image_info = self.image_info[image_id]
-        width, height = image_info['width'], image_info['height']
-        image = Image.open(str(image_info['path'])).resize((width, height))
-        return np.array(image)
-
-    def load_mask(self, image_id):
-        image_info = self.image_info[image_id]
-        mask = np.array(Image.open(str(image_info['mask_path'])))
-        mask[mask == 191] = 1
-        mask[mask == 192] = 2
-        mask[mask == 193] = 3
-        mask[mask == 194] = 4
-        mask[mask == 195] = 5
-        mask[mask == 196] = 6
-        mask[mask > 6] = 0
-
-        count = len(np.unique(mask)[1:])
-        width, height = image_info['width'], image_info['height']
-        out = np.zeros([height, width, count], dtype=np.uint8)
-
-        mask_ids = list(np.unique(mask)[1:])
-        for nb_mask, mask_id in enumerate(mask_ids):
-            m_o = cv2.resize(np.array(mask == mask_id, dtype=np.uint8), (width, height))
-            out[:, :, nb_mask] = m_o
-
-        class_ids = np.unique(mask)[1:]
-        class_ids[class_ids == 4] = 3
-        class_ids[class_ids == 5] = 3
-        class_ids[class_ids == 6] = 3
-
-        return out.astype(np.int32), class_ids.astype(np.int32)
-
-    def image_reference(self, image_id):
-        return self.image_info[image_id]
-
+        """
+        visualize.display_instances(
+            image, r['rois'], r['masks'], r['class_ids'],
+            dataset.class_names, r['scores'],
+            show_bbox=True, show_mask=True,
+            title="Predictions")
+        plt.savefig("{}/{}.png".format(
+          submit_dir, os.path.basename(dataset.image_info[image_id]["id"])))
+        """
+    mean_ap, _ = eval_map(det_results, annotations, iou_thr=0.7)
+    print(mean_ap)
 
 
 parser = argparse.ArgumentParser(description='Train Mask R-CNN')
+parser.add_argument("command",
+                    metavar="<command>",
+                    help="'train' or 'evaluate' on MS COCO")
 parser.add_argument('--dataset', required=True,
                     metavar="/path/to/datset/",
                     help='Directory of the train dataset')
 args = parser.parse_args()
 
-config = FarmerConfig()
+if args.command == "train":
+    config = TrainConfig()
+else:
+    config = InferenceConfig()
 config.display()
 model = model.MaskRCNN(mode="training", config=config, model_dir="logs")
 model_path = model.get_imagenet_weights()
 model.load_weights(model_path, by_name=True)
 
-dataset_train = FarmerDataset()
-dataset_train.load_dataset(args.dataset, "train")
+train_annos = segmentation_set(args.dataset, ["train"], "images", "labels")
+dataset_train = MaskrcnnDataset(train_annos, CLASS_IDS)
+dataset_train.load_dataset()
 dataset_train.prepare()
 
-dataset_val = FarmerDataset()
-dataset_val.load_dataset(args.dataset, "valid")
+train_annos = segmentation_set(args.dataset, ["valid"], "images", "labels")
+dataset_val = MaskrcnnDataset(train_annos, CLASS_IDS)
+dataset_val.load_dataset()
 dataset_val.prepare()
 
 augmentation = iaa.SomeOf((0, 2), [
@@ -114,8 +127,19 @@ augmentation = iaa.SomeOf((0, 2), [
     iaa.GaussianBlur(sigma=(0.0, 5.0))
 ])
 
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE,
-            epochs=200,
-            layers='all',
-            augmentation=augmentation)
+if args.command == "train":
+    print("Train network heads")
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                epochs=40,
+                augmentation=augmentation,
+                layers='heads')
+
+    print("Train all layers")
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE/10,
+                epochs=160,
+                augmentation=augmentation,
+                layers='all')
+else:
+    evaluate_det(model, dataset_val, config)

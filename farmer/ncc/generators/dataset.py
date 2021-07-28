@@ -140,22 +140,25 @@ class MaskrcnnDataset(utils.Dataset):
             self,
             annotations: list,
             train_colors: dict,
+            class_names: list,
             **kwargs
     ):
 
         self.annotations = annotations
-        self.train_colors = train_colors # {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
+        self.train_colors = train_colors
+        self.class_names = class_names
         self.nb_classes = max(train_colors.values())
 
         super().__init__()
 
     def load_dataset(self):
         for class_id in range(self.nb_classes):
-            self.add_class('Maskrcnn', class_id+1, str(class_id+1))
+            self.add_class('Maskrcnn', class_id+1, self.class_names[class_id])
 
         for image_path, mask_path in self.annotations:
             mask = cv2.imread(mask_path)
-            height, width = mask.shape[:2]
+            # height, width = mask.shape[:2]
+            height, width = 640, 640
 
             self.add_image(
                 'Maskrcnn',
@@ -167,7 +170,8 @@ class MaskrcnnDataset(utils.Dataset):
 
     def load_image(self, image_id):
         image_info = self.image_info[image_id]
-        image = Image.open(str(image_info['path']))
+        width, height = image_info['width'], image_info['height']
+        image = Image.open(str(image_info['path'])).resize((width, height))
         return np.array(image)
 
     def load_mask(self, image_id):

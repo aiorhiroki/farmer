@@ -1,5 +1,6 @@
 from mrcnn.config import Config
-from mrcnn import model, utils
+from mrcnn import model as modellib, utils
+from mmdet.core.evaluation import eval_map
 
 from imgaug import augmenters as iaa
 from pathlib import Path
@@ -7,20 +8,39 @@ import argparse
 import numpy as np
 from PIL import Image
 import cv2
+import os
+import datetime
+from tqdm import tqdm
 
 from farmer.ncc.readers import segmentation_set
 from farmer.ncc.generators import MaskrcnnDataset
 
 """
-docker exec -it maskrcnn_tf2 bash -c "cd $PWD && python farmer/domain/tasks/train_mrcnn.py \
+# for train
+docker exec -it maskrcnn_tf2 bash -c "cd $PWD && python farmer/domain/tasks/train_mrcnn.py train \
+--dataset=/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
+
+# for evaluate
+docker exec -it maskrcnn_tf2 bash -c "cd $PWD && python farmer/domain/tasks/train_mrcnn.py eval \
 --dataset=/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
 """
 
 CLASS_IDS = {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
 
+
+parser = argparse.ArgumentParser(description='Train Mask R-CNN')
+parser.add_argument("command",
+                    metavar="<command>",
+                    help="'train' or 'evaluate' on MS COCO")
+parser.add_argument('--dataset', required=True,
+                    metavar="/path/to/datset/",
+                    help='Directory of the train dataset')
+args = parser.parse_args()
+
+
 class TrainConfig(Config):
     NAME = "farmer"
-    NUM_CLASSES = 1 + 3
+    NUM_CLASSES = 1 + max(CLASS_IDS.values())
     IMAGE_MAX_DIM = 640
     USE_MINI_MASK = False
 
@@ -29,14 +49,16 @@ class InferenceConfig(TrainConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
+
 def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
-    ROOT_DIR = os.path.abspath("../../")
-    RESULTS_DIR = os.path.join(ROOT_DIR, "results/forceps/")
+    RESULTS_DIR = "results/forceps"
     if not os.path.exists(RESULTS_DIR):
         os.makedirs(RESULTS_DIR)
     submit_dir = "submit_{:%Y%m%dT%H%M%S}".format(datetime.datetime.now())
     submit_dir = os.path.join(RESULTS_DIR, submit_dir)
     os.makedirs(submit_dir)
+
+    print("nb classes: ", config.NUM_CLASSES)
 
     image_ids = image_ids or dataset.image_ids
     annotations = list()
@@ -60,7 +82,7 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
                 cls1_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
             elif class_id == 1:
                 cls2_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
-            if class_id == 2:
+            elif class_id == 2:
                 cls3_det.append(list(r['rois'][det_id]) + [float(r['scores'][det_id])])
         if len(cls1_det) == 0:
             cls1_det = np.empty((0, 5))
@@ -89,21 +111,16 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
     print(mean_ap)
 
 
-parser = argparse.ArgumentParser(description='Train Mask R-CNN')
-parser.add_argument("command",
-                    metavar="<command>",
-                    help="'train' or 'evaluate' on MS COCO")
-parser.add_argument('--dataset', required=True,
-                    metavar="/path/to/datset/",
-                    help='Directory of the train dataset')
-args = parser.parse_args()
-
 if args.command == "train":
     config = TrainConfig()
+    mode = "training"
 else:
     config = InferenceConfig()
+    mode = "inference"
+
+
 config.display()
-model = model.MaskRCNN(mode="training", config=config, model_dir="logs")
+model = modellib.MaskRCNN(mode=mode, config=config, model_dir="logs")
 model_path = model.get_imagenet_weights()
 model.load_weights(model_path, by_name=True)
 

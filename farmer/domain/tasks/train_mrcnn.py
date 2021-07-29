@@ -18,39 +18,30 @@ from farmer.ncc.readers import segmentation_set
 from farmer.ncc.generators import MaskrcnnDataset
 
 """
-# for train instruments
+# command
 nohup docker exec -t maskrcnn_tf2 bash -c "cd $PWD && env CUDA_VISIBLE_DEVICES=0 \
-python farmer/domain/tasks/train_mrcnn.py train \
---dataset=/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments" > train0.out &
-
-# for train artery
-nohup docker exec -t maskrcnn_tf2 bash -c "cd $PWD && env CUDA_VISIBLE_DEVICES=1 \
-python farmer/domain/tasks/train_mrcnn.py train \
---dataset=/mnt/cloudy_z/src/yishikawa/input/Images/Artery/separate_sra_ima_11000/ima" > train1.out &
-
-# for evaluate
-docker exec -it maskrcnn_tf2 bash -c "cd $PWD && python farmer/domain/tasks/train_mrcnn.py eval \
---dataset=/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
+python farmer/domain/tasks/train_mrcnn.py train" > train0.out &
 """
 
-# CLASS_IDS = {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
-# CLASS_NAMES = ["linear", "point", "grasper"]
-# IMAGE_DIR = "images"
-# MASK_DIR = "labels"
+CLASS_IDS = {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
+CLASS_NAMES = ["linear", "point", "grasper"]
+IMAGE_DIR = "images"
+MASK_DIR = "labels"
+DATASET = "/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
+train_dirs = ["train"]
+val_dirs = ["valid"]
+TRAINING = False
 
-CLASS_IDS = {112:1, 207:2, 208:3}
-CLASS_NAMES = ["112", "207", "208"]
-IMAGE_DIR = "movieframe"
-MASK_DIR = "label"
-
-parser = argparse.ArgumentParser(description='Train Mask R-CNN')
-parser.add_argument("command",
-                    metavar="<command>",
-                    help="'train' or 'evaluate' on MS COCO")
-parser.add_argument('--dataset', required=True,
-                    metavar="/path/to/datset/",
-                    help='Directory of the train dataset')
-args = parser.parse_args()
+# CLASS_IDS = {112:1, 207:2, 208:3}
+# CLASS_NAMES = ["112", "207", "208"]
+# IMAGE_DIR = "movieframe"
+# MASK_DIR = "label"
+# DATASET = "/mnt/cloudy_z/src/yishikawa/input/Images/Artery/separate_sra_ima_11000/ima"
+# dataset_dirs = os.listdir(DATASET)
+# split_line = int(0.8*len(dataset_dirs))
+# train_dirs = dataset_dirs[:split_line]
+# val_dirs = dataset_dirs[split_line:]
+# TRAINING = False
 
 
 class TrainConfig(Config):
@@ -77,7 +68,6 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
     print("class names: ", dataset.class_names)
 
     image_ids = image_ids or dataset.image_ids
-    image_ids = image_ids[:100]
     annotations = list()
     det_results = list()
     for i, image_id in tqdm(enumerate(image_ids)):
@@ -104,14 +94,13 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
                 det_result[det_cls] = np.array(det_result[det_cls])
         det_results.append(det_result)
 
-        """
         # to check prediction
         visualize.display_instances(
             image, r['rois'], r['masks'], r['class_ids'],
             dataset.class_names, r['scores'],
             show_bbox=True, show_mask=True,
             title="Predictions")
-        """
+
 
         """
         # to check groud truth
@@ -128,7 +117,7 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
     print(mean_ap)
 
 
-if args.command == "train":
+if TRAINING:
     config = TrainConfig()
     mode = "training"
 else:
@@ -137,29 +126,19 @@ else:
 config.display()
 
 model = modellib.MaskRCNN(mode=mode, config=config, model_dir="logs")
-if args.command == "train":
+if TRAINING:
     model_path = model.get_imagenet_weights()
 else:
-    model_path = model.find_last()
+    # model_path = model.find_last()
+    model_path = "logs/farmer20210728T1023/mask_rcnn_farmer_0073.h5"
 model.load_weights(model_path, by_name=True)
 
-# train_dirs = ["train"]
-# val_dirs = ["valid"]
-
-dataset_dirs = os.listdir(args.dataset)
-split_line = int(0.8*len(dataset_dirs))
-train_dirs = dataset_dirs[:split_line]
-val_dirs = dataset_dirs[split_line:]
-
-print("train_dirs: ", train_dirs)
-print("val_dirs: ", val_dirs)
-
-train_annos = segmentation_set(args.dataset, train_dirs, IMAGE_DIR, MASK_DIR)
+train_annos = segmentation_set(DATASET, train_dirs, IMAGE_DIR, MASK_DIR)
 dataset_train = MaskrcnnDataset(train_annos, CLASS_IDS, CLASS_NAMES)
 dataset_train.load_dataset()
 dataset_train.prepare()
 
-train_annos = segmentation_set(args.dataset, val_dirs, IMAGE_DIR, MASK_DIR)
+train_annos = segmentation_set(DATASET, val_dirs, IMAGE_DIR, MASK_DIR)
 dataset_val = MaskrcnnDataset(train_annos, CLASS_IDS, CLASS_NAMES)
 dataset_val.load_dataset()
 dataset_val.prepare()
@@ -171,7 +150,7 @@ augmentation = iaa.SomeOf((0, 2), [
     iaa.GaussianBlur(sigma=(0.0, 5.0))
 ])
 
-if args.command == "train":
+if TRAINING:
     print("Train network heads")
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
@@ -185,5 +164,5 @@ if args.command == "train":
                 epochs=160,
                 augmentation=augmentation,
                 layers='all')
-else:
-    evaluate_det(model, dataset_val, config)
+
+evaluate_det(model, dataset_val, config)

@@ -13,6 +13,7 @@ import os
 import datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import yaml
 
 from farmer.ncc.readers import segmentation_set
 from farmer.ncc.generators import MaskrcnnDataset
@@ -23,30 +24,19 @@ nohup docker exec -t maskrcnn_tf2 bash -c "cd $PWD && env CUDA_VISIBLE_DEVICES=0
 python farmer/domain/tasks/train_mrcnn.py train" > train0.out &
 """
 
-CLASS_IDS = {191:1, 192:2, 193:3, 194:3, 195:3, 196:3}
-CLASS_NAMES = ["linear", "point", "grasper"]
-IMAGE_DIR = "images"
-MASK_DIR = "labels"
-DATASET = "/mnt/cloudy_z/src/yalee/instrument_tip_detection_yalee/datasets/preprocessed/3instruments"
-train_dirs = ["train"]
-val_dirs = ["valid"]
-TRAINING = False
+with open("example/yamls/mrcnn-instruments.yaml") as yamlfile:
+    yaml_config = yaml.safe_load(yamlfile)
 
-# CLASS_IDS = {112:1, 207:2, 208:3}
-# CLASS_NAMES = ["112", "207", "208"]
-# IMAGE_DIR = "movieframe"
-# MASK_DIR = "label"
-# DATASET = "/mnt/cloudy_z/src/yishikawa/input/Images/Artery/separate_sra_ima_11000/ima"
-# dataset_dirs = os.listdir(DATASET)
-# split_line = int(0.8*len(dataset_dirs))
-# train_dirs = dataset_dirs[:split_line]
-# val_dirs = dataset_dirs[split_line:]
-# TRAINING = False
 
+if yaml_config["TRAIN_DIRS"] is None or yaml_config["VAL_DIRS"] is None:
+    dataset_dirs = os.listdir(yaml_config["DATASET"])
+    split_line = int(0.8*len(dataset_dirs))
+    yaml_config["TRAIN_DIRS"] = dataset_dirs[:split_line]
+    yaml_config["VAL_DIRS"] = dataset_dirs[split_line:]
 
 class TrainConfig(Config):
     NAME = "farmer"
-    NUM_CLASSES = 1 + max(CLASS_IDS.values())
+    NUM_CLASSES = 1 + max(yaml_config["CLASS_IDS"].values())
     IMAGE_MAX_DIM = 640
     USE_MINI_MASK = False
 
@@ -117,7 +107,7 @@ def evaluate_det(model, dataset, config, eval_type="bbox", image_ids=None):
     print(mean_ap)
 
 
-if TRAINING:
+if yaml_config["TRAINING"]:
     config = TrainConfig()
     mode = "training"
 else:
@@ -126,20 +116,19 @@ else:
 config.display()
 
 model = modellib.MaskRCNN(mode=mode, config=config, model_dir="logs")
-if TRAINING:
+if yaml_config["TRAINING"]:
     model_path = model.get_imagenet_weights()
 else:
-    # model_path = model.find_last()
-    model_path = "logs/farmer20210728T1023/mask_rcnn_farmer_0073.h5"
+    model_path = yaml_config["TRAINED_MODEL"]
 model.load_weights(model_path, by_name=True)
 
-train_annos = segmentation_set(DATASET, train_dirs, IMAGE_DIR, MASK_DIR)
-dataset_train = MaskrcnnDataset(train_annos, CLASS_IDS, CLASS_NAMES)
+train_annos = segmentation_set(yaml_config["DATASET"], yaml_config["TRAIN_DIRS"], yaml_config["IMAGE_DIR"], yaml_config["MASK_DIR"])
+dataset_train = MaskrcnnDataset(train_annos, yaml_config["CLASS_IDS"], yaml_config["CLASS_NAMES"])
 dataset_train.load_dataset()
 dataset_train.prepare()
 
-train_annos = segmentation_set(DATASET, val_dirs, IMAGE_DIR, MASK_DIR)
-dataset_val = MaskrcnnDataset(train_annos, CLASS_IDS, CLASS_NAMES)
+train_annos = segmentation_set(yaml_config["DATASET"], yaml_config["VAL_DIRS"], yaml_config["IMAGE_DIR"], yaml_config["MASK_DIR"])
+dataset_val = MaskrcnnDataset(train_annos, yaml_config["CLASS_IDS"], yaml_config["CLASS_NAMES"])
 dataset_val.load_dataset()
 dataset_val.prepare()
 
@@ -150,7 +139,7 @@ augmentation = iaa.SomeOf((0, 2), [
     iaa.GaussianBlur(sigma=(0.0, 5.0))
 ])
 
-if TRAINING:
+if yaml_config["TRAINING"]:
     print("Train network heads")
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,

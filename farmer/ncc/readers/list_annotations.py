@@ -61,10 +61,12 @@ def classification_video_set(
         with open(csv_path, "r") as fr:
             reader = csv.reader(fr)
             next(reader)
-            for start_time, end_time, class_name in reader:
-                if class_name not in class_names:
+            for start_time, end_time, *classes in reader:
+                if ( set(classes) & set(class_names) ) != set(classes):
                     continue
-                class_id = class_names.index(class_name)
+                class_ids = [
+                    class_names.index(c) for c in classes
+                ]
                 if time_format == "datetime":
                     start_time = _str_time_to_frame(start_time, fps)
                     end_time = _str_time_to_frame(end_time, fps)
@@ -72,7 +74,7 @@ def classification_video_set(
                     start_time, end_time = int(start_time), int(end_time)
                 annotations.extend(
                     [
-                        [video_path, frame, class_id]
+                        [video_path, frame, class_ids]
                         for frame in range(start_time, end_time)
                         if skip_frame == 0 or frame % skip_frame == 0
                     ]

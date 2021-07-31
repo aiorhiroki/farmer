@@ -62,7 +62,7 @@ class PredictClassificationTask:
                     [
                         image_file,
                         frame_id,
-                        self.config.class_names[int(pred_cls)],
+                        [self.config.class_names[int(p)] for p in pred_cls],
                         self.config.class_names[int(true_cls)]
                     ]
                 )

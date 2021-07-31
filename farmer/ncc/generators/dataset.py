@@ -94,8 +94,7 @@ class ClassificationDataset:
     def __getitem__(self, i):
 
         # input_file is [image_path] or [video_path, frame_id]
-        # label is class_id
-        *input_file, label = self.annotations[i]
+        *input_file, class_ids = self.annotations[i]
 
         if self.input_data_type == "video":
             # video data [video_path, frame_id]
@@ -114,7 +113,9 @@ class ClassificationDataset:
         # apply preprocessing
         input_image = self.image_util.resize(input_image, anti_alias=True)
         input_image = self.image_util.normalization(input_image)
-        label = self.image_util.cast_to_onehot(label)
+        labels = np.zeros(self.image_util.nb_classes)
+        for c_id in class_ids:
+            labels += self.image_util.cast_to_onehot(c_id)
 
         # apply augmentations
         if self.augmentation and len(self.augmentation) > 0:
@@ -125,7 +126,7 @@ class ClassificationDataset:
                 self.augmix
             )
 
-        return input_image, label
+        return input_image, labels
 
     def __len__(self):
         return len(self.annotations)

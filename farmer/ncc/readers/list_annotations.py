@@ -23,7 +23,7 @@ def classification_set(target_dir, data_list, class_names):
                     )
                 )
         class_annotation = [
-            [image_path, class_id] for image_path in image_paths
+            [image_path, [class_id]] for image_path in image_paths
         ]
         annotations.extend(class_annotation)
 

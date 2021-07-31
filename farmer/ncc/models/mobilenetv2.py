@@ -258,7 +258,7 @@ def MobileNetV2(classes=1000, input_tensor=None, input_shape=(512, 512, 3), weig
         return no_top_model
 
 
-def mobilenet_v2(nb_classes, height=244, width=244, weights_info=None):
+def mobilenet_v2(nb_classes, height=244, width=244, weights_info=None, activation='softmax'):
     base_model = MobileNetV2(
         input_shape=(height, width, 3),
         weights_info=weights_info,
@@ -271,7 +271,7 @@ def mobilenet_v2(nb_classes, height=244, width=244, weights_info=None):
         epsilon=1e-3, momentum=0.999, name='Conv_1_bn')(x)
     x = Activation(relu6, name='out_relu')(x)
     x = GlobalAveragePooling2D()(x)
-    predictions = Dense(nb_classes, activation='softmax')(x)
+    predictions = Dense(nb_classes, activation=activation)(x)
     model = Model(base_model.input, predictions)
 
     return model

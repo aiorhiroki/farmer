@@ -39,23 +39,28 @@ class PredictClassificationTask:
             use_multiprocessing=self.config.multi_gpu,
             verbose=1,
         )
-        prediction_cls = np.argmax(prediction, axis=1)
-        true_cls = np.argmax(
-            [class_id for _, class_id in dataset], axis=1)
+        th = 0.5
+        prediction_cls = [
+            [i for i, p in enumerate(pred) if p > th]
+            for pred in prediction
+        ]
+        true_cls = [
+            [i for i, id in enumerate(class_id) if id > th]
+            for _, class_id in dataset
+        ]
         eval_report = classification_report(
             true_cls, prediction_cls, output_dict=True
         )
-        return prediction, eval_report
+        return prediction_cls, eval_report
 
     def _do_save_result_task(self, annotation_set, prediction, save_npy):
         if save_npy:
             np.save(f"{self.config.info_path}/pred.npy", prediction)
 
-        prediction_classes = np.argmax(prediction, axis=-1)
         pred_result = list()
         pred_ids = list()
         true_ids = list()
-        for files, pred_cls in zip(annotation_set, prediction_classes):
+        for files, pred_cls in zip(annotation_set, prediction):
             if self.config.input_data_type == "video":
                 image_file, frame_id, true_cls = files
                 pred_result.append(
@@ -63,7 +68,7 @@ class PredictClassificationTask:
                         image_file,
                         frame_id,
                         [self.config.class_names[int(p)] for p in pred_cls],
-                        self.config.class_names[int(true_cls)]
+                        [self.config.class_names[int(t)] for t in true_cls]
                     ]
                 )
             else:
@@ -75,8 +80,8 @@ class PredictClassificationTask:
                         self.config.class_names[int(true_cls)]
                     ]
                 )
-            pred_ids.append(int(pred_cls))
-            true_ids.append(int(true_cls))
+            pred_ids.append(pred_cls)
+            true_ids.append(true_cls)
         with open(f"{self.config.info_path}/pred.csv", "w") as fw:
             writer = csv.writer(fw)
             writer.writerows(pred_result)

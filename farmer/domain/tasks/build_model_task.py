@@ -81,7 +81,8 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=weights_info
+                    weights_info=weights_info,
+                    activation=activation
                 )
             elif model_name.startswith("efficientnetb"):
                 model = models.EfficientNet(

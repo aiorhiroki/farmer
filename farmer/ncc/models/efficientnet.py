@@ -5,7 +5,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 
 
-def EfficientNet(model_name, nb_classes, height, width):
+def EfficientNet(model_name, nb_classes, height, width, activation='softmax'):
     model_name_converted = model_name.replace('efficientnetb', 'EfficientNetB')
 
     with tf.device("/cpu:0"):
@@ -16,7 +16,7 @@ def EfficientNet(model_name, nb_classes, height, width):
         )
         x = base_model.output
         x = GlobalAveragePooling2D()(x)
-        predictions = Dense(nb_classes, activation='softmax')(x)
+        predictions = Dense(nb_classes, activation=activation)(x)
         model = Model(base_model.input, predictions)
 
     return model

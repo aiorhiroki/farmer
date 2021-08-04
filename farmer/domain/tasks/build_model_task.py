@@ -61,20 +61,23 @@ class BuildModelTask:
                 model = models.xception(
                     nb_classes=nb_classes,
                     height=height,
-                    width=width
+                    width=width,
+                    activation=activation
                 )
             elif model_name == "dilated_xception" and xception_shape_condition:
                 model = models.dilated_xception(
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
-                    weights_info=weights_info
+                    weights_info=weights_info,
+                    activation=activation
                 )
             elif model_name == "mobilenet" and mobilenet_shape_condition:
                 model = models.mobilenet(
                     nb_classes=nb_classes,
                     height=height,
-                    width=width
+                    width=width,
+                    activation=activation
                 )
             elif model_name == "mobilenetv2" and mobilenet_shape_condition:
                 model = models.mobilenet_v2(
@@ -90,6 +93,7 @@ class BuildModelTask:
                     nb_classes=nb_classes,
                     height=height,
                     width=width,
+                    activation=activation
                 )
             elif model_name.startswith('resnest'):
                 model = models.resnest(
@@ -97,6 +101,7 @@ class BuildModelTask:
                     model_name=model_name,
                     height=height,
                     width=width,
+                    fc_activation=activation
                 )
             else:
                 model = models.Model2D(nb_classes, height, width)

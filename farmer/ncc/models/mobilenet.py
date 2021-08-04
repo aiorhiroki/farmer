@@ -6,7 +6,7 @@ from tensorflow.keras.models import Model
 import pretrainedmodels
 
 
-def mobilenet(nb_classes, height=244, width=244, framework="tensorflow"):
+def mobilenet(nb_classes, height=244, width=244, framework="tensorflow", activation='softmax'):
     if framework == "tensorflow":
         with tf.device("/cpu:0"):
             base_model = MobileNet(
@@ -16,7 +16,7 @@ def mobilenet(nb_classes, height=244, width=244, framework="tensorflow"):
             )
             x = base_model.output
             x = GlobalAveragePooling2D()(x)
-            predictions = Dense(nb_classes, activation='softmax')(x)
+            predictions = Dense(nb_classes, activation=activation)(x)
             model = Model(base_model.input, predictions)
 
     elif framework == "pytorch":

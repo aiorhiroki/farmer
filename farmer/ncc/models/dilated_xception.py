@@ -217,7 +217,7 @@ def DilatedXception(classes=10, input_tensor=None, input_shape=(512, 512, 3), we
     else:
         return model
 
-def dilated_xception(nb_classes, height=512, width=512, weights_info=None):
+def dilated_xception(nb_classes, height=512, width=512, weights_info=None, activation='softmax'):
     base_model = DilatedXception(
         classes=nb_classes,
         input_shape=(height, width, 3),
@@ -226,7 +226,7 @@ def dilated_xception(nb_classes, height=512, width=512, weights_info=None):
     )
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
-    predictions = Dense(nb_classes, activation='softmax')(x)
+    predictions = Dense(nb_classes, activation=activation)(x)
     model = Model(base_model.input, predictions)
 
     return model

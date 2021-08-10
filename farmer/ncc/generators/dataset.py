@@ -100,11 +100,13 @@ class ClassificationDataset:
             # video data [video_path, frame_id]
             video_path, frame_id = input_file
             # read frame
-            video = cv2.VideoCapture(video_path)
-            video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
-            ret, input_image = video.read()
-            # BGR -> RGB
-            input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+            # video = cv2.VideoCapture(video_path)
+            # video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+            # ret, input_image = video.read()
+            # # BGR -> RGB
+            # input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
+
+            input_image = self._synthesize(video_path, frame_id)
 
         elif self.input_data_type == "image":
             # image data [image_path]
@@ -130,3 +132,24 @@ class ClassificationDataset:
 
     def __len__(self):
         return len(self.annotations)
+    
+    def _synthesize(self, video_path, frame_id, frame_step=1):
+        imgs = []
+        # read frame
+        video = cv2.VideoCapture(video_path)
+        for i in range(2):
+            if frame_id-(frame_step*i) < 0:
+                continue
+            video.set(cv2.CAP_PROP_POS_FRAMES, frame_id-(frame_step*i))
+            ret, img = video.read()
+            # BGR -> RGB
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            imgs.append(img)
+        
+        # 合成
+        if len(imgs) >= 2:
+            out_img = cv2.addWeighted(src1=imgs[0],alpha=0.6,src2=imgs[1],beta=0.4,gamma=0)
+        else:
+            out_img = imgs[0]
+
+        return out_img

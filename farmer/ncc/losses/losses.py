@@ -159,3 +159,29 @@ class LogCoshLoss(Loss):
         return F.flooding(
             tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0),
             self.flooding_level)
+
+
+class RelativeVolumeDifferenceLoss(Loss):
+    def __init__(self, class_weights=None, flooding_level=0., **kwargs):
+        super().__init__(name='rvd_loss')
+        self.class_weights = class_weights if class_weights is not None else 1
+        self.flooding_level = flooding_level
+
+    def __call__(self, gt, pr):
+        return F.flooding(F.rvd_loss(
+            gt=gt,
+            pr=pr,
+            class_weights=self.class_weights
+        ), self.flooding_level)
+
+
+class BoundaryLoss(Loss):
+    def __init__(self, flooding_level=0., **kwargs):
+        super().__init__(name='boundary_loss')
+        self.flooding_level = flooding_level
+
+    def __call__(self, gt, pr):
+        return F.flooding(F.surface_loss(
+            gt=gt,
+            pr=pr,
+        ), self.flooding_level)

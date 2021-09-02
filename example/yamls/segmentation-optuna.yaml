@@ -100,4 +100,13 @@ train_colors:
     - 5
     - 10
     - 15
-    
+mlflow: True
+experiment_name: test_experiment
+run_name: segmentation-optuna_test
+user_name: test_user
+use_data:
+    Artery: True
+    Ureter: True
+    Hypogastric: True
+description: test
+version: 0.0.0

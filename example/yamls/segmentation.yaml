@@ -96,3 +96,13 @@ train_colors:
 early_stopping: yes # yes if using early_stopping to interruption
 patience: 5
 monitor: val_loss
+mlflow: True
+experiment_name: test_experiment
+run_name: segmentation_test
+user_name: test_user
+use_data:
+    Artery: True
+    Ureter: False
+    Hypogastric: True
+description: test
+version: 0.0.0

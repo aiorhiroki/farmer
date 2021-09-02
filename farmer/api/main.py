@@ -12,7 +12,7 @@ from farmer.ncc.utils import cross_val_split
 from farmer.domain.model.task_model import Task
 from farmer.domain.model import Trainer
 from farmer.domain.workflows.train_workflow import TrainWorkflow
-
+from farmer.ncc.mlflow_wrapper.mlflow_client_wrapper import MlflowClientWrapper
 
 def fit():
     yaml.add_constructor(
@@ -41,6 +41,13 @@ def fit():
             config.update(secret_config)
         trainer = Trainer(**config)
         val_dirs = trainer.val_dirs
+        
+        if trainer.mlflow:
+            client = MlflowClientWrapper.create_run(experiment_name=trainer.experiment_name,
+                                                    run_name=trainer.run_name,
+                                                    user_name=trainer.user_name)
+            trainer.artifacts_path = client.get_artifacts_path()
+        
         if trainer.training and (val_dirs is None or len(val_dirs) == 0):
             # cross validation
             if trainer.task == Task.SEMANTIC_SEGMENTATION:

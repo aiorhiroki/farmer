@@ -32,3 +32,8 @@ train_params:
     weights_info:
         classes: 
         weights: 
+mlflow: True
+experiment_name: test_experiment
+run_name: classification
+user_name: test_user
+version: 0.0.0

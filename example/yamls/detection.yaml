@@ -34,3 +34,9 @@ class_names:
     - bird
     - car
     - train
+mlflow: True
+experiment_name: test_experiment
+run_name: detection_test
+user_name: test_user
+description: test
+version: 0.0.0

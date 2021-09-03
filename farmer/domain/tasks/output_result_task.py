@@ -1,3 +1,5 @@
+import os
+import glob
 import yaml
 from farmer.ncc.tasks import Task
 from farmer.ncc.mlflow_wrapper.mlflow_client_wrapper import MlflowClientWrapper
@@ -62,6 +64,11 @@ class OutputResultTask:
         MlflowClientWrapper.save_artifacts_to_mlruns(self.config.info_path, artifact_dir_name="info")
         MlflowClientWrapper.save_artifacts_to_mlruns(self.config.learning_path, artifact_dir_name="learning")
         MlflowClientWrapper.save_artifacts_to_mlruns(self.config.model_path, artifact_dir_name="model")
+        
+        dice_result_paths = glob.glob(os.path.join(self.config.image_path, 'test/*dice*'))
+        if dice_result_paths:
+            for p in dice_result_paths:
+                MlflowClientWrapper.save_artifact_to_mlruns(p, artifact_dir_name="test")
         
         if self.config.data_dvc_path:
             for data_name, dvc_path in self.config.data_dvc_path.items():

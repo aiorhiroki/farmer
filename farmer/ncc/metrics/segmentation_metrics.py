@@ -6,7 +6,7 @@ from ..utils import get_imageset
 import matplotlib.pyplot as plt
 import cv2
 import json
-
+from ..metrics.surface_dice import metrics as surface_distance
 
 def calc_segmentation_metrics(confusion):
     tp = np.diag(confusion)
@@ -137,7 +137,6 @@ def detection_rate_confusions(pred_labels, gt_labels, nb_classes):
 
     return confusion_tabel
 
-
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
@@ -175,6 +174,48 @@ def plot_confusion_matrix(cm, classes,
     plt.tight_layout()
     plt.savefig('{}.png'.format(save_file))
 
+def calc_surface_dice(pred_out, gt_label, nb_classes, vertical=1.0, horizontal=1.0, tolerance=0.0):
+    """
+    surface dice calculation
+
+    Args:
+        pred_out (np.array, shape (h,w,nb_classes)): prediction output. 
+        gt_mask (np.array, shape (h,w)): ground truth mask. 
+        nb_classes (int): the number of classes
+        vertical (float, optional): real length (mm) of pixel in the vertical direction. Defaults to 1.0.
+        horizontal (float, optional): real length (mm) of pixel in the horizontal direction. Defaults to 1.0.
+        tolerance (float, optional): acceptable tolerance (mm) of boundary. Defaults to 0.0.
+
+    Returns:
+        surface_dice (float): 
+    """
+    class_surface_dice = list()
+    
+    # convert array (value: class_id)
+    pred_label = np.uint8(np.argmax(pred_out, axis=2))
+    gt_label = np.uint8(np.argmax(gt_label, axis=2))
+
+    for class_id in range(nb_classes):
+        gt_mask = gt_label == class_id
+        pred_mask = pred_label == class_id
+        
+        # convert bool np.array mask
+        gt_mask = np.asarray(gt_mask, dtype=np.bool)
+        pred_mask = np.asarray(pred_mask, dtype=np.bool)
+        
+        # if both masks are empty, the result is NaN.
+        if (np.sum(gt_mask==True) == 0) & (np.sum(pred_mask==True) == 0):
+            surface_dice = 0.0
+        else:        
+            surface_distances = surface_distance.compute_surface_distances(
+                gt_mask,
+                pred_mask,
+                spacing_mm=(vertical, horizontal))
+            surface_dice = surface_distance.compute_surface_dice_at_tolerance(surface_distances, tolerance_mm=tolerance)
+        
+        class_surface_dice.append(surface_dice)
+    
+    return class_surface_dice
 
 def generate_segmentation_result(
     nb_classes,
@@ -186,6 +227,8 @@ def generate_segmentation_result(
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
     image_dice_list = list()
     dice_list = list()
+    surface_dice_list = list()
+    
     print('\nsave predicted image...')
     for i, (image, mask) in enumerate(tqdm(dataset)):
         if i == 0:
@@ -203,12 +246,13 @@ def generate_segmentation_result(
             for j in range(image_index + 1):
                 confusion = calc_segmentation_confusion(
                     output[j], masks[j], nb_classes)
-
                 metrics = calc_segmentation_metrics(confusion)
                 dice = metrics['dice']
+                surface_dice = calc_surface_dice(output[j], masks[j], nb_classes)
+                
                 result_image = get_imageset(
-                    images[j], output[j], masks[j], put_text=f'dice: {dice}')
-
+                    images[j], output[j], masks[j],
+                    put_text=f'dice: {np.round(dice, 3)}    surface dice: {np.round(surface_dice, 3)}')
                 data_index = batch_index * batch_size + j
                 *input_file, _ = dataset.annotations[data_index]
                 image_path = Path(input_file[0])
@@ -217,6 +261,8 @@ def generate_segmentation_result(
                 save_image_path = str(save_image_dir / image_path.name)
                 image_dice_list.append([save_image_path, dice])
                 dice_list.append(dice)
+                surface_dice_list.append([save_image_path, surface_dice])
+                
                 result_image_out = result_image[:, :, ::-1]   # RGB => BGR
                 cv2.imwrite(save_image_path, result_image_out)
 
@@ -224,8 +270,12 @@ def generate_segmentation_result(
 
             images[:] = 0
             masks[:] = 0
+    
     with open(f"{save_dir}/dice.json", "w") as fw:
         json.dump(image_dice_list, fw, ensure_ascii=True, indent=4)
+
+    with open(f"{save_dir}/surface_dice.json", "w") as fw:
+        json.dump(surface_dice_list, fw, ensure_ascii=True, indent=4)
 
     dice_class_axis = np.array(dice_list).T.tolist()
     for i in range(len(dice_class_axis)):
@@ -233,4 +283,9 @@ def generate_segmentation_result(
         plt.hist(dice_class_axis[i])
         plt.savefig(f"{save_dir}/dice_hist_class_{i}.png")
 
-    return calc_segmentation_metrics(confusion_all)
+    metrics = calc_segmentation_metrics(confusion_all)
+    # append surface_dice to metrics
+    mean_surface_dice = np.mean(list(map(lambda x: x[1], surface_dice_list)), axis=0)
+    metrics['surface_dice'] = list(mean_surface_dice)
+
+    return metrics

@@ -24,25 +24,18 @@ from __future__ import print_function
 import os
 
 import tensorflow as tf
-
+from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras import layers
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.layers import Lambda
 from tensorflow.python.keras.layers import Activation
 from tensorflow.python.keras.layers import Concatenate
-from tensorflow.python.keras.layers import Add
 from tensorflow.python.keras.layers import Dropout
 from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.layers import Conv2D
-from tensorflow.python.keras.layers import DepthwiseConv2D
-from tensorflow.python.keras.layers import ZeroPadding2D
 from tensorflow.python.keras.layers import GlobalAveragePooling2D
 from tensorflow.python.keras.utils.layer_utils import get_source_inputs
 from tensorflow.python.keras.utils.data_utils import get_file
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.activations import relu
-from tensorflow.python.keras.applications.imagenet_utils import preprocess_input
 
 from tensorflow.keras.applications import efficientnet
 from .functional import SepConv_BN
@@ -55,7 +48,7 @@ WEIGHTS_PATH_X_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/d
 WEIGHTS_PATH_MOBILE_CS = "https://github.com/bonlime/keras-deeplab-v3-plus/releases/download/1.2/deeplabv3_mobilenetv2_tf_dim_ordering_tf_kernels_cityscapes.h5"
 
 
-def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
+def Deeplabv3(weights_info={}, input_tensor=None, input_shape=(512, 512, 3), classes=21, backbone='mobilenetv2',
               OS=16, alpha=1., activation='softmax'):
     """ Instantiates the Deeplabv3+ architecture
 
@@ -101,9 +94,9 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
                          'efficientnetb0', 'efficientnetb1', 'efficientnetb2', 'efficientnetb3',
                          'efficientnetb4', 'efficientnetb5', 'efficientnetb6', 'efficientnetb7'}):
         raise ValueError('The `backbone` argument should be either '
-                         '`xception`  or `mobilenetv2` or `efficientnetb#`')
+                         '`xception`  or `mobilenetv2` ')
 
-    if weights_info is None:
+    if weights_info.get("weights") is None:
         weights = 'pascal_voc'
     else:
         weights = weights_info["weights"]
@@ -143,15 +136,13 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
             input_shape=input_shape,
             weights_info=weights_info,
             OS=OS,
-            include_top=False,
+            include_top=False
         )
 
     x = base_model.output
-
     # end of feature extractor
 
     # branching for Atrous Spatial Pyramid Pooling
-
     # Image Feature branch
     shape_before = tf.shape(x)
     b4 = GlobalAveragePooling2D()(x)
@@ -193,8 +184,8 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
     x = BatchNormalization(name='concat_projection_BN', epsilon=1e-5)(x)
     x = Activation('relu')(x)
     x = Dropout(0.1)(x)
-    # DeepLab v.3+ decoder
 
+    # DeepLab v.3+ decoder
     if backbone == 'xception':
         # Feature projection
         # x4 (x2) block
@@ -255,8 +246,8 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         else:
             return model
         model.load_weights(weights_path, by_name=True)
-        print("loaded weights of pascal voc")
-
+        print('load weights:', weights)
+        
     elif weights == 'cityscapes':
         if backbone == 'xception':
             weights_path = get_file('deeplabv3_xception_tf_dim_ordering_tf_kernels_cityscapes.h5',
@@ -269,19 +260,11 @@ def Deeplabv3(weights_info=None, input_tensor=None, input_shape=(512, 512, 3), c
         else:
             return model
         model.load_weights(weights_path, by_name=True)
-        print("loaded weights of cityscapes")
-    
+        print('load weights:', weights)
+
     elif os.path.exists(weights):
         if weights_info.get("classes") is None:
             model.load_weights(weights)
+            print('load weights:', weights)
+
     return model
-
-
-def preprocess_input(x):
-    """Preprocesses a numpy array encoding a batch of images.
-    # Arguments
-        x: a 4D numpy array consists of RGB values within [0, 255].
-    # Returns
-        Input array scaled to [-1.,1.]
-    """
-    return preprocess_input(x, mode='tf')

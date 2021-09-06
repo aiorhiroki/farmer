@@ -779,6 +779,14 @@ python-versions = "*"
 pyasn1 = ">=0.4.6,<0.5.0"
 
 [[package]]
+name = "pydensecrf"
+version = "1.0rc3"
+description = "A python interface to Philipp Krähenbühl's fully-connected (dense) CRF code."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyparsing"
 version = "2.4.7"
 description = "Python parsing module"
@@ -1271,7 +1279,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "3.6.9"
-content-hash = "fa95d9e05fc15867e3ca1b91e498d65a7644656897a3488ec16829a78e31d0db"
+content-hash = "104bc3e805d27543c7bcef781680ccb73312d02988ac544c457d3ecb71e2f952"
 
 [metadata.files]
 absl-py = [
@@ -1899,6 +1907,9 @@ pyasn1-modules = [
     {file = "pyasn1_modules-0.2.8-py3.5.egg", hash = "sha256:426edb7a5e8879f1ec54a1864f16b882c2837bfd06eee62f2c982315ee2473ed"},
     {file = "pyasn1_modules-0.2.8-py3.6.egg", hash = "sha256:cbac4bc38d117f2a49aeedec4407d23e8866ea4ac27ff2cf7fb3e5b570df19e0"},
     {file = "pyasn1_modules-0.2.8-py3.7.egg", hash = "sha256:c29a5e5cc7a3f05926aff34e097e84f8589cd790ce0ed41b67aed6857b26aafd"},
+]
+pydensecrf = [
+    {file = "pydensecrf-1.0rc3.tar.gz", hash = "sha256:08be1603af2bede05c7697b6018e8e3059de7cc181e4e784b334889dcc749aa5"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},

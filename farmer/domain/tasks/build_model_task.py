@@ -120,6 +120,14 @@ class BuildModelTask:
                     backbone=backbone,
                     activation=activation
                 )
+            elif model_name == "deeplab_v3_subpixel":
+                model = models.Deeplabv3_subpixel(
+                    weights_info=self.config.train_params.weights_info,
+                    input_shape=(height, width, 3),
+                    classes=nb_classes,
+                    backbone=backbone,
+                    activation=activation
+                )
             elif model_name == "pspnet":
                 model = segmentation_models.PSPNet(
                     backbone_name=backbone,

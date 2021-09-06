@@ -57,11 +57,6 @@ def flooding(loss, b=0.02):
     return tf.math.abs(loss - b) + b
 
 
-def rvd_loss(gt, pr, class_weights=1.):
-    index = _rvd_index(gt, pr) * class_weights
-    return tf.reduce_mean(index)
-
-
 def surface_loss(gt, pr):
     gt_dist_map = tf.py_function(func=_calc_dist_map_batch,
                                      inp=[gt],

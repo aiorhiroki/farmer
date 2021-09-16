@@ -104,6 +104,12 @@ class ClassificationDataset:
             video = cv2.VideoCapture(video_path)
             video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
             ret, input_image = video.read()
+            while not ret:
+                *input_file, label = self.annotations[np.random.randint(0, len(self.annotations)-1)]
+                video_path, frame_id = input_file
+                video = cv2.VideoCapture(video_path)
+                video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+                ret, input_image = video.read()
             # BGR -> RGB
             input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
 

@@ -13,7 +13,9 @@ class OutputResultTask:
 
         if self.config.mlflow:
             if not MlflowClientWrapper.is_running():
-                MlflowClientWrapper.create_run(experiment_name=self.config.experiment_name,
+                MlflowClientWrapper.create_run(tracking_uri=self.config.tracking_uri,
+                                                registry_uri=self.config.tracking_uri,
+                                                experiment_name=self.config.experiment_name,
                                                 run_name=self.config.run_name,
                                                 user_name=self.config.user_name)
             self._do_log_mlflow_task()
@@ -72,7 +74,7 @@ class OutputResultTask:
         
         if self.config.data_dvc_path:
             for data_name, dvc_path in self.config.data_dvc_path.items():
-                if (data_name is not None) & (dvc_path is not None):
+                if (data_name is not None) & (dvc_path is not None) & (os.path.exists(dvc_path)):
                     MlflowClientWrapper.save_artifact_to_mlruns(dvc_path, artifact_dir_name=f"dvc/data/{data_name}")
         
         if self.config.task == Task.SEMANTIC_SEGMENTATION:

@@ -26,9 +26,6 @@ mlflow: True
 experiment_name: test_experiment
 run_name: classification-eval_test
 user_name: test_user
-use_data:
-    Artery: True
-    Ureter: True
-    Hypogastric: True
+tracking_uri: '/mnt/cloudy_z/result/mlruns'
 description: test
 version: 0.0.0

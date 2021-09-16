@@ -4,9 +4,6 @@ import shutil
 import mlflow
 from mlflow.tracking import MlflowClient
 
-class MlflowConfig:
-    TRACKING_URI = '/mnt/cloudy_z/result/mlruns'
-
 class MlflowClientWrapper:
     _singleton = None
     _mlflow_client = None
@@ -15,7 +12,7 @@ class MlflowClientWrapper:
     _experiment_id = None
     
     @classmethod
-    def __internal_new__(cls, experiment_name="", run_name="", user_name=""):
+    def __internal_new__(cls, tracking_uri="", registry_uri="", experiment_name="", run_name="", user_name=""):
         """
         インスタンスを生成する
         MlflowClientの生成、experiment, runを開始する
@@ -30,9 +27,9 @@ class MlflowClientWrapper:
         """
         print('[I] MlflowClientWrapper new')
         
-        cls._mlflow_client = MlflowClient(tracking_uri=MlflowConfig.TRACKING_URI, registry_uri=MlflowConfig.TRACKING_URI)
+        cls._mlflow_client = MlflowClient(tracking_uri, registry_uri)
         # mlrunsのパスを指定
-        mlflow.set_tracking_uri(MlflowConfig.TRACKING_URI)
+        mlflow.set_tracking_uri(tracking_uri)
         
         try:
             cls._experiment_id = cls._mlflow_client.create_experiment(experiment_name)

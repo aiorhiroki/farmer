@@ -43,7 +43,8 @@ class Trainer(Config, ImageLoader):
     experiment_name: str = None
     run_name: str = None
     description: str = None
-    use_data: dict = None
+    tracking_uri: str = None
+    data_dvc_path: dict = None
     version: str = None
     user_name: str = None
 
@@ -92,7 +93,6 @@ class Trainer(Config, ImageLoader):
         self.get_mean_std()
         self.nb_classes = len(self.class_names)
         self.height, self.width = self.get_image_shape()
-        self.data_dvc_path = {}
 
         # For optuna analysis hyperparameter
         def _check_need_optuna(train_params: dict):
@@ -105,15 +105,3 @@ class Trainer(Config, ImageLoader):
         _check_need_optuna(self.train_params)
         if self.optuna:
             self.optuna_params = self.train_params
-        
-        # For dvc
-        if self.use_data:
-            dvc_paths = {
-                'Artery': '/mnt/cloudy_z/input/Artery/train_test.dvc',
-                'Ureter': '/mnt/cloudy_z/input/Ureter/train_test.dvc',
-                'Hypogastric': '/mnt/cloudy_z/input/Hypogastric_nerve/train_test.dvc'
-            }
-            
-            for data_name, use_flag in self.use_data.items():
-                if use_flag:
-                    self.data_dvc_path[data_name] = dvc_paths.get(data_name, None)

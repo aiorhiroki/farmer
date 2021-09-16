@@ -43,7 +43,9 @@ def fit():
         val_dirs = trainer.val_dirs
         
         if trainer.mlflow:
-            client = MlflowClientWrapper.create_run(experiment_name=trainer.experiment_name,
+            client = MlflowClientWrapper.create_run(tracking_uri=trainer.tracking_uri,
+                                                    registry_uri=trainer.tracking_uri,
+                                                    experiment_name=trainer.experiment_name,
                                                     run_name=trainer.run_name,
                                                     user_name=trainer.user_name)
             trainer.artifacts_path = client.get_artifacts_path()

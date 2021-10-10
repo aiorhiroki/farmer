@@ -42,6 +42,6 @@ mlflow: True
 experiment_name: test_experiment
 run_name: segmentation-eval_test
 user_name: test_user
-tracking_uri: '/mnt/cloudy_z/result/mlruns'
+tracking_uri: './mlruns' # path to mlruns
 description: test
 version: 0.0.0

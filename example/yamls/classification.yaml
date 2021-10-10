@@ -36,5 +36,5 @@ mlflow: True
 experiment_name: test_experiment
 run_name: classification
 user_name: test_user
-tracking_uri: '/mnt/cloudy_z/result/mlruns'
+tracking_uri: './mlruns' # path to mlruns
 version: 0.0.0

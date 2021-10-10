@@ -100,10 +100,8 @@ mlflow: True
 experiment_name: test_experiment
 run_name: segmentation_test
 user_name: test_user
-tracking_uri: '/mnt/cloudy_z/result/mlruns'
+tracking_uri: './mlruns' # path to mlruns
 data_dvc_path:
-    'Artery': '/mnt/cloudy_z/input/Artery/train_test.dvc'
-    'Ureter': '/mnt/cloudy_z/input/Ureter/train_test.dvc'
-    'Hypogastric': '/mnt/cloudy_z/input/Hypogastric_nerve/train_test.dvc'
+    'data_name': './data.dvc' # path to dvc
 description: test
 version: 0.0.0

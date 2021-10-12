@@ -286,6 +286,6 @@ def generate_segmentation_result(
     metrics = calc_segmentation_metrics(confusion_all)
     # append surface_dice to metrics
     mean_surface_dice = np.mean(list(map(lambda x: x[1], surface_dice_list)), axis=0)
-    metrics['surface_dice'] = list(mean_surface_dice)
+    metrics['surface_dice'] = [float(x) for x in mean_surface_dice]
 
     return metrics

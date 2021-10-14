@@ -222,7 +222,8 @@ def generate_segmentation_result(
     dataset,
     model,
     save_dir,
-    batch_size
+    batch_size,
+    sdice_tolerance
 ):
     confusion_all = np.zeros((nb_classes, nb_classes), dtype=np.int32)
     image_dice_list = list()
@@ -248,7 +249,7 @@ def generate_segmentation_result(
                     output[j], masks[j], nb_classes)
                 metrics = calc_segmentation_metrics(confusion)
                 dice = metrics['dice']
-                surface_dice = calc_surface_dice(output[j], masks[j], nb_classes)
+                surface_dice = calc_surface_dice(output[j], masks[j], nb_classes, tolerance=sdice_tolerance)
                 
                 result_image = get_imageset(
                     images[j], output[j], masks[j],

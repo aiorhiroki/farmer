@@ -22,3 +22,10 @@ width: 80
 height: 80
 trained_path: result/classification/images/classification_result
 result_dir: test_classification_result
+mlflow: True
+experiment_name: test_experiment
+run_name: classification-eval_test
+user_name: test_user
+tracking_uri: './mlruns' # path to mlruns
+description: test
+version: 0.0.0

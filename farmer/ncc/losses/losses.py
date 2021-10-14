@@ -159,3 +159,15 @@ class LogCoshLoss(Loss):
         return F.flooding(
             tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0),
             self.flooding_level)
+
+
+class BoundaryLoss(Loss):
+    def __init__(self, flooding_level=0., **kwargs):
+        super().__init__(name='boundary_loss')
+        self.flooding_level = flooding_level
+
+    def __call__(self, gt, pr):
+        return F.flooding(F.surface_loss(
+            gt=gt,
+            pr=pr,
+        ), self.flooding_level)

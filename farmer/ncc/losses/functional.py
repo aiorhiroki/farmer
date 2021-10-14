@@ -1,5 +1,7 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras import backend as K
+from scipy.ndimage import distance_transform_edt as distance
 
 SMOOTH = K.epsilon()
 
@@ -55,6 +57,14 @@ def flooding(loss, b=0.02):
     return tf.math.abs(loss - b) + b
 
 
+def surface_loss(gt, pr):
+    gt_dist_map = tf.py_function(func=_calc_dist_map_batch,
+                                     inp=[gt],
+                                     Tout=tf.float32)
+    multipled = pr * gt_dist_map
+    return tf.reduce_mean(multipled)
+
+
 def _tp_fp_fn(gt, pr):
     pr = tf.clip_by_value(pr, SMOOTH, 1 - SMOOTH)
     reduce_axes = [0, 1, 2]
@@ -82,3 +92,27 @@ def _iou_index(gt, pr):
 def _tversky_index(gt, pr, alpha, beta):
     tp, fp, fn = _tp_fp_fn(gt, pr)
     return (tp + SMOOTH) / (tp + alpha * fp + beta * fn + SMOOTH)
+
+
+def _rvd_index(gt, pr):
+    tp, fp, fn = _tp_fp_fn(gt, pr)
+    v_label = tp + fn + SMOOTH
+    v_infer = tp + fp
+    return abs( (v_infer - v_label) / v_label )
+
+
+def _calc_dist_map(seg):
+    res = np.zeros_like(seg)
+    posmask = seg.astype(np.bool)
+
+    if posmask.any():
+        negmask = ~posmask
+        res = distance(negmask) * negmask - (distance(posmask) - 1) * posmask
+
+    return res
+
+
+def _calc_dist_map_batch(y_true):
+    y_true_numpy = y_true.numpy()
+    return np.array([_calc_dist_map(y)
+                     for y in y_true_numpy]).astype(np.float32)

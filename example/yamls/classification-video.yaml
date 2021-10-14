@@ -38,3 +38,10 @@ predict_videos:
     - name: data/classification/videos/test/SampleVideo_1280x720_1mb.mp4
       start_time: 0:00:02
       end_time: 0:00:04
+mlflow: True
+experiment_name: test_experiment
+run_name: classification-video_test
+user_name: test_user
+tracking_uri: './mlruns' # path to mlruns
+description: test
+version: 0.0.0

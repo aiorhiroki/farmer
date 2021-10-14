@@ -96,3 +96,12 @@ train_colors:
 early_stopping: yes # yes if using early_stopping to interruption
 patience: 5
 monitor: val_loss
+mlflow: True
+experiment_name: test_experiment
+run_name: segmentation_test
+user_name: test_user
+tracking_uri: './mlruns' # path to mlruns
+data_dvc_path:
+    'data_name': './data.dvc' # path to dvc
+description: test
+version: 0.0.0

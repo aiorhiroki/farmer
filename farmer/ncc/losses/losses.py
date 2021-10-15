@@ -171,3 +171,20 @@ class BoundaryLoss(Loss):
             gt=gt,
             pr=pr,
         ), self.flooding_level)
+
+class UnifiedFocalLoss(Loss):
+    def __init__(self, weight=0.5, delta=0.6, gamma=0.2, flooding_level=0.):
+        super().__init__(name='unified_focal_loss')
+        self.weight = weight
+        self.delta = delta
+        self.gamma = gamma
+        self.flooding_level = flooding_level
+
+    def __call__(self, gt, pr):
+        return F.flooding(F.unified_focal_loss(
+            gt=gt,
+            pr=pr,
+            weight=self.weight,
+            delta=self.delta,
+            gamma=self.gamma
+        ), self.flooding_level)

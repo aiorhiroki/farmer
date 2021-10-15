@@ -122,7 +122,8 @@ class TrainTask:
                 valid_dataset=valid_dataset,
                 nb_classes=self.config.nb_classes,
                 batch_size=self.config.train_params.batch_size,
-                segmentation_val_step=self.config.segmentation_val_step
+                segmentation_val_step=self.config.segmentation_val_step,
+                sdice_tolerance=self.config.sdice_tolerance
             )
             callbacks.extend([iou_history, generate_sample_result])
 

@@ -83,13 +83,15 @@ class GenerateSampleResult(keras.callbacks.Callback):
         valid_dataset,
         nb_classes,
         batch_size,
-        segmentation_val_step=3
+        segmentation_val_step=3,
+        sdice_tolerance=0.0
     ):
         self.val_save_dir = val_save_dir
         self.valid_dataset = valid_dataset
         self.nb_classes = nb_classes
         self.segmentation_val_step = segmentation_val_step
         self.batch_size = batch_size
+        self.sdice_tolerance = sdice_tolerance
 
     def on_epoch_end(self, epoch, logs={}):
         # display sample predict
@@ -103,7 +105,8 @@ class GenerateSampleResult(keras.callbacks.Callback):
             dataset=self.valid_dataset,
             model=self.model,
             save_dir=save_dir,
-            batch_size=self.batch_size
+            batch_size=self.batch_size,
+            sdice_tolerance=self.sdice_tolerance
         )
 
 

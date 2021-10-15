@@ -112,10 +112,10 @@ def _calc_dist_map(seg):
     return res
 
 
-def _calc_dist_map_batch(gt):
-    gt_numpy = gt.numpy()
+def _calc_dist_map_batch(y_true):
+    y_true_numpy = y_true.numpy()
     return np.array([_calc_dist_map(y)
-                     for y in gt_numpy]).astype(np.float32)
+                     for y in y_true_numpy]).astype(np.float32)
 
 def asymmetric_focal_loss(gt, pr, delta=0.25, gamma=2.):
     """

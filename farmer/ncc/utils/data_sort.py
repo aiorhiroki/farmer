@@ -49,3 +49,27 @@ def cross_val_split(dirs, counts, k=5, n_iter=15, mix_step=5):
         cross_val_dirs.append(val_dirs)
 
     return cross_val_dirs
+
+
+def representive_sequence(annotation_set, mask_dir):
+    """
+    step1: find image folder that has most images in all folders.
+    step2: get the mode using envery 10000 frames
+
+    args:
+    mask_dir: mask dir name
+    annoatton_set: [[image_path, mask_path], [image_path, mask_path], ...]
+        - image_path: ~/root_folder/image_dir/mask/frame_000111.png
+
+    returns:
+    video_name: image_folder which has most images
+    start_frame: 
+    end_frame: 
+    """
+
+    img_dirs = [
+        Path(img_path).parent.parent.name for img_path, _ in annotation_set]
+    img_dirs = list(set(img_dirs))
+    nb_img_per_dir = [len(glob(f"{img_dir}/{mask_dir}/*.png")) for img_dir in img_dirs]
+
+    pass
